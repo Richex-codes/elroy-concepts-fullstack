@@ -211,7 +211,7 @@ export default function DashboardPage() {
               ) => (
                 <div className="product-card" key={product._id}>
                   <img
-                    src={`https://elroy-concepts.onrender.com/uploads/${product.image}`}
+                    src={product.image} // <--- CHANGED HERE
                     alt={product.name}
                     className="product-img"
                   />

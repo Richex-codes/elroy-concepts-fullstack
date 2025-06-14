@@ -2,6 +2,36 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../models/productModel");
 const jwt = require("jsonwebtoken");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer");
+const path = require("path");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Set storage for Multer to Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "elroy-concepts-products", // Optional: specify a folder in your Cloudinary account
+    format: async (req, file) => "jpeg", // supports 'png', 'jpg', 'gif', etc.
+    public_id: (req, file) => {
+      // Generate a unique public_id based on timestamp and original filename (without extension)
+      const filenameWithoutExt = file.originalname
+        .split(".")
+        .slice(0, -1)
+        .join(".");
+      return `product-${Date.now()}-${filenameWithoutExt}`;
+    },
+    transformation: [{ width: 500, height: 500, crop: "limit" }], // Optional: Resize/transform images on upload
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Middleware for authentication
 const authMiddleware = (req, res, next) => {
@@ -38,43 +68,34 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 //multer setup for image upload
-const multer = require("multer");
-const path = require("path");
 
-// Set storage location and filename
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // folder to store uploaded files
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + file.originalname;
-    cb(null, uniqueName);
-  },
-});
-
-const upload = multer({ storage });
-
+// POST a new product (MODIFIED)
 router.post(
   "/",
   authMiddleware,
-  upload.single("image"), // multer middleware to handle image
+  upload.single("image"), // Use the Cloudinary-configured Multer
   async (req, res) => {
     try {
       const { name, category, description } = req.body;
 
+      // Check for req.file, as Cloudinary upload might fail or be missing
       if (!name || !category || !req.file) {
-        return res.status(400).json({ msg: "All fields are required" });
+        // If an image is required, ensure req.file exists
+        // If req.file is null/undefined here, Multer (or CloudinaryStorage) might have failed
+        return res
+          .status(400)
+          .json({ msg: "All fields are required, including an image." });
       }
 
       // Parse inventory array (it's sent as a string)
-      const inventory = JSON.parse(req.body.inventory); // <- from frontend
+      const inventory = JSON.parse(req.body.inventory);
 
       const newProduct = new Product({
         name,
         description,
         category,
-        image: req.file.filename, // save image path
-        inventory, // already in [{ branch, quantity }, ...] format
+        image: req.file.path, // <--- IMPORTANT: req.file.path now contains the Cloudinary URL!
+        inventory,
       });
 
       await newProduct.save();
@@ -82,8 +103,14 @@ router.post(
         .status(201)
         .json({ msg: "Product added successfully", product: newProduct });
     } catch (err) {
-      console.error("Error saving product:", err.message);
-      res.status(500).json({ msg: "Server error" });
+      console.error(
+        "Error saving product or uploading image to Cloudinary:",
+        err.message
+      );
+      // More specific error handling for Multer/Cloudinary errors might be useful here
+      res
+        .status(500)
+        .json({ msg: "Server error during product creation or image upload." });
     }
   }
 );

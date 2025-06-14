@@ -5,8 +5,8 @@ const mongoose = require("mongoose");
 const usersRoute = require("./routes/index");
 const AdminRoute = require("./routes/admin");
 const ProductRoute = require("./routes/product");
-const path = require("path");
-const fs = require("fs");
+// const path = require("path"); // <-- REMOVE THIS
+// const fs = require("fs");   // <-- REMOVE THIS
 const cron = require("node-cron");
 const runInventorySummaryEmail = require("./utils/emailSummaryTask");
 
@@ -19,15 +19,15 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // <-- REMOVE OR COMMENT OUT THIS LINE
 app.use("/", usersRoute);
 app.use("/admin", AdminRoute);
 app.use("/products", ProductRoute);
 
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+// const uploadDir = path.join(__dirname, "uploads"); // <-- REMOVE THIS
+// if (!fs.existsSync(uploadDir)) {                  // <-- REMOVE THIS
+//   fs.mkdirSync(uploadDir);                         // <-- REMOVE THIS
+// }
 
 // 🕗 Example → Runs every day at 8 AM
 cron.schedule("0 8 * * *", () => {

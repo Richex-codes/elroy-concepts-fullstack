@@ -145,7 +145,7 @@ export default function ProductPage() {
                 &times;
               </span>
               <img
-                src={`https://elroy-concepts.onrender.com/uploads/${selectedProduct.image}`}
+                src={selectedProduct.image} // <-- CHANGED HERE
                 alt={selectedProduct.name}
                 className="modal-product-img"
               />
@@ -176,7 +176,7 @@ export default function ProductPage() {
             {filteredProducts.map((product) => (
               <div key={product._id} className="product-card">
                 <img
-                  src={`https://elroy-concepts.onrender.com/uploads/${product.image}`}
+                  src={product.image} // <-- CHANGED HERE
                   alt={product.name}
                   className="product-img"
                   onClick={() => handleProductClick(product)}
