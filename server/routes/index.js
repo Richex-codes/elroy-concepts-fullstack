@@ -10,6 +10,18 @@ const router = express.Router();
 const { generateEnquiryPDF } = require("../utils/pdfGenerator");
 const Enquiry = require("../models/enquiriesModel");
 
+const twilio = require("twilio");
+const accountSid = process.env.TWILIO_ACCOUNT_SID; // Store securely in .env
+const authToken = process.env.TWILIO_AUTH_TOKEN; // Store securely in .env
+const twilioClient = twilio(accountSid, authToken);
+const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER; // Store securely in .env
+// Admin WhatsApp numbers for sending notifications
+
+const ADMIN_WHATSAPP_NUMBERS = [
+  "whatsapp:+2348107396206", // Replace with actual numbers, prefixed for WhatsApp
+  "whatsapp:+2347066313719", // Example: another admin's number
+];
+
 // Middleware for authentication
 const authMiddleware = (req, res, next) => {
   const authHeader = req.header("Authorization");
@@ -202,31 +214,78 @@ router.put("/profile", authMiddleware, async (req, res) => {
 
 // send enquiry
 router.post("/send-enquiry", async (req, res) => {
-  const { cart, user } = req.body;
+  const { cart, user } = req.body; // user should contain name, email, phone
+
   if (!cart || cart.length === 0) {
     return res.status(400).json({ msg: "Cart is empty" });
   }
 
-  const pdfBuffer = await generateEnquiryPDF(cart);
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: "richardigwe2005@gmail.com",
-    subject: "Product Enquiry",
-    text: `New product enquiry by ${user.name} (${user.email}) (${user.phone}) :\n`,
-    attachments: [{ filename: "Product-Enquiry.pdf", content: pdfBuffer }],
-  };
-
   try {
+    const pdfBuffer = await generateEnquiryPDF(cart);
+
+    // --- 1. Send Email (Existing Functionality) ---
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: "richardigwe2005@gmail.com", // Your fixed recipient email for enquiries
+      subject: "New Product Enquiry",
+      text:
+        `New product enquiry by ${user.name || "N/A"} (${
+          user.email || "N/A"
+        }) (${user.phone || "N/A"})\n\nCart Details:\n` +
+        cart.map((item) => `${item.name} (Qty: ${item.quantity})`).join("\n") +
+        `\n\nFull details in attached PDF.`,
+      attachments: [{ filename: "Product-Enquiry.pdf", content: pdfBuffer }],
+    };
+
     await transporter.sendMail(mailOptions);
+    console.log("Email enquiry sent successfully.");
+
+    // --- 2. Construct and Send WhatsApp Message ---
+    let whatsappMessage = `*New Product Enquiry*\n`;
+    whatsappMessage += `From: *${user.name || "N/A"}*\n`;
+    whatsappMessage += `Email: ${user.email || "N/A"}\n`;
+    whatsappMessage += `Phone: ${user.phone || "N/A"}\n\n`; // Assuming user.phone is correctly passed
+
+    whatsappMessage += `*Cart Items:*\n`;
+    cart.forEach((item, index) => {
+      whatsappMessage += `${index + 1}. ${item.name} (Qty: ${item.quantity})\n`;
+    });
+
+    whatsappMessage += `\n*Note*: Detailed enquiry in email attachment.`;
+
+    // Send message to all specified recipient numbers
+    const whatsappPromises = ADMIN_WHATSAPP_NUMBERS.map(async (number) => {
+      try {
+        await twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_NUMBER, // Your Twilio WhatsApp number (e.g., whatsapp:+14155238886)
+          to: number, // Recipient WhatsApp number (e.g., whatsapp:+234XXXXXXXXXX)
+          body: whatsappMessage,
+          // If you want to send the PDF via WhatsApp, it's more complex:
+          // You'd need to host the PDF publicly and provide its URL in `mediaUrl`.
+          // mediaUrl: ['https://your-public-url-to-pdf.com/Product-Enquiry.pdf'],
+        });
+        console.log(`WhatsApp message sent to ${number}`);
+      } catch (whatsappErr) {
+        console.error(
+          `Failed to send WhatsApp message to ${number}:`,
+          whatsappErr.message
+        );
+        // Do not return/throw here unless you want to stop the entire request if one WhatsApp fails
+      }
+    });
+
+    // Wait for all WhatsApp messages to at least attempt sending
+    await Promise.allSettled(whatsappPromises);
+
+    // --- 3. Save Enquiry to Database (Existing Functionality) ---
     const newEnquiry = new Enquiry({
       name: user.name,
       email: user.email,
@@ -234,9 +293,11 @@ router.post("/send-enquiry", async (req, res) => {
       cart,
     });
     await newEnquiry.save();
-    res.json({ msg: "Enquiry sent successfully" });
+    console.log("Enquiry saved to database.");
+
+    res.json({ msg: "Enquiry sent successfully via email and WhatsApp" });
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error handling enquiry:", error); // General catch for email/PDF/DB
     res.status(500).json({ msg: "Failed to send enquiry" });
   }
 });
@@ -303,7 +364,9 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 
   if (newPassword.length < 8) {
-    return res.status(400).json({ msg: "Password must be at least 8 characters" });
+    return res
+      .status(400)
+      .json({ msg: "Password must be at least 8 characters" });
   }
 
   try {
@@ -327,6 +390,5 @@ router.post("/reset-password/:token", async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 
 module.exports = router;

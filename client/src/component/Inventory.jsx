@@ -38,7 +38,7 @@ export default function InventoryPage() {
       inventoryId: item._id,
       name: product.name,
       branchName: item.branch.name,
-      branchId: item.branch._id,
+      branchId: item.branch._id, // 👈 THIS IS WHAT YOU NEED
       quantity: item.quantity,
       addedAt: item.addedAt,
     }))
@@ -90,7 +90,7 @@ export default function InventoryPage() {
   const handleSaveClick = async (item, index) => {
     try {
       await axios.put(
-        `https://elroy-concepts.onrender.com/products/${item.productId}/${item.inventoryId}`,
+        `https://elroy-concepts.onrender.com/products/${item.productId}/branch/${item.branchId}`,
         { quantity: item.quantity },
         {
           headers: {

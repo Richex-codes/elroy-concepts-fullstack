@@ -7,6 +7,8 @@ const Enquiry = require("../models/enquiriesModel.js");
 const { generateInventoryPDF } = require("../utils/pdfGenerator.js");
 const sendEmailWithPDF = require("../utils/emailSender.js");
 
+
+
 const router = express.Router();
 
 const authMiddleware = (req, res, next) => {

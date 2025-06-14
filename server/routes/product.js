@@ -132,18 +132,27 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 });
 
 // PUT /products/:productId/inventory/:inventoryId
-router.put("/:productId/:inventoryId", authMiddleware, async (req, res) => {
+router.put("/:productId/branch/:branchId", authMiddleware, async (req, res) => {
   const { quantity } = req.body;
-  const { productId, inventoryId } = req.params;
+  const { productId, branchId } = req.params;
 
   try {
     const product = await Product.findById(productId);
-    const inventoryItem = product.inventory.id(inventoryId);
-    if (!inventoryItem)
-      return res.status(404).json({ msg: "Inventory item not found" });
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
+
+    const inventoryItem = product.inventory.find(
+      (item) => item.branch.toString() === branchId
+    );
+
+    if (!inventoryItem) {
+      return res.status(404).json({ msg: "No inventory for that branch" });
+    }
 
     inventoryItem.quantity = quantity;
     await product.save();
+
     res.json({ msg: "Quantity updated successfully" });
   } catch (err) {
     console.error(err);
