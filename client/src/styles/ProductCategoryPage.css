@@ -1,0 +1,340 @@
+.product-category-page nav {
+  background-color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.product-category-page main {
+  padding: 20px 60px;
+}
+
+.product-category-page h1 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  justify-items: center;
+}
+
+.product-card {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+  text-align: center;
+  transition: transform var(--transition-speed),
+    box-shadow var(--transition-speed);
+  cursor: pointer;  
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.product-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  margin-bottom: 15px;
+}
+
+.product-card p {
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-bottom: 15px;
+  font-size: 1.1em;
+}
+
+.product-card h3 {
+  margin-bottom: 10px;
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.category-name {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+
+.add-to-cart-btn {
+  background-color: var(--accent-color);
+  color: white;
+  width: 100%;
+  padding: 5px 20px;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color var(--transition-speed),
+    transform var(--transition-speed);
+}
+
+.add-to-cart-btn:hover {
+  background-color: #b0040e;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.category-header input {
+  border-radius: 5px;
+  border: 1px solid var(--primary-color);
+  text-align: center;
+}
+
+.category-header input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+}
+
+
+/* Styles for the modal overlay */
+.product-modal {
+  position: fixed; /* Stays in the same position even if the page scrolls */
+  z-index: 1000; /* Stays on top of other content */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if content is too long */
+  background-color: rgba(0, 0, 0, 0.4); /* Black with 40% opacity (dimmed effect) */
+  display: flex; /* Use flexbox for easy centering of modal content */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  backdrop-filter: blur(3px); /* Optional: Adds a subtle blur to the background content */
+  -webkit-backdrop-filter: blur(3px); /* For Safari compatibility */
+}
+
+/* Styles for the modal's actual content box */
+.modal-content {
+  background-color: #fefefe; /* White background for the content box */
+  margin: auto; /* Auto margin will center it if flexbox isn't used or as a fallback */
+  padding: 35px; /* Ample padding inside the content box */
+  border-radius: 10px; /* Slightly rounded corners */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Soft shadow for depth */
+  width: 80%; /* Adjust width as needed, max-width is usually good */
+  max-width: 500px; /* Maximum width to prevent it from getting too wide on large screens */
+  position: relative; /* Needed for positioning the close button */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center text and button horizontally */
+  text-align: center;
+}
+
+/* Styles for the close button */
+.close {
+  color: #aaa;
+  font-size: 40px;
+  font-weight: bold;
+  position: absolute; /* Position relative to the modal-content */
+  top: -10px;
+  right: 10px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close:hover,
+.close:focus {
+  color: #333;
+  text-decoration: none;
+}
+
+/* Styles for the product image inside the modal */
+.modal-product-img {
+  width: 100%; /* Ensure image doesn't overflow its container */
+  height: 500px ; /* Maintain aspect ratio */
+  border-radius: 5px; /* Slightly rounded corners for the image */
+  margin-bottom: 20px; 
+  object-fit: cover;
+}
+
+/* General typography for modal content */
+.modal-content h2 {
+  font-size: 2em;
+  margin-bottom: 10px;
+  color: #333;
+  font-weight: bold;
+}
+
+.modal-content p {
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: bold;
+}
+
+.modal-content .add-to-cart-btn {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1em;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content .add-to-cart-btn:hover {
+  background-color: #b0040e;
+}
+
+/* Optional: Add some responsiveness for smaller screens */
+/* ===================== */
+/* ✅ 1024px and below */
+/* ===================== */
+@media (max-width: 1024px) {
+  .product-category-page main {
+    padding: 20px 30px;
+  }
+
+  .product-card img {
+    height: 220px;
+  }
+
+  .modal-product-img {
+    height: 400px;
+  }
+
+  .product-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 940px) {
+ .product-category-page .menu-toggle {
+    display: block;
+  }
+
+  .dashboard-nav-links,
+  .nav-actions {
+    display: none;
+  }
+}
+
+/* ===================== */
+/* ✅ 768px and below */
+/* ===================== */
+@media (max-width: 768px) {
+  .product-category-page nav {
+    padding: 10px 15px;
+  }
+
+  .product-category-page main {
+    padding: 20px;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .product-card img {
+    height: 180px;
+  }
+
+  .product-card {
+    padding: 12px;
+  }
+
+  .product-category-page h1 {
+    font-size: 1.8em;
+  }
+
+  .product-search {
+    width: 90%;
+    margin: 0 auto 20px auto;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .dashboard-nav-links,
+  .nav-actions {
+    display: none;
+  }
+
+
+  .modal-product-img {
+    height: 300px;
+  }
+}
+
+/* ===================== */
+/* ✅ 480px and below */
+/* ===================== */
+@media (max-width: 480px) {
+  .product-category-page main {
+    padding: 15px;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .product-card img {
+    height: 150px;
+  }
+
+  .product-card h3 {
+    font-size: 1.1em;
+  }
+
+  .product-card {
+    padding: 10px;
+  }
+
+  .product-category-page h1 {
+    font-size: 1.5em;
+  }
+
+  .product-search {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .add-to-cart-btn {
+    font-size: 0.95em;
+    padding: 8px 16px;
+  }
+
+  .sidebar-links a,
+  .sidebar-links button {
+    font-size: 1rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 15px;
+  }
+
+  .modal-product-img {
+    height: auto;
+    max-height: 250px;
+  }
+}
+

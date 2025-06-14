@@ -1,0 +1,230 @@
+:root {
+  --primary-color: #4A4A4A;       /* Dark gray for headings and main text */
+  --accent-color: #E30613;        /* Red for buttons and highlights */
+  --background-color: #ecf0f1;    /* Light background */
+  --card-bg-color: #ffffff;       /* White card backgrounds */
+  --secondary-text: #888888;      /* Muted text */
+  --border-radius: 8px;
+  --transition-speed: 0.3s ease;
+  --input-border: #ccc;
+  --input-focus-border: #E30613;
+}
+
+.profile-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 1rem;
+  background-color: var(--background-color);
+  min-height: 100vh;
+}
+
+.profile-page nav {
+  background-color: var(--card-bg-color);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.profile-page nav .logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.profile-card {
+  background-color: var(--card-bg-color);
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  width: 100%;
+  text-align: left;
+  color: var(--primary-color);
+}
+
+.profile-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.profile-card p {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  color: var(--primary-color);
+}
+
+.profile-card input {
+  width: 100%;
+  padding: 0.6rem;
+  margin: 0.5rem 0 1rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: border-color var(--transition-speed);
+}
+
+.profile-card input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+}
+
+.profile-buttons {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background var(--transition-speed);
+}
+
+.btn-primary:hover {
+  background-color: #b0040f; /* Slightly darker red */
+}
+
+.btn-outline {
+  background-color: var(--card-bg-color);
+  color: var(--accent-color);
+  border: 2px solid var(--accent-color);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background var(--transition-speed);
+}
+
+.btn-outline:hover {
+  background-color: #fdecea; /* very light red background */
+}
+
+.profile-message {
+  margin-top: 1rem;
+  color: green;
+  font-weight: 500;
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* ===================== */
+/* ✅ 1024px and below */
+/* ===================== */
+@media (max-width: 1024px) {
+  .profile-page-container {
+    padding: 3rem 1rem;
+  }
+
+  .profile-card {
+    padding: 2rem;
+  }
+
+  .profile-card h2 {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 940px) {
+.profile-page .menu-toggle {
+    display: block;
+  }
+
+  .dashboard-nav-links,
+  .nav-actions {
+    display: none;
+  }
+}
+
+/* ===================== */
+/* ✅ 768px and below */
+/* ===================== */
+@media (max-width: 768px) {
+  .profile-page nav {
+    padding: 10px 15px;
+  }
+
+  .dashboard-nav-links,
+  .nav-actions {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .profile-page-container {
+    padding: 2rem 1rem;
+  }
+
+  .profile-card {
+    padding: 1.5rem;
+  }
+
+  .profile-card input {
+    padding: 0.5rem;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .profile-buttons {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}
+
+/* ===================== */
+/* ✅ 480px and below */
+/* ===================== */
+@media (max-width: 480px) {
+  .profile-page-container {
+    padding: 1rem;
+  }
+
+  .profile-card {
+    padding: 1rem;
+  }
+
+  .profile-card h2 {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .profile-card input {
+    font-size: 0.95rem;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    font-size: 0.9rem;
+  }
+
+  .sidebar-links a,
+  .sidebar-links button {
+    font-size: 1rem;
+  }
+
+  .profile-buttons {
+    gap: 0.7rem;
+  }
+
+  .profile-message {
+    font-size: 0.9rem;
+  }
+}
+

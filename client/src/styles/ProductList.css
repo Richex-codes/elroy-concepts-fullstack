@@ -1,0 +1,204 @@
+.product-list-page {
+  padding: 40px 20px;
+}
+
+/* View Toggle Buttons */
+.view-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.view-toggle button {
+  padding: 8px 18px;
+  font-weight: bold;
+  border: 1px solid var(--primary-color);
+  background-color: #fff;
+  color: var(--primary-color);
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.view-toggle button.active,
+.view-toggle button:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+/* Filters */
+.inventory-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.inventory-filters input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-color);
+  min-width: 180px;
+  flex: 1;
+}
+
+.inventory-filters input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+}
+
+/* ======================= */
+/* ✅ Card View Styling */
+/* ======================= */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  justify-items: center;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+}
+
+.product-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.product-card h3 {
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.admin-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.delete-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  background-color: crimson;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: #9b0d19;
+}
+
+/* ======================= */
+/* ✅ Table View Styling */
+/* ======================= */
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.product-table th,
+.product-table td {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.product-table th {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.product-table td {
+  background-color: #fafafa;
+}
+
+.product-table .delete-btn {
+  font-size: 0.85em;
+  padding: 4px 8px;
+}
+
+/* ======================= */
+/* ✅ Responsiveness */
+/* ======================= */
+
+/* ✅ Tablet (768px and below) */
+/* @media (max-width: 768px) {
+  .inventory-filters {
+    flex-direction: column;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .product-table {
+    display: block;
+    overflow-x: auto;
+    max-width: 500px;
+  }
+} */
+
+/* ✅ Mobile (480px and below) */
+@media (max-width: 480px) {
+  .product-list-page {
+    padding: 20px 10px;
+    margin-top: 50px;
+  }
+
+  
+
+  .view-toggle {
+    gap: 6px;
+  }
+
+  .view-toggle button {
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+
+  .product-img {
+    height: 140px;
+  }
+
+  .inventory-filters input {
+    font-size: 0.9em;
+  }
+
+  .product-card {
+    padding: 12px;
+  }
+
+  .delete-btn {
+    font-size: 0.8em;
+    padding: 5px 10px;
+  }
+
+  .product-table th,
+  .product-table td {
+    font-size: 0.85em;
+    padding: 8px 10px;
+  }
+}

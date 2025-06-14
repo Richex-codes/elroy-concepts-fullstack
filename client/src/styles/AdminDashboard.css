@@ -1,0 +1,129 @@
+:root {
+  --primary-color: #4a4a4a;
+  --accent-color: #e30613;
+  --background-light: #ecf0f1;
+  --text-muted: #888888;
+  --white: #ffffff;
+}
+
+.admin-dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 220px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 20px;
+}
+
+.admin-sidebar h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.admin-sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.admin-sidebar li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* .admin-sidebar li:hover {
+    background-color: #34495e;
+  } */
+
+.admin-content {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Sidebar defaults for large screens */
+.admin-sidebar {
+  width: 220px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.hamburger-btn {
+  display: none;
+  background: none;
+  color: white;
+  font-size: 1.8rem;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 9999;
+}
+
+.close-sidebar {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  z-index: 1101;  /* Above sidebar content */
+}
+
+.close-sidebar:hover {
+  color: var(--accent-color);
+}
+
+
+/* ======================= */
+/* ✅ Responsive Styles */
+/* ======================= */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transform: translateX(-100%);
+    z-index: 1000;
+    width: 250px; /* make it slightly wider for better space */
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .hamburger-btn {
+    display: block;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    font-size: 2rem;
+    color: var(--primary-color);
+    background: none;
+    border: none;
+    z-index: 1100; /* High enough to stay on top */
+  }
+
+  .admin-sidebar h2 {
+    margin-top: 60px; /* Pushes down the heading to avoid overlap */
+    padding-left: 10px;
+  }
+
+  .admin-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-sidebar {
+    width: 75%; /* Wider on phones for easier tap targets */
+  }
+}

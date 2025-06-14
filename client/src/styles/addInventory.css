@@ -1,0 +1,113 @@
+.add-inventory-page {
+  padding: 40px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.add-inventory-page h2 {
+  font-size: 2em;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.inventory-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inventory-form label {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.inventory-form select,
+.inventory-form input[type="number"] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1em;
+}
+
+.inventory-form .btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: bold;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.inventory-form .btn-primary:hover {
+  background-color: #c10510;
+}
+
+.message {
+  text-align: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #ecf0f1;
+  color: #2c3e50;
+  font-weight: bold;
+}
+
+/* ===================== */
+/* ✅ 768px and below */
+/* ===================== */
+@media (max-width: 768px) {
+  .add-inventory-page {
+    padding: 30px 15px;
+    margin-top: 50px;
+  }
+
+  .add-inventory-page h2 {
+    font-size: 1.7em;
+  }
+
+  .inventory-form select,
+  .inventory-form input[type="number"] {
+    padding: 8px;
+    font-size: 0.95em;
+  }
+
+  .inventory-form .btn-primary {
+    padding: 10px;
+    font-size: 1em;
+  }
+}
+
+/* ===================== */
+/* ✅ 480px and below */
+/* ===================== */
+@media (max-width: 480px) {
+  .add-inventory-page {
+    padding: 20px 10px;
+    margin-top: 50px;
+  }
+
+  .add-inventory-page h2 {
+    font-size: 1.5em;
+  }
+
+  .inventory-form {
+    gap: 12px;
+  }
+
+  .inventory-form select,
+  .inventory-form input[type="number"] {
+    padding: 8px;
+    font-size: 0.9em;
+  }
+
+  .inventory-form .btn-primary {
+    padding: 8px;
+    font-size: 0.95em;
+  }
+}
