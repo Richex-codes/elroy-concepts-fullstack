@@ -256,15 +256,13 @@ export default function DashboardPage() {
           <div className="footer-column" w-tid="261">
             <h3>Contact Us</h3>
             <p>
-              <i className="fas fa-phone" w-tid="267"></i> (123) 456-7890
+              Head Office: Shop 262/263 Block B4 HFP Shopping Complex, Abraham
+              Adesanya Roundabout Lekki Ajah. (07066313719)
             </p>
+            <p>Branch: No 148 dopemu road Agege Lagos. (08035570086)</p>
             <p>
-              <i className="fas fa-envelope" w-tid="271"></i>{" "}
-              info@dadsrailings.com
-            </p>
-            <p>
-              <i className="fas fa-map-marker-alt" w-tid="275"></i> 123 Railing
-              St, Anytown, USA
+              Branch: No 8 sowemimo Street Agape community badagry expressway
+              Lagos. Opposite tradefair complex. (07062606662)
             </p>
           </div>
           <div class="footer-column">

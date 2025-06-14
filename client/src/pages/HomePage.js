@@ -225,18 +225,13 @@ export default function HomePage() {
           <div className="footer-column" w-tid="261">
             <h3>Contact Us</h3>
             <p>
-              <i class="fas fa-phone" w-tid="267"></i> Head Office: Shop 262/263
-              Block B4 HFP Shopping Complex, Abraham Adesanya Roundabout Lekki
-              Ajah. (07066313719)
+              Head Office: Shop 262/263 Block B4 HFP Shopping Complex, Abraham
+              Adesanya Roundabout Lekki Ajah. (07066313719)
             </p>
+            <p>Branch: No 148 dopemu road Agege Lagos. (08035570086)</p>
             <p>
-              <i class="fas fa-envelope" w-tid="271"></i> Branch: No 148 dopemu
-              road Agege Lagos. (08035570086)
-            </p>
-            <p>
-              <i class="fas fa-map-marker-alt" w-tid="275"></i> Branch: No 8
-              sowemimo Street Agape community badagry expressway Lagos. Opposite
-              tradefair complex. (07062606662)
+              Branch: No 8 sowemimo Street Agape community badagry expressway
+              Lagos. Opposite tradefair complex. (07062606662)
             </p>
           </div>
           <div class="footer-column">
