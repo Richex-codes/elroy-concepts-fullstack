@@ -12,11 +12,14 @@ export default function ProductListPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/products", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await axios.get(
+        "https://elroy-concepts.onrender.com/products",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       setProducts(res.data);
     } catch (err) {
       console.error("Error fetching products:", err);
@@ -40,7 +43,7 @@ export default function ProductListPage() {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
     try {
-      await axios.delete(`http://localhost:3001/products/${id}`, {
+      await axios.delete(`https://elroy-concepts.onrender.com/products/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -96,7 +99,7 @@ export default function ProductListPage() {
           {filtered.map((product) => (
             <div className="product-card" key={product._id}>
               <img
-                src={`http://localhost:3001/uploads/${product.image}`}
+                src={`https://elroy-concepts.onrender.com/uploads/${product.image}`}
                 alt={product.name}
                 className="product-img"
               />

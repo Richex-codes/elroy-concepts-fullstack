@@ -19,11 +19,14 @@ export default function DashboardSummary() {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/admin/branches", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await axios.get(
+          "https://elroy-concepts.onrender.com/admin/branches",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setBranches(res.data);
       } catch (err) {
         console.error("Failed to load branches", err);
@@ -39,40 +42,42 @@ export default function DashboardSummary() {
       try {
         const summaryUrl =
           selectedBranch === "all"
-            ? "http://localhost:3001/admin/summary"
-            : `http://localhost:3001/admin/summary/${selectedBranch}`;
+            ? "https://elroy-concepts.onrender.com/admin/summary"
+            : `https://elroy-concepts.onrender.com/admin/summary/${selectedBranch}`;
         const recentProductsUrl =
           selectedBranch === "all"
-            ? "http://localhost:3001/products/recent"
-            : `http://localhost:3001/products/recent/${selectedBranch}`;
+            ? "https://elroy-concepts.onrender.com/products/recent"
+            : `https://elroy-concepts.onrender.com/products/recent/${selectedBranch}`;
         const recentInventoryUrl =
           selectedBranch === "all"
-            ? "http://localhost:3001/products/recent-inventory"
-            : `http://localhost:3001/products/recent-inventory/${selectedBranch}`;
-        const lowStockUrl = "http://localhost:3001/products/low-stock";
+            ? "https://elroy-concepts.onrender.com/products/recent-inventory"
+            : `https://elroy-concepts.onrender.com/products/recent-inventory/${selectedBranch}`;
+        const lowStockUrl =
+          "https://elroy-concepts.onrender.com/products/low-stock";
 
-        const [summaryRes, recentProdRes, recentInvRes, lowStockRes] = await Promise.all([
-          axios.get(summaryUrl, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }),
-          axios.get(recentProductsUrl, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }),
-          axios.get(recentInventoryUrl, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }),
-          axios.get(lowStockUrl, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }),
-        ]);
+        const [summaryRes, recentProdRes, recentInvRes, lowStockRes] =
+          await Promise.all([
+            axios.get(summaryUrl, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }),
+            axios.get(recentProductsUrl, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }),
+            axios.get(recentInventoryUrl, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }),
+            axios.get(lowStockUrl, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }),
+          ]);
 
         setSummary(summaryRes.data);
         setRecentProducts(recentProdRes.data);

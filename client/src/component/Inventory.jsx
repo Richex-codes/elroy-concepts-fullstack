@@ -15,11 +15,14 @@ export default function InventoryPage() {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/products", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await axios.get(
+          "https://elroy-concepts.onrender.com/products",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setInventoryData(res.data);
       } catch (err) {
         console.error("Failed to load inventory:", err);
@@ -87,7 +90,7 @@ export default function InventoryPage() {
   const handleSaveClick = async (item, index) => {
     try {
       await axios.put(
-        `http://localhost:3001/products/${item.productId}/${item.inventoryId}`,
+        `https://elroy-concepts.onrender.com/products/${item.productId}/${item.inventoryId}`,
         { quantity: item.quantity },
         {
           headers: {

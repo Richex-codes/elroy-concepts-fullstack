@@ -10,7 +10,6 @@ export default function VerifyEmailPage() {
   const didVerify = useRef(false);
 
   useEffect(() => {
-
     if (didVerify.current) return; // skip if already verified once
     didVerify.current = true;
 
@@ -22,7 +21,7 @@ export default function VerifyEmailPage() {
       try {
         console.log("Sending verify request with token:", token);
         const response = await axios.get(
-          `http://localhost:3001/verify-email/${token}`
+          `https://elroy-concepts.onrender.com/verify-email/${token}`
         );
         console.log("Response from verify-email:", response.data);
         setMessage(response.data.msg || "Email verified successfully!");

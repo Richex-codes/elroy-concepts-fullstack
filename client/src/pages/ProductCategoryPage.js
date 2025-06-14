@@ -39,7 +39,7 @@ export default function ProductCategoryPage() {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3001/products/category/${categoryId}`,
+          `https://elroy-concepts.onrender.com/products/category/${categoryId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -184,7 +184,7 @@ export default function ProductCategoryPage() {
                 &times;
               </span>
               <img
-                src={`http://localhost:3001/uploads/${selectedProduct.image}`}
+                src={`https://elroy-concepts.onrender.com/uploads/${selectedProduct.image}`}
                 alt={selectedProduct.name}
                 className="modal-product-img"
               />
@@ -214,7 +214,7 @@ export default function ProductCategoryPage() {
                 displayedProducts.map((product) => (
                   <div key={product._id} className="product-card">
                     <img
-                      src={`http://localhost:3001/uploads/${product.image}`}
+                      src={`https://elroy-concepts.onrender.com/uploads/${product.image}`}
                       alt={product.name}
                       className="product-img"
                       onClick={() => handleProductClick(product)}

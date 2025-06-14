@@ -17,7 +17,10 @@ export default function ResetPassPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`http://localhost:3001/reset-password/${token}`, form);
+      await axios.post(
+        `https://elroy-concepts.onrender.com/reset-password/${token}`,
+        form
+      );
       // Optionally, you can add a success message or redirect here
       setTimeout(() => {
         navigate("/login");

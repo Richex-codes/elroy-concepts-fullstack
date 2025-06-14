@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
   const handleUpdate = async () => {
     try {
-      await axios.put("http://localhost:3001/profile", formData, {
+      await axios.put("https://elroy-concepts.onrender.com/profile", formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

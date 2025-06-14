@@ -29,7 +29,7 @@ export default function SignUpPage() {
     setloading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3001/register",
+        "https://elroy-concepts.onrender.com/register",
         formData
       );
       console.log("user registered succesfully", response.data);

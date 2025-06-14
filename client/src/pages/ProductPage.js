@@ -28,9 +28,14 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/products", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await axios.get(
+          "https://elroy-concepts.onrender.com/products",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setProducts(res.data);
       } catch (err) {
         console.error("Error fetching products:", err);
@@ -140,7 +145,7 @@ export default function ProductPage() {
                 &times;
               </span>
               <img
-                src={`http://localhost:3001/uploads/${selectedProduct.image}`}
+                src={`https://elroy-concepts.onrender.com/uploads/${selectedProduct.image}`}
                 alt={selectedProduct.name}
                 className="modal-product-img"
               />
@@ -171,7 +176,7 @@ export default function ProductPage() {
             {filteredProducts.map((product) => (
               <div key={product._id} className="product-card">
                 <img
-                  src={`http://localhost:3001/uploads/${product.image}`}
+                  src={`https://elroy-concepts.onrender.com/uploads/${product.image}`}
                   alt={product.name}
                   className="product-img"
                   onClick={() => handleProductClick(product)}

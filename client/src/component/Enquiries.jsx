@@ -11,11 +11,14 @@ export default function Enquiries() {
 
   const fetchEnquiries = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/admin/enquiries", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await axios.get(
+        "https://elroy-concepts.onrender.com/admin/enquiries",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       setEnquiries(res.data);
     } catch (err) {
       console.error("Failed to fetch enquiries:", err);
@@ -27,11 +30,14 @@ export default function Enquiries() {
       return;
 
     try {
-      await axios.delete(`http://localhost:3001/admin/enquiries/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await axios.delete(
+        `https://elroy-concepts.onrender.com/admin/enquiries/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       setEnquiries((prev) => prev.filter((enquiry) => enquiry._id !== id));
     } catch (err) {
       console.error("Failed to delete enquiry:", err);

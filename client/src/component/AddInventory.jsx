@@ -13,13 +13,18 @@ export default function AddInventoryPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productRes = await axios.get("http://localhost:3001/products", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const productRes = await axios.get(
+          "https://elroy-concepts.onrender.com/products",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setProducts(productRes.data);
 
         const branchRes = await axios.get(
-          "http://localhost:3001/admin/branches",
+          "https://elroy-concepts.onrender.com/admin/branches",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -38,7 +43,7 @@ export default function AddInventoryPage() {
     e.preventDefault();
     try {
       await axios.post(
-        `http://localhost:3001/products/${selectedProduct}/add-inventory`,
+        `https://elroy-concepts.onrender.com/products/${selectedProduct}/add-inventory`,
         { branch: selectedBranch, quantity },
         {
           headers: {

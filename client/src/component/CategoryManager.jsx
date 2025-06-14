@@ -10,7 +10,7 @@ export default function AddCategoryPage() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        "http://localhost:3001/admin/categories",
+        "https://elroy-concepts.onrender.com/admin/categories",
         { name },
         {
           headers: {

@@ -29,7 +29,7 @@ export default function CartPage() {
   const handleEnquiry = async () => {
     try {
       await axios.post(
-        "http://localhost:3001/send-enquiry",
+        "https://elroy-concepts.onrender.com/send-enquiry",
         {
           cart,
           user: {

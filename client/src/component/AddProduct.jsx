@@ -19,7 +19,9 @@ export default function AddProductPage() {
     // 🔵 Load categories
     const fetchCategories = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/admin/categories");
+        const res = await axios.get(
+          "https://elroy-concepts.onrender.com/admin/categories"
+        );
         setCategories(res.data);
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -29,11 +31,14 @@ export default function AddProductPage() {
     // 🔵 Load branches
     const fetchBranches = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/admin/branches", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await axios.get(
+          "https://elroy-concepts.onrender.com/admin/branches",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setBranches(res.data);
         // ⚠️ Initialize inventory with all branches and quantity 0
         const initialInventory = res.data.map((branch) => ({
@@ -89,7 +94,7 @@ export default function AddProductPage() {
     payload.append("inventory", JSON.stringify(filteredInventory)); // send inventory
 
     try {
-      await axios.post("http://localhost:3001/products", payload, {
+      await axios.post("https://elroy-concepts.onrender.com/products", payload, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,

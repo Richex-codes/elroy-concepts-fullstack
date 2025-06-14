@@ -43,7 +43,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:3001/admin/categories");
+        const response = await fetch(
+          "https://elroy-concepts.onrender.com/admin/categories"
+        );
         const data = await response.json();
         setCategories(data);
       } catch (error) {
@@ -59,7 +61,7 @@ export default function DashboardPage() {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3001/products/recent",
+          "https://elroy-concepts.onrender.com/products/recent",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -209,7 +211,7 @@ export default function DashboardPage() {
               ) => (
                 <div className="product-card" key={product._id}>
                   <img
-                    src={`http://localhost:3001/uploads/${product.image}`}
+                    src={`https://elroy-concepts.onrender.com/uploads/${product.image}`}
                     alt={product.name}
                     className="product-img"
                   />

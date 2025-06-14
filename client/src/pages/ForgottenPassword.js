@@ -10,7 +10,9 @@ export default function ForgottenPassword() {
     e.preventDefault();
     setError(""); // Clear previous errors
     try {
-      await axios.post("http://localhost:3001/forgot-password", { email });
+      await axios.post("https://elroy-concepts.onrender.com/forgot-password", {
+        email,
+      });
       // Optionally show a success message here
     } catch (error) {
       if (

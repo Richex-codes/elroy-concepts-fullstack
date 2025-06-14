@@ -8,7 +8,7 @@ import logoImg from "../images/elroy_logo_cropped.png";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setloading] = useState(false);
   const [Form, setForm] = useState({
@@ -24,7 +24,10 @@ export default function LoginPage() {
     e.preventDefault();
     setloading(true);
     try {
-      const response = await axios.post("http://localhost:3001/login", Form);
+      const response = await axios.post(
+        "https://elroy-concepts.onrender.com/login",
+        Form
+      );
       console.log("logged in succesfully", response.data);
       const { token } = response.data;
       localStorage.setItem("token", token);
