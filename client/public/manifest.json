@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Elroy",
+  "description": "Elroy Concepts - Your Gateway to Innovative Solutions",
+  "name": "Elroy Concepts",
   "icons": [
     {
       "src": "favicon.ico",
