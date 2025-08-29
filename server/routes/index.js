@@ -19,7 +19,8 @@ const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER; // Store secu
 
 const ADMIN_WHATSAPP_NUMBERS = [
   "whatsapp:+2348107396206", // Replace with actual numbers, prefixed for WhatsApp
-  "whatsapp:+2347066313719", // Example: another admin's number
+  "whatsapp:+2347066313719",
+  "whatsapp:+2349136343600" // Example: another admin's number
 ];
 
 // Middleware for authentication
