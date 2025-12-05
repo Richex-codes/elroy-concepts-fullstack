@@ -213,6 +213,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
   res.json({ msg: "Profile updated successfully" });
 });
 
+
 // send enquiry
 router.post("/send-enquiry", async (req, res) => {
   const { cart, user } = req.body; // user should contain name, email, phone
@@ -222,71 +223,73 @@ router.post("/send-enquiry", async (req, res) => {
   }
 
   try {
+    // --- 1. Generate PDF ---
     const pdfBuffer = await generateEnquiryPDF(cart);
 
-    // --- 1. Send Email (Existing Functionality) ---
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: "richardigwe2005@gmail.com", // Your fixed recipient email for enquiries
-      subject: "New Product Enquiry",
-      text:
-        `New product enquiry by ${user.name || "N/A"} (${
-          user.email || "N/A"
-        }) (${user.phone || "N/A"})\n\nCart Details:\n` +
-        cart.map((item) => `${item.name} (Qty: ${item.quantity})`).join("\n") +
-        `\n\nFull details in attached PDF.`,
-      attachments: [{ filename: "Product-Enquiry.pdf", content: pdfBuffer }],
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log("Email enquiry sent successfully.");
-
-    // --- 2. Construct and Send WhatsApp Message ---
+    // --- 2. Send WhatsApp Message First ---
     let whatsappMessage = `*New Product Enquiry*\n`;
     whatsappMessage += `From: *${user.name || "N/A"}*\n`;
     whatsappMessage += `Email: ${user.email || "N/A"}\n`;
-    whatsappMessage += `Phone: ${user.phone || "N/A"}\n\n`; // Assuming user.phone is correctly passed
-
+    whatsappMessage += `Phone: ${user.phone || "N/A"}\n\n`;
     whatsappMessage += `*Cart Items:*\n`;
     cart.forEach((item, index) => {
       whatsappMessage += `${index + 1}. ${item.name} (Qty: ${item.quantity})\n`;
     });
-
     whatsappMessage += `\n*Note*: Detailed enquiry in email attachment.`;
 
-    // Send message to all specified recipient numbers
-    const whatsappPromises = ADMIN_WHATSAPP_NUMBERS.map(async (number) => {
-      try {
-        await twilioClient.messages.create({
-          from: TWILIO_WHATSAPP_NUMBER, // Your Twilio WhatsApp number (e.g., whatsapp:+14155238886)
-          to: number, // Recipient WhatsApp number (e.g., whatsapp:+234XXXXXXXXXX)
+    const whatsappResults = await Promise.allSettled(
+      ADMIN_WHATSAPP_NUMBERS.map((number) =>
+        twilioClient.messages.create({
+          from: TWILIO_WHATSAPP_NUMBER,
+          to: number,
           body: whatsappMessage,
-          // If you want to send the PDF via WhatsApp, it's more complex:
-          // You'd need to host the PDF publicly and provide its URL in `mediaUrl`.
-          // mediaUrl: ['https://your-public-url-to-pdf.com/Product-Enquiry.pdf'],
-        });
-        console.log(`WhatsApp message sent to ${number}`);
-      } catch (whatsappErr) {
+        })
+      )
+    );
+
+    whatsappResults.forEach((result, i) => {
+      if (result.status === "fulfilled") {
+        console.log(`WhatsApp sent to ${ADMIN_WHATSAPP_NUMBERS[i]}`);
+      } else {
         console.error(
-          `Failed to send WhatsApp message to ${number}:`,
-          whatsappErr.message
+          `Failed WhatsApp to ${ADMIN_WHATSAPP_NUMBERS[i]}:`,
+          result.reason.message
         );
-        // Do not return/throw here unless you want to stop the entire request if one WhatsApp fails
       }
     });
 
-    // Wait for all WhatsApp messages to at least attempt sending
-    await Promise.allSettled(whatsappPromises);
+    // --- 3. Send Email (Separate Try-Catch) ---
+    let emailStatus = "Email sent successfully";
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
-    // --- 3. Save Enquiry to Database (Existing Functionality) ---
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: "richardigwe2005@gmail.com",
+        subject: "New Product Enquiry",
+        text:
+          `New product enquiry by ${user.name || "N/A"} (${
+            user.email || "N/A"
+          }) (${user.phone || "N/A"})\n\nCart Details:\n` +
+          cart.map((item) => `${item.name} (Qty: ${item.quantity})`).join("\n") +
+          `\n\nFull details in attached PDF.`,
+        attachments: [{ filename: "Product-Enquiry.pdf", content: pdfBuffer }],
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log("Email enquiry sent successfully.");
+    } catch (emailErr) {
+      console.error("Failed to send email:", emailErr.message);
+      emailStatus = "Email failed to send";
+    }
+
+    // --- 4. Save to Database ---
     const newEnquiry = new Enquiry({
       name: user.name,
       email: user.email,
@@ -296,12 +299,17 @@ router.post("/send-enquiry", async (req, res) => {
     await newEnquiry.save();
     console.log("Enquiry saved to database.");
 
-    res.json({ msg: "Enquiry sent successfully via email and WhatsApp" });
+    res.json({
+      msg: "Enquiry processed",
+      whatsapp: "Attempted",
+      email: emailStatus,
+    });
   } catch (error) {
-    console.error("Error handling enquiry:", error); // General catch for email/PDF/DB
-    res.status(500).json({ msg: "Failed to send enquiry" });
+    console.error("Error handling enquiry:", error);
+    res.status(500).json({ msg: "Failed to process enquiry" });
   }
 });
+
 
 // forogot password
 router.post("/forgot-password", async (req, res) => {
