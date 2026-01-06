@@ -216,6 +216,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
 
 // send enquiry
 router.post("/send-enquiry", async (req, res) => {
+  console.log("ENQUIRY ROUTE HIT");
   const { cart, user } = req.body; // user should contain name, email, phone
 
   if (!cart || cart.length === 0) {
@@ -236,6 +237,12 @@ router.post("/send-enquiry", async (req, res) => {
       whatsappMessage += `${index + 1}. ${item.name} (Qty: ${item.quantity})\n`;
     });
     whatsappMessage += `\n*Note*: Detailed enquiry in email attachment.`;
+
+    await twilioClient.messages.create({
+  from: process.env.TWILIO_WHATSAPP_NUMBER,
+  to: "whatsapp:+2348107396206",
+  body: "✅ WhatsApp test from Elroy Concepts backend",
+ });
 
     const whatsappResults = await Promise.allSettled(
       ADMIN_WHATSAPP_NUMBERS.map((number) =>
