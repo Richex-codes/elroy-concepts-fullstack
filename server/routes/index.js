@@ -238,11 +238,6 @@ router.post("/send-enquiry", async (req, res) => {
     });
     whatsappMessage += `\n*Note*: Detailed enquiry in email attachment.`;
 
-    await twilioClient.messages.create({
-  from: process.env.TWILIO_WHATSAPP_NUMBER,
-  to: "whatsapp:+2348107396206",
-  body: "✅ WhatsApp test from Elroy Concepts backend",
- });
 
     const whatsappResults = await Promise.allSettled(
       ADMIN_WHATSAPP_NUMBERS.map((number) =>
