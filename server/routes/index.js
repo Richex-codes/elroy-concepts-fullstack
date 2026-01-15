@@ -7,21 +7,10 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const validator = require("validator");
 const router = express.Router();
-const { generateEnquiryPDF } = require("../utils/pdfGenerator");
 const Enquiry = require("../models/enquiriesModel");
+const { enquiryQueue } = require("../jobs/queue");
 
-const twilio = require("twilio");
-const accountSid = process.env.TWILIO_ACCOUNT_SID; // Store securely in .env
-const authToken = process.env.TWILIO_AUTH_TOKEN; // Store securely in .env
-const twilioClient = twilio(accountSid, authToken);
-const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER; // Store securely in .env
-// Admin WhatsApp numbers for sending notifications
 
-const ADMIN_WHATSAPP_NUMBERS = [
-  "whatsapp:+2348107396206", // Replace with actual numbers, prefixed for WhatsApp
-  "whatsapp:+2347066313719",
-  "whatsapp:+2349136343600" // Example: another admin's number
-];
 
 // Middleware for authentication
 const authMiddleware = (req, res, next) => {
@@ -217,100 +206,41 @@ router.put("/profile", authMiddleware, async (req, res) => {
 // send enquiry
 router.post("/send-enquiry", async (req, res) => {
   console.log("ENQUIRY ROUTE HIT");
-  const { cart, user } = req.body; // user should contain name, email, phone
+  const { cart, user } = req.body;
 
   if (!cart || cart.length === 0) {
     return res.status(400).json({ msg: "Cart is empty" });
   }
 
   try {
-    // --- 1. Generate PDF ---
-    const pdfBuffer = await generateEnquiryPDF(cart);
-
-    // --- 2. Send WhatsApp Message First ---
-    let whatsappMessage = `*New Product Enquiry*\n`;
-    whatsappMessage += `From: *${user.name || "N/A"}*\n`;
-    whatsappMessage += `Email: ${user.email || "N/A"}\n`;
-    whatsappMessage += `Phone: ${user.phone || "N/A"}\n\n`;
-    whatsappMessage += `*Cart Items:*\n`;
-    cart.forEach((item, index) => {
-      whatsappMessage += `${index + 1}. ${item.name} (Qty: ${item.quantity})\n`;
-    });
-    whatsappMessage += `\n*Note*: Detailed enquiry in email attachment.`;
-
-
-    const whatsappResults = await Promise.allSettled(
-      ADMIN_WHATSAPP_NUMBERS.map((number) =>
-        twilioClient.messages.create({
-          from: TWILIO_WHATSAPP_NUMBER,
-          to: number,
-          body: whatsappMessage,
-        })
-      )
-    );
-
-    whatsappResults.forEach((result, i) => {
-      if (result.status === "fulfilled") {
-        console.log(`WhatsApp sent to ${ADMIN_WHATSAPP_NUMBERS[i]}`);
-      } else {
-        console.error(
-          `Failed WhatsApp to ${ADMIN_WHATSAPP_NUMBERS[i]}:`,
-          result.reason.message
-        );
-      }
-    });
-
-    // --- 3. Send Email (Separate Try-Catch) ---
-    let emailStatus = "Email sent successfully";
-    try {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: "richardigwe2005@gmail.com",
-        subject: "New Product Enquiry",
-        text:
-          `New product enquiry by ${user.name || "N/A"} (${
-            user.email || "N/A"
-          }) (${user.phone || "N/A"})\n\nCart Details:\n` +
-          cart.map((item) => `${item.name} (Qty: ${item.quantity})`).join("\n") +
-          `\n\nFull details in attached PDF.`,
-        attachments: [{ filename: "Product-Enquiry.pdf", content: pdfBuffer }],
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log("Email enquiry sent successfully.");
-    } catch (emailErr) {
-      console.error("Failed to send email:", emailErr.message);
-      emailStatus = "Email failed to send";
-    }
-
-    // --- 4. Save to Database ---
+    // 1️⃣ Save enquiry to DB (CRITICAL)
     const newEnquiry = new Enquiry({
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      cart,
+      name: user?.name,
+      email: user?.email,
+      phone: user?.phone,
+      cart
     });
     await newEnquiry.save();
     console.log("Enquiry saved to database.");
 
-    res.json({
-      msg: "Enquiry processed",
-      whatsapp: "Attempted",
-      email: emailStatus,
+    // 2️⃣ Add background job (NON-BLOCKING)
+    await enquiryQueue.add("process-enquiry", {
+      enquiryId: newEnquiry._id,
+      user,
+      cart
     });
+
+    // 3️⃣ Respond immediately
+    res.json({
+      msg: "Enquiry received. Our team will contact you shortly."
+    });
+
   } catch (error) {
     console.error("Error handling enquiry:", error);
     res.status(500).json({ msg: "Failed to process enquiry" });
   }
 });
+
 
 
 // forogot password
