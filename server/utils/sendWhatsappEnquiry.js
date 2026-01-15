@@ -1,21 +1,19 @@
+require("dotenv").config();
 const twilio = require("twilio");
-const accountSid = process.env.TWILIO_ACCOUNT_SID; // Store securely in .env
-const authToken = process.env.TWILIO_AUTH_TOKEN; // Store securely in .env
-const twilioClient = twilio(accountSid, authToken);
-const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER; // Store securely in .env
-// Admin WhatsApp numbers for sending notifications
 
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioClient = twilio(accountSid, authToken);
+
+const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER;
 
 const ADMIN_WHATSAPP_NUMBERS = [
-  "whatsapp:+2348107396206", // Replace with actual numbers, prefixed for WhatsApp
+  "whatsapp:+2348107396206",
   "whatsapp:+2347066313719",
-  "whatsapp:+2349136343600" // Example: another admin's number
+  "whatsapp:+2349136343600",
 ];
 
-/**
- * Sends WhatsApp enquiry message to admins
- */
-export async function sendWhatsappEnquiry({ user, cart }) {
+async function sendWhatsappEnquiry({ user, cart }) {
   let whatsappMessage = `*New Product Enquiry*\n`;
   whatsappMessage += `From: *${user?.name || "N/A"}*\n`;
   whatsappMessage += `Email: ${user?.email || "N/A"}\n`;
@@ -33,7 +31,7 @@ export async function sendWhatsappEnquiry({ user, cart }) {
       twilioClient.messages.create({
         from: TWILIO_WHATSAPP_NUMBER,
         to: number,
-        body: whatsappMessage
+        body: whatsappMessage,
       })
     )
   );
@@ -49,3 +47,5 @@ export async function sendWhatsappEnquiry({ user, cart }) {
     }
   });
 }
+
+module.exports = { sendWhatsappEnquiry };

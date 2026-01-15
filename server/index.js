@@ -5,10 +5,23 @@ const mongoose = require("mongoose");
 const usersRoute = require("./routes/index");
 const AdminRoute = require("./routes/admin");
 const ProductRoute = require("./routes/product");
-// const path = require("path"); // <-- REMOVE THIS
-// const fs = require("fs");   // <-- REMOVE THIS
+const Redis = require("ioredis");
 const cron = require("node-cron");
 const runInventorySummaryEmail = require("./utils/emailSummaryTask");
+
+const redisConnection = new Redis(process.env.REDIS_URL, {
+  tls: {},                // required for rediss://
+  maxRetriesPerRequest: null, // Upstash requirement
+  enableReadyCheck: false     // Upstash requirement
+});
+
+redisConnection.on("connect", () => {
+  console.log("✅ Redis connected via:", process.env.REDIS_URL);
+});
+
+redisConnection.on("error", (err) => {
+  console.error("❌ Redis connection error:", err);
+});
 
 const app = express();
 app.use(

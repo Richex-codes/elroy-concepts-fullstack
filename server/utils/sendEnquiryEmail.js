@@ -1,3 +1,4 @@
+require("dotenv").config();
 const nodemailer = require("nodemailer");
 
 async function sendEnquiryEmail({ user, cart, pdfBuffer }) {

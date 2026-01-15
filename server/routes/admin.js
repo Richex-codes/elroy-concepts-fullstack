@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const Category = require("../models/productCategoryModel.js");
 const jwt = require("jsonwebtoken");
