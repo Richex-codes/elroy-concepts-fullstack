@@ -1,52 +1,65 @@
 const PDFDocument = require("pdfkit");
+const {
+  drawHeader,
+  drawSectionTitle,
+  drawTable,
+  drawFooter,
+} = require("./pdfLayout");
 
-function generateInventoryPDF(inventorySummary, totalSummary) {
-  const doc = new PDFDocument();
+function generateInventoryPDF(summary, totalSummary) {
+  const doc = new PDFDocument({ margin: 40, bufferPages: true });
   const buffers = [];
 
   doc.on("data", buffers.push.bind(buffers));
-  doc.fontSize(16).text("Inventory Summary by Branch\n", { underline: true });
 
-  inventorySummary.forEach((item) => {
-    doc.fontSize(12).text(`${item.name} (${item.branch}): ${item.quantity}`);
+  drawHeader(doc, {
+    title: "Inventory Summary Report",
+    subtitle: `${summary.length} inventory line${summary.length === 1 ? "" : "s"}`,
   });
 
-  doc
-    .addPage()
-    .fontSize(16)
-    .text("Total Quantity per Product\n", { underline: true });
+  drawSectionTitle(doc, "Detailed Breakdown");
+  drawTable(
+    doc,
+    [
+      { key: "product", label: "PRODUCT", width: 220 },
+      { key: "branch", label: "BRANCH", width: 140 },
+      { key: "color", label: "COLOR", width: 100 },
+      { key: "totalQuantity", label: "QTY", width: 55, align: "right" },
+    ],
+    summary.map((item) => ({
+      product: item.product,
+      branch: item.branch,
+      color: item.color,
+      totalQuantity: item.totalQuantity,
+    }))
+  );
 
-  totalSummary.forEach((item) => {
-    doc.fontSize(12).text(`${item.name}: ${item.total}`);
-  });
+  doc.addPage();
+  drawHeader(doc, { title: "Total Quantity Per Product" });
+  drawTable(
+    doc,
+    [
+      { key: "product", label: "PRODUCT", width: 380 },
+      { key: "total", label: "TOTAL QTY", width: 135, align: "right" },
+    ],
+    totalSummary
+  );
+
+  const range = doc.bufferedPageRange();
+  for (let i = 0; i < range.count; i++) {
+    doc.switchToPage(i);
+    drawFooter(doc);
+  }
 
   doc.end();
 
   return new Promise((resolve) => {
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
-  });
-}
-
-function generateEnquiryPDF(emailContent) {
-  const doc = new PDFDocument();
-  const buffers = [];
-
-  doc.on("data", buffers.push.bind(buffers));
-  doc.fontSize(16).text("Product Enquiry\n", { underline: true });
-
-  emailContent.forEach((item) => {
-    doc.fontSize(12).text(`${item.name}: ${item.quantity}`);
-  });
-
-  doc.end();
-
-  return new Promise((resolve) => {
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("end", () => {
+      resolve(Buffer.concat(buffers));
+    });
   });
 }
 
 module.exports = {
   generateInventoryPDF,
-  generateEnquiryPDF,
 };
-

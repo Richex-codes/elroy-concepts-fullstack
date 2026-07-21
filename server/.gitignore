@@ -1,3 +1,9 @@
 .env
 /node_modules
 *.DS_Store
+
+# Real signature image used to stamp invoices/reports -- this repo is
+# public, so it must never be committed (anyone could reuse it to forge a
+# "signed" document). It still needs to exist at this path on the server for
+# PDF generation to find it -- copy it there directly (scp), outside of git.
+assets/mum_signature.png

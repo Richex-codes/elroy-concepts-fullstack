@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import "../styles/SignUpPage.css";
 import { useState } from "react";
-import axios from "axios";
+import api from "../api/axios.js";
 // import { useNavigate } from "react-router-dom";
 import Spinner from "../component/Spinner";
 import logoImg from "../images/elroy_logo_cropped.png";
@@ -9,15 +9,18 @@ import logoImg from "../images/elroy_logo_cropped.png";
 export default function SignUpPage() {
   // const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("error");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phoneNumber: "",
     password: "",
     confirmPassword: "",
+    adminRequested: false,
   });
   const [loading, setloading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,27 +31,17 @@ export default function SignUpPage() {
     e.preventDefault();
     setloading(true);
     try {
-      const response = await axios.post(
-        "https://elroy-concepts.onrender.comgit/register",
-        formData
-      );
-      console.log("user registered succesfully", response.data);
-      setSuccessMessage(
-        "user registered succesfully please check Your email to verify your Account!"
+      await api.post("/register", formData);
+      setMessageType("success");
+      setMessage(
+        "Registered successfully! Please check your email to verify your account."
       );
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setSuccessMessage(error.response.data.msg);
-        setTimeout(() => {
-          setSuccessMessage("");
-        }, 1500);
-      }
-      if (error.response && error.response.status === 401) {
-        setSuccessMessage(error.response.data.msg);
-        setTimeout(() => {
-          setSuccessMessage("");
-        }, 1500);
-      }
+      setMessageType("error");
+      setMessage(
+        error.response?.data?.msg || "Something went wrong. Please try again."
+      );
+      setTimeout(() => setMessage(""), 3000);
     } finally {
       setloading(false);
     }
@@ -57,10 +50,7 @@ export default function SignUpPage() {
   return (
     <div className="signup-page">
       {loading && <Spinner></Spinner>}
-      {successMessage && !loading && (
-        <div className="success-message">{successMessage}</div>
-      )}
-      {!successMessage && !loading && (
+      {!loading && (
         <>
           <header className="signup-header">
             <div className="logo-container">
@@ -70,7 +60,7 @@ export default function SignUpPage() {
             <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
               <ul>
                 <li>
-                  <Link to="/" className="nav-link">
+                  <Link to="/home" className="nav-link">
                     Home
                   </Link>
                 </li>
@@ -94,30 +84,36 @@ export default function SignUpPage() {
           <main>
             <section className="registration-section">
               <div className="registration-container">
+                <div className="auth-icon">
+                  <i className="fas fa-user-plus"></i>
+                </div>
                 <h2>Create Your Account</h2>
+                {message && (
+                  <div className={`alert alert-${messageType}`}>{message}</div>
+                )}
                 <form id="registration-form" onSubmit={handleSubmit}>
                   <div className="form-group">
-                    <label for="full-name">Full Name</label>
+                    <label htmlFor="full-name">Full Name</label>
                     <input
                       onChange={handleChange}
                       type="text"
                       id="full-name"
                       name="name"
-                      required=""
+                      required
                     />
                   </div>
                   <div className="form-group">
-                    <label for="email">Email</label>
+                    <label htmlFor="email">Email</label>
                     <input
                       onChange={handleChange}
                       type="email"
                       id="email"
                       name="email"
-                      required=""
+                      required
                     />
                   </div>
                   <div className="form-group">
-                    <label for="phone">Phone</label>
+                    <label htmlFor="phone">Phone</label>
                     <input
                       onChange={handleChange}
                       type="tel"
@@ -126,27 +122,68 @@ export default function SignUpPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label for="password">Password</label>
+                    <label htmlFor="password">Password</label>
                     <input
                       onChange={handleChange}
                       type="password"
                       id="password"
                       name="password"
-                      required=""
+                      required
                     />
                   </div>
                   <div className="form-group">
-                    <label for="confirm-password">Confirm Password</label>
+                    <label htmlFor="confirm-password">Confirm Password</label>
                     <input
                       onChange={handleChange}
                       type="password"
                       id="confirm-password"
                       name="confirmPassword"
-                      required=""
+                      required
                     />
                   </div>
+                  <div className="admin-request-box">
+                    <label htmlFor="admin-request" className="admin-request-label">
+                      <input
+                        type="checkbox"
+                        id="admin-request"
+                        checked={formData.adminRequested}
+                        onChange={(e) =>
+                          setFormData({ ...formData, adminRequested: e.target.checked })
+                        }
+                      />
+                      <span>
+                        <i className="fas fa-triangle-exclamation"></i>{" "}
+                        <strong>I am a business/branch admin, not a customer</strong>
+                      </span>
+                    </label>
+                    <p className="admin-request-hint">
+                      Only check this box if you manage a branch for Elroy Concepts and need
+                      admin access to the inventory system. <strong>Regular shoppers should
+                      leave this unchecked.</strong> Checking it does not grant access by
+                      itself — a super admin still has to approve your request.
+                    </p>
+                  </div>
+                  <div className="form-group form-group-checkbox">
+                    <label htmlFor="agree-terms">
+                      <input
+                        type="checkbox"
+                        id="agree-terms"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        required
+                      />
+                      I agree to the{" "}
+                      <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer">
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer">
+                        Privacy Policy
+                      </Link>
+                    </label>
+                  </div>
                   <button type="submit" className="cta-button">
-                    Register
+                    <i className="fas fa-user-plus"></i> Register
                   </button>
                 </form>
                 <p className="login-redirect">
@@ -156,8 +193,13 @@ export default function SignUpPage() {
             </section>
           </main>
           <footer className="registration-footer">
-            <div class="footer-bottom">
-              <p>© 2025 Elroy Concepts. All Rights Reserved.</p>
+            <div className="footer-links">
+              <Link to="/privacy-policy">Privacy Policy</Link>
+              <span>·</span>
+              <Link to="/terms-of-service">Terms of Service</Link>
+            </div>
+            <div className="footer-bottom">
+              <p>© {new Date().getFullYear()} Elroy Concepts. All Rights Reserved.</p>
             </div>
           </footer>
         </>

@@ -1,55 +1,372 @@
-:root {
-  --primary-color: #4a4a4a;
-  --accent-color: #e30613;
-  --background-light: #ecf0f1;
-  --text-muted: #888888;
-  --white: #ffffff;
-}
-
 .admin-dashboard {
   display: flex;
   min-height: 100vh;
+  background-color: var(--background-light);
 }
 
+/* ======================= */
+/* Sidebar */
+/* ======================= */
 .admin-sidebar {
-  width: 220px;
-  background-color: var(--primary-color);
+  position: relative;
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
   color: white;
-  padding: 20px;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  transition: width 0.25s ease;
 }
 
-.admin-sidebar h2 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
+.collapse-toggle-btn {
+  display: none;
 }
 
-.admin-sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.admin-sidebar li {
-  padding: 10px;
-  cursor: pointer;
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* .admin-sidebar li:hover {
-    background-color: #34495e;
-  } */
+.admin-sidebar-brand img {
+  height: 30px;
+  width: auto;
+  background-color: white;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+}
+
+.admin-sidebar-brand span {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.admin-sidebar-section {
+  margin-bottom: 14px;
+}
+
+.admin-sidebar-section-label {
+  margin: 0 0 4px;
+  padding: 0 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-sidebar-nav ul,
+.admin-sidebar-footer {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Enabled items render as a NavLink (an <a>) inside a plain <li>; disabled
+   items keep everything on the <li> itself since they're not real links.
+   Both share the same visual treatment below. */
+.admin-sidebar-nav li > a,
+.admin-sidebar-nav li.disabled {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  margin: 2px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.admin-sidebar-nav li > a i,
+.admin-sidebar-nav li.disabled i {
+  width: 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55);
+  transition: color var(--transition-speed);
+}
+
+.admin-sidebar-nav li > a:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.admin-sidebar-nav li > a.active {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.admin-sidebar-nav li > a.active i {
+  color: white;
+}
+
+.admin-sidebar-nav li.disabled {
+  position: relative;
+  color: rgba(255, 255, 255, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+}
+
+.admin-sidebar-nav li.disabled i {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.admin-sidebar-nav li.disabled:hover {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-sidebar-nav li.disabled span:first-of-type {
+  flex: 1;
+}
+
+.coming-soon-badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.coming-soon-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background-color: var(--primary-color-dark);
+  color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: coming-soon-toast-in 0.2s ease;
+}
+
+@keyframes coming-soon-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.admin-sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+}
+
+.admin-sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.92rem;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.admin-sidebar-logout i {
+  width: 16px;
+  text-align: center;
+}
+
+.admin-sidebar-logout:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.admin-sidebar-notifications {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.92rem;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+  margin-bottom: 4px;
+}
+
+.admin-sidebar-notifications i {
+  width: 16px;
+  text-align: center;
+}
+
+.admin-sidebar-notifications:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.admin-sidebar-notifications.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ======================= */
+/* Collapsible sidebar (desktop only) */
+/* ======================= */
+@media (min-width: 1025px) {
+  .collapse-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 24px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    color: white;
+    border: 2px solid var(--background-light);
+    cursor: pointer;
+    font-size: 0.65rem;
+    z-index: 20;
+    transition: background-color var(--transition-speed);
+  }
+
+  .collapse-toggle-btn:hover {
+    background-color: var(--accent-color-dark);
+  }
+
+  .admin-sidebar.collapsed {
+    width: 76px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-brand {
+    justify-content: center;
+    padding: 18px 0;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-nav li > a,
+  .admin-sidebar.collapsed .admin-sidebar-nav li.disabled {
+    justify-content: center;
+    padding: 12px 0;
+    margin: 2px 14px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-logout,
+  .admin-sidebar.collapsed .admin-sidebar-notifications {
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-nav li > a i,
+  .admin-sidebar.collapsed .admin-sidebar-nav li.disabled i,
+  .admin-sidebar.collapsed .admin-sidebar-logout i,
+  .admin-sidebar.collapsed .admin-sidebar-notifications i {
+    width: auto;
+    font-size: 1.05rem;
+  }
+
+  /*
+    Labels stay in the DOM at every screen size (React no longer removes
+    them) — only hide them here, inside this desktop-only media query, so
+    collapse never affects mobile/tablet regardless of the persisted
+    localStorage state.
+  */
+  .admin-sidebar.collapsed .admin-sidebar-brand span,
+  .admin-sidebar.collapsed .admin-sidebar-section-label,
+  .admin-sidebar.collapsed .admin-sidebar-nav li > a span,
+  .admin-sidebar.collapsed .admin-sidebar-nav li.disabled span,
+  .admin-sidebar.collapsed .admin-sidebar-logout span,
+  .admin-sidebar.collapsed .admin-sidebar-notifications span {
+    display: none;
+  }
+}
+
+/* ======================= */
+/* Main content */
+/* ======================= */
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 30px;
+  background-color: white;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 5;
+}
+
+.admin-topbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--accent-color), var(--accent-color-dark));
+}
+
+.admin-topbar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.admin-topbar h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--primary-color);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
 
 .admin-content {
   flex: 1;
-  padding: 20px;
+  padding: 28px 30px 36px;
 }
 
-/* Sidebar defaults for large screens */
-.admin-sidebar {
-  width: 220px;
-  background-color: var(--primary-color);
-  color: white;
-  padding: 20px;
-  transition: transform 0.3s ease;
+.admin-section-loading {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--secondary-text);
+  font-size: 0.95rem;
 }
 
 .hamburger-btn {
@@ -59,31 +376,18 @@
   font-size: 1.8rem;
   border: none;
   cursor: pointer;
-  position: absolute;
+  position: fixed;
   top: 15px;
   left: 15px;
-  z-index: 9999;
+  z-index: 1100;
 }
 
-.close-sidebar {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: white;
-  cursor: pointer;
-  z-index: 1101;  /* Above sidebar content */
+.admin-sidebar-backdrop {
+  display: none;
 }
-
-.close-sidebar:hover {
-  color: var(--accent-color);
-}
-
 
 /* ======================= */
-/* ✅ Responsive Styles */
+/* Responsive */
 /* ======================= */
 @media (max-width: 1024px) {
   .admin-sidebar {
@@ -93,7 +397,8 @@
     height: 100%;
     transform: translateX(-100%);
     z-index: 1000;
-    width: 250px; /* make it slightly wider for better space */
+    width: 270px;
+    transition: transform 0.3s ease;
   }
 
   .admin-sidebar.open {
@@ -102,28 +407,46 @@
 
   .hamburger-btn {
     display: block;
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    font-size: 2rem;
     color: var(--primary-color);
-    background: none;
-    border: none;
-    z-index: 1100; /* High enough to stay on top */
   }
 
-  .admin-sidebar h2 {
-    margin-top: 60px; /* Pushes down the heading to avoid overlap */
-    padding-left: 10px;
+  .admin-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+  }
+
+  .admin-topbar {
+    padding: 18px 20px 18px 60px;
   }
 
   .admin-content {
-    padding: 15px;
+    padding: 22px 20px 28px;
   }
 }
 
 @media (max-width: 480px) {
   .admin-sidebar {
-    width: 75%; /* Wider on phones for easier tap targets */
+    width: 82%;
+  }
+
+  .admin-topbar {
+    padding: 16px 16px 16px 55px;
+  }
+
+  .admin-topbar h1 {
+    font-size: 1.1rem;
+  }
+
+  .admin-topbar-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .admin-content {
+    padding: 18px 14px 24px;
   }
 }

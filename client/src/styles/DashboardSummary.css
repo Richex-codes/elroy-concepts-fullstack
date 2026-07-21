@@ -1,13 +1,13 @@
 .dashboard-summary {
-  padding: 30px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(44, 62, 80, 0.05);
+  padding: 24px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .dashboard-title {
   color: var(--primary-color);
-  font-size: 2em;
+  font-size: var(--font-size-xl);
   margin-bottom: 20px;
   text-align: center;
 }
@@ -15,6 +15,8 @@
 .branch-selector {
   display: flex;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 30px;
 }
@@ -24,10 +26,24 @@
   color: var(--primary-color);
 }
 
+.branch-selector label:not(:first-child) {
+  margin-left: 10px;
+}
+
 .branch-selector select {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
+}
+
+.summary-card-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--secondary-text);
+  font-size: 0.7em;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .summary-cards {
@@ -52,6 +68,18 @@
 .summary-card i {
   font-size: 2.2em;
   color: var(--accent-color);
+}
+
+.summary-card-danger {
+  background-color: var(--accent-color-light);
+}
+
+.summary-card-danger i {
+  color: var(--danger-color);
+}
+
+.summary-card-danger p {
+  color: var(--danger-color);
 }
 
 .summary-card h3 {
@@ -118,8 +146,21 @@
 
 .low-stock-alerts h3 {
   font-size: 1.2em;
-  color: #c0392b;
+  color: var(--danger-color);
   margin-bottom: 10px;
+}
+
+.low-stock-alerts-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.low-stock-alerts-header h3 {
+  margin-bottom: 0;
 }
 
 .low-stock-alerts ul {
@@ -135,7 +176,7 @@
 }
 
 .low-stock-alerts li strong {
-  color: #e74c3c;
+  color: var(--danger-color);
 }
 
 .low-stock-alerts li small {
@@ -194,6 +235,10 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+  }
+
+  .branch-selector label:not(:first-child) {
+    margin-left: 0;
   }
 
   .recent-activity {

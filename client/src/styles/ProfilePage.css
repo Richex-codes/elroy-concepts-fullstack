@@ -1,31 +1,22 @@
-:root {
-  --primary-color: #4A4A4A;       /* Dark gray for headings and main text */
-  --accent-color: #E30613;        /* Red for buttons and highlights */
-  --background-color: #ecf0f1;    /* Light background */
-  --card-bg-color: #ffffff;       /* White card backgrounds */
-  --secondary-text: #888888;      /* Muted text */
-  --border-radius: 8px;
-  --transition-speed: 0.3s ease;
-  --input-border: #ccc;
-  --input-focus-border: #E30613;
-}
-
 .profile-page-container {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 4rem 1rem;
-  background-color: var(--background-color);
+  background-color: var(--background-light);
   min-height: 100vh;
 }
 
 .profile-page nav {
-  background-color: var(--card-bg-color);
-  padding: 10px 20px;
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 12px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--glass-shadow);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -38,9 +29,9 @@
 
 .profile-card {
   background-color: var(--card-bg-color);
-  padding: 2rem 3rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 1.75rem 2.25rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   max-width: 500px;
   width: 100%;
   text-align: left;
@@ -48,7 +39,7 @@
 }
 
 .profile-card h2 {
-  font-size: 1.8rem;
+  font-size: var(--font-size-xl);
   margin-bottom: 1rem;
   color: var(--primary-color);
 }
@@ -93,7 +84,7 @@
 }
 
 .btn-primary:hover {
-  background-color: #b0040f; /* Slightly darker red */
+  background-color: var(--accent-color-dark);
 }
 
 .btn-outline {
@@ -101,14 +92,14 @@
   color: var(--accent-color);
   border: 2px solid var(--accent-color);
   padding: 0.6rem 1.2rem;
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: background var(--transition-speed);
 }
 
 .btn-outline:hover {
-  background-color: #fdecea; /* very light red background */
+  background-color: var(--accent-color-light);
 }
 
 .profile-message {

@@ -2,7 +2,7 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 
-async function sendEmailWithPDF(buffer) {
+async function sendEmailWithPDF(buffer, to, options = {}) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -13,10 +13,12 @@ async function sendEmailWithPDF(buffer) {
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: "richardigwe2005@gmail.com",
-    subject: "Daily Inventory Summary",
-    text: "Attached is the daily inventory summary report.",
-    attachments: [{ filename: "Inventory-Summary.pdf", content: buffer }],
+    to,
+    subject: options.subject || "Inventory Summary",
+    text: options.text || "Attached is the inventory summary report.",
+    attachments: [
+      { filename: options.filename || "Inventory-Summary.pdf", content: buffer },
+    ],
   };
 
   await transporter.sendMail(mailOptions);

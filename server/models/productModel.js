@@ -7,10 +7,7 @@ const ProductSchema = new Schema(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-      required: true,
-    },
+    
     category: {
       type: Schema.Types.ObjectId,
       ref: "Category",
@@ -18,7 +15,7 @@ const ProductSchema = new Schema(
     },
     image: {
       type: String,
-      required: true,
+      required: false,
     },
     inventory: [
       {
@@ -32,18 +29,34 @@ const ProductSchema = new Schema(
           required: true,
           default: 0,
         },
+        color: {
+          type: String,
+          required: true,
+        },
+        description: {
+          type: String,
+          default: "",
+        },
         addedAt: {
           type: Date,
           default: Date.now,
         },
       },
     ],
-    createdAt:{
+    dateAdded:{
       type: Date,
       default: Date.now,
     }
   },
   { timestamps: true }
 );
+
+// Inventory/low-stock/summary aggregations all $unwind inventory then
+// $match on branch and/or color; category lookups filter on category too.
+ProductSchema.index({ "inventory.branch": 1 });
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ name: 1 });
+// Dashboard "recent inventory" pipeline sorts by this after $unwind.
+ProductSchema.index({ "inventory.addedAt": -1 });
 
 module.exports = mongoose.model("Product", ProductSchema);

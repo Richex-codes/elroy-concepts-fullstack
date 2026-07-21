@@ -7,11 +7,12 @@ const twilioClient = twilio(accountSid, authToken);
 
 const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER;
 
-const ADMIN_WHATSAPP_NUMBERS = [
-  "whatsapp:+2348107396206",
-  "whatsapp:+2347066313719",
-  "whatsapp:+2349136343600",
-];
+// Comma-separated list, e.g. "whatsapp:+2348107396206,whatsapp:+2347066313719"
+// -- who gets pinged for new enquiries, configurable without a code change.
+const ADMIN_WHATSAPP_NUMBERS = (process.env.ADMIN_WHATSAPP_NUMBERS || "")
+  .split(",")
+  .map((n) => n.trim())
+  .filter(Boolean);
 
 async function sendWhatsappEnquiry({ user, cart }) {
   let whatsappMessage = `*New Product Enquiry*\n`;
@@ -20,9 +21,12 @@ async function sendWhatsappEnquiry({ user, cart }) {
   whatsappMessage += `Phone: ${user?.phone || "N/A"}\n\n`;
   whatsappMessage += `*Cart Items:*\n`;
 
-  cart.forEach((item, index) => {
-    whatsappMessage += `${index + 1}. ${item.name} (Qty: ${item.quantity})\n`;
-  });
+ cart.forEach((item, index) => {
+  whatsappMessage +=
+    `${index + 1}. ${item.name}\n` +
+    `   Qty: ${item.quantity}\n` +
+    `   Color: ${item.color || "Not Selected"}\n`;
+});
 
   whatsappMessage += `\n*Note*: Detailed enquiry in email attachment.`;
 

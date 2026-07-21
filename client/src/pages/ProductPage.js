@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import api from "../api/axios.js";
 import { CartContext } from "../context/CartContext";
 import { Link, useNavigate } from "react-router-dom";
 import logoImg from "../images/elroy_logo_cropped.png";
@@ -28,8 +28,8 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(
-          "https://elroy-concepts.onrender.com/products",
+        const res = await api.get(
+          "/products",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios.js";
+import ConfirmModal from "./ConfirmModal.jsx";
+import { useConfirm } from "../utils/useConfirm.js";
 import "../styles/Enquiries.css";
 
 export default function Enquiries() {
   const [enquiries, setEnquiries] = useState([]);
+  const { confirm, modalProps } = useConfirm();
 
   useEffect(() => {
     fetchEnquiries();
@@ -11,8 +14,8 @@ export default function Enquiries() {
 
   const fetchEnquiries = async () => {
     try {
-      const res = await axios.get(
-        "https://elroy-concepts.onrender.com/admin/enquiries",
+      const res = await api.get(
+        "/admin/enquiries",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -26,12 +29,16 @@ export default function Enquiries() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this enquiry?"))
-      return;
+    const ok = await confirm("Are you sure you want to delete this enquiry?", {
+      title: "Delete enquiry",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
-      await axios.delete(
-        `https://elroy-concepts.onrender.com/admin/enquiries/${id}`,
+      await api.delete(
+        `/admin/enquiries/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -51,11 +58,13 @@ export default function Enquiries() {
       {enquiries.length === 0 ? (
         <p>No enquiries yet.</p>
       ) : (
+        <div className="enquiry-table-container">
         <table className="enquiries-table">
           <thead>
             <tr>
               <th>Name</th>
               <th>Email</th>
+              <th>Phone Number</th>
               <th>Cart Items</th>
               <th>Date</th>
               <th>Action</th>
@@ -66,12 +75,14 @@ export default function Enquiries() {
               <tr key={enquiry._id}>
                 <td data-label="Name">{enquiry.name}</td>
                 <td data-label="Email">{enquiry.email}</td>
+                <td data-label="Phone">{enquiry.phone}</td>
                 <td data-label="Cart Items">
                   {enquiry.cart && enquiry.cart.length > 0 ? (
                     <ul>
                       {enquiry.cart.map((item, index) => (
                         <li key={index}>
-                          {item.name} : {item.quantity}
+                          {item.name} — Qty: {item.quantity}
+                          {item.color && ` — Color: ${item.color}`}
                         </li>
                       ))}
                     </ul>
@@ -94,7 +105,9 @@ export default function Enquiries() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
+      <ConfirmModal {...modalProps} />
     </div>
   );
 }

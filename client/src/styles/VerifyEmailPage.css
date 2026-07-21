@@ -1,30 +1,35 @@
 .verify-email-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 30vh;
-    max-width: 400px;
-    margin: 5rem auto;
-    padding: 2rem 3rem;
-    background-color: #ecf0f1;
-    border-radius: 12px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #333;
-    text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 40vh;
+  max-width: 420px;
+  margin: 5rem auto;
+  padding: 2rem 2.5rem;
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.verify-email-container h2 {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.verify-email-container p {
+  font-size: var(--font-size-base);
+  color: var(--secondary-text);
+  margin-top: 0;
+}
+
+@media (max-width: 480px) {
+  .verify-email-container {
+    margin: 3rem 1rem;
+    padding: 1.5rem;
   }
-  
-  .verify-email-container h2 {
-    font-size: 1rem;
-    font-weight: bold;
-    color: #4a90e2; /* nice blue */
-    margin-bottom: 1rem;
-  }
-  
-  .verify-email-container p {
-    font-size: 1rem;
-    color: #666;
-    margin-top: 0;
-  }
-  
+}

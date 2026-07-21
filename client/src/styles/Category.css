@@ -1,52 +1,92 @@
 .add-category-page {
-  padding: 40px 20px;
-  max-width: 400px;
+  padding: 36px 32px;
+  max-width: 420px;
   margin: 0 auto;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.add-category-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  font-size: 1.2rem;
 }
 
 .add-category-page h2 {
-  font-size: 1.8em;
-  margin-bottom: 20px;
+  font-size: var(--font-size-xl);
+  margin-bottom: 6px;
   color: var(--primary-color);
   text-align: center;
+}
+
+.add-category-subtitle {
+  margin: 0 0 22px;
+  color: var(--secondary-text);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .add-category-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
+  text-align: left;
+}
+
+.add-category-form label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--secondary-text);
 }
 
 .add-category-form input[type="text"] {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 11px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   font-size: 1em;
+  margin-bottom: 10px;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.add-category-form input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-light);
 }
 
 .add-category-form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background-color: var(--accent-color);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   padding: 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed), transform var(--transition-speed);
 }
 
 .add-category-form button:hover {
-  background-color: #c10510;
+  background-color: var(--accent-color-dark);
+  transform: translateY(-1px);
 }
 
-.category-message {
-  text-align: center;
-  margin-bottom: 15px;
-  color: #2c3e50;
-  font-weight: bold;
+.add-category-form button:active {
+  transform: translateY(0);
 }
 
 /* ===================== */
@@ -64,7 +104,6 @@
 @media (max-width: 768px) {
   .add-category-page {
     padding: 25px 12px;
-    margin-top: 50px;
   }
 
   .add-category-page h2 {
@@ -95,7 +134,7 @@
   }
 
   .add-category-form {
-    gap: 12px;
+    gap: 4px;
   }
 
   .add-category-form input[type="text"] {

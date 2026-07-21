@@ -3,13 +3,15 @@ import { createContext, useState, useEffect } from "react";
 export const CartContext = createContext();
 
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+  try {
+    const data = localStorage.getItem("cart");
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+});
 
-  // ✅ Load cart from localStorage on mount
-  useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
-    setCart(storedCart);
-  }, []);
 
   // ✅ Save cart to localStorage when it changes
   useEffect(() => {
@@ -18,21 +20,29 @@ export function CartProvider({ children }) {
 
   // ✅ Add to cart or increment quantity if product already exists
   const addToCart = (product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (item) => item.productId === product.productId
+  setCart((prevCart) => {
+    const existingItem = prevCart.find(
+      (item) => item.productId === product.productId
+    );
+
+    if (existingItem) {
+      return prevCart.map((item) =>
+        item.productId === product.productId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
       );
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.productId === product.productId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        return [...prevCart, { ...product, quantity: 1 }];
-      }
-    });
-  };
+    } else {
+      return [
+        ...prevCart,
+        {
+          ...product,
+          quantity: 1,
+          color: "", // ✅ IMPORTANT
+        },
+      ];
+    }
+  });
+};
 
   // ✅ Update quantity of an item in the cart
   const updateQuantity = (productId, quantity) => {
@@ -55,9 +65,23 @@ export function CartProvider({ children }) {
     setCart([]);
   };
 
+  const updateCartItem = (productId, updates) => {
+  setCart((prev) =>
+    prev.map((item) =>
+      item.productId === productId
+        ? {
+            ...item,
+            ...updates,
+            color: updates.color ?? item.color,
+          }
+        : item
+    )
+  );
+};
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart }}
+      value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart, updateCartItem }}
     >
       {children}
     </CartContext.Provider>

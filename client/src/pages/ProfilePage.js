@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { Link } from "react-router-dom";
 import "../styles/ProfilePage.css";
-import axios from "axios";
+import api from "../api/axios.js";
 import logoImg from "../images/elroy_logo_cropped.png";
 import { CartContext } from "../context/CartContext";
 
@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
   const handleUpdate = async () => {
     try {
-      await axios.put("https://elroy-concepts.onrender.com/profile", formData, {
+      await api.put("/profile", formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

@@ -12,16 +12,21 @@ async function sendEnquiryEmail({ user, cart, pdfBuffer }) {
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: "richardigwe2005@gmail.com",
+    to: process.env.ENQUIRY_NOTIFICATION_EMAIL || process.env.EMAIL_USER,
     subject: "New Product Enquiry",
     text:
-      `New product enquiry by ${user?.name || "N/A"} ` +
-      `(${user?.email || "N/A"}) (${user?.phone || "N/A"})\n\n` +
-      `Cart Details:\n` +
-      cart
-        .map((item) => `${item.name} (Qty: ${item.quantity})`)
-        .join("\n") +
-      `\n\nFull details in attached PDF.`,
+    `New product enquiry by ${user?.name || "N/A"} ` +
+    `(${user?.email || "N/A"}) (${user?.phone || "N/A"})\n\n` +
+    `Cart Details:\n` +
+    cart
+      .map(
+        (item) =>
+          `${item.name} | Qty: ${item.quantity} | Color: ${
+            item.color || "Not Selected"
+          }`
+      )
+      .join("\n") +
+    `\n\nFull details in attached PDF.`,
     attachments: [
       {
         filename: "Product-Enquiry.pdf",

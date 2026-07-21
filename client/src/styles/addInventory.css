@@ -1,61 +1,116 @@
 .add-inventory-page {
-  padding: 40px 20px;
-  max-width: 600px;
+  padding: 36px 32px;
+  max-width: 640px;
   margin: 0 auto;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.add-inventory-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  font-size: 1.2rem;
 }
 
 .add-inventory-page h2 {
-  font-size: 2em;
-  margin-bottom: 20px;
+  font-size: var(--font-size-xl);
+  margin-bottom: 6px;
   color: var(--primary-color);
   text-align: center;
+}
+
+.add-inventory-subtitle {
+  margin: 0 0 22px;
+  color: var(--secondary-text);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .inventory-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  text-align: left;
+}
+
+.inventory-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.inventory-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .inventory-form label {
-  font-weight: bold;
-  color: var(--primary-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--secondary-text);
 }
 
 .inventory-form select,
-.inventory-form input[type="number"] {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+.inventory-form input[type="number"],
+.inventory-form input[type="date"],
+.inventory-form textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   font-size: 1em;
+  font-family: inherit;
+  background: white;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.inventory-form textarea {
+  resize: vertical;
+}
+
+.inventory-form select:focus,
+.inventory-form input:focus,
+.inventory-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-light);
 }
 
 .inventory-form .btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background-color: var(--accent-color);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   padding: 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed), transform var(--transition-speed);
 }
 
 .inventory-form .btn-primary:hover {
-  background-color: #c10510;
+  background-color: var(--accent-color-dark);
+  transform: translateY(-1px);
 }
 
-.message {
-  text-align: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  border-radius: 5px;
-  background-color: #ecf0f1;
-  color: #2c3e50;
-  font-weight: bold;
+.inventory-form .btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ===================== */
@@ -64,11 +119,15 @@
 @media (max-width: 768px) {
   .add-inventory-page {
     padding: 30px 15px;
-    margin-top: 50px;
   }
 
   .add-inventory-page h2 {
     font-size: 1.7em;
+  }
+
+  .inventory-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .inventory-form select,
@@ -89,7 +148,6 @@
 @media (max-width: 480px) {
   .add-inventory-page {
     padding: 20px 10px;
-    margin-top: 50px;
   }
 
   .add-inventory-page h2 {

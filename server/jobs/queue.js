@@ -1,12 +1,14 @@
-require('dotenv').config();
+const path = require("path");
+require("dotenv").config({
+  path: path.resolve(__dirname, "../.env"),
+});
 const {Queue} = require('bullmq');
 const Redis = require('ioredis');
 
 const Redisconnection = new Redis(process.env.REDIS_URL, {
-    tls: {},
-  maxRetriesPerRequest: null,   // ✅ REQUIRED
-  enableReadyCheck: false       // ✅ REQUIRED (Upstash)
+  maxRetriesPerRequest: null,
 });
+
 
 const enquiryQueue = new Queue('enquiry-queue', { connection: Redisconnection });
 

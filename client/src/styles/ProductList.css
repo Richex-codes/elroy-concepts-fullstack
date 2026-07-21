@@ -1,5 +1,5 @@
 .product-list-page {
-  padding: 40px 20px;
+  padding: 28px 24px;
 }
 
 /* View Toggle Buttons */
@@ -34,6 +34,56 @@
   gap: 10px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+}
+
+.search-btn {
+  padding: 9px 14px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--transition-speed);
+  white-space: nowrap;
+}
+
+.search-btn:hover {
+  background: var(--primary-color-dark);
+}
+
+.inventory-filters select {
+  border-radius: 5px;
+  border: 1px solid var(--primary-color);
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  flex: 1;
+  min-width: 150px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+}
+
+.inventory-filters select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+}
+
+/* Optional hover effect */
+.inventory-filters select:hover {
+  border-color: var(--accent-color);
+}
+
+.inventory-filters select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666'%3E%3Cpath d='M6 9L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 35px;
 }
 
 .inventory-filters input {
@@ -96,17 +146,17 @@
 .delete-btn {
   padding: 6px 12px;
   border: none;
-  border-radius: 5px;
-  font-weight: bold;
-  background-color: crimson;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  background-color: var(--danger-color);
   color: white;
   cursor: pointer;
   font-size: 0.9em;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed);
 }
 
 .delete-btn:hover {
-  background-color: #9b0d19;
+  background-color: var(--danger-color-dark);
 }
 
 /* ======================= */
@@ -144,10 +194,29 @@
 /* ✅ Responsiveness */
 /* ======================= */
 
-/* ✅ Tablet (768px and below) */
-/* @media (max-width: 768px) {
+/* ✅ Medium screens / tablets (1024px and below) */
+@media (max-width: 1024px) {
   .inventory-filters {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .inventory-filters select,
+  .inventory-filters input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search-btn {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ✅ Tablet (768px and below) */
+@media (max-width: 768px) {
+  .product-list-page {
+    padding: 20px 16px;
   }
 
   .card-grid {
@@ -157,15 +226,14 @@
   .product-table {
     display: block;
     overflow-x: auto;
-    max-width: 500px;
+    max-width: 100%;
   }
-} */
+}
 
 /* ✅ Mobile (480px and below) */
 @media (max-width: 480px) {
   .product-list-page {
     padding: 20px 10px;
-    margin-top: 50px;
   }
 
   

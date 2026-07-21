@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../api/axios.js";
 import { useEffect, useState, useMemo, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logoImg from "../images/elroy_logo_cropped.png";
@@ -38,8 +38,8 @@ export default function ProductCategoryPage() {
     setLoading(true);
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(
-          `https://elroy-concepts.onrender.com/products/category/${categoryId}`,
+        const response = await api.get(
+          `/products/category/${categoryId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

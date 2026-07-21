@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import logoImg from "../images/elroy_logo_cropped.png";
 import { CartContext } from "../context/CartContext.jsx";
-import axios from "axios";
+import api from "../api/axios.js";
 
 export default function DashboardPage() {
   const { cart } = useContext(CartContext);
@@ -21,7 +21,16 @@ export default function DashboardPage() {
 
   // const [selectedCategory, setSelectedCategory] = useState("");
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post(
+        "/logout",
+        { reason: "manual" },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+    } catch (err) {
+      console.error("Failed to record logout:", err);
+    }
     localStorage.removeItem("token");
     navigate("/login");
   };
@@ -43,11 +52,15 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          "https://elroy-concepts.onrender.com/admin/categories"
+        const response = await api.get(
+          "/admin/categories",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
-        const data = await response.json();
-        setCategories(data);
+        setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -60,8 +73,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(
-          "https://elroy-concepts.onrender.com/products/recent",
+        const response = await api.get(
+          "/products/recent-products",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -84,8 +97,8 @@ export default function DashboardPage() {
             <img src={logoImg} alt="logo" className="logo-icon" />
           </div>
           <ul className="dashboard-nav-links">
-            <li w-tid="31">
-              <Link to="/">Home</Link>
+            <li>
+              <Link to="/home">Home</Link>
             </li>
             <li>
               <Link to="/products">Products</Link>
@@ -115,7 +128,7 @@ export default function DashboardPage() {
               {isAdmin && (
                 <button
                   onClick={() => {
-                    navigate("/admin-dashboard");
+                    navigate("/admin");
                   }}
                   className="admin-link"
                 >
@@ -139,7 +152,7 @@ export default function DashboardPage() {
 
           <ul className="sidebar-links">
             <li>
-              <Link to="/" onClick={toggleSidebar}>
+              <Link to="/home" onClick={toggleSidebar}>
                 Home
               </Link>
             </li>
@@ -171,7 +184,7 @@ export default function DashboardPage() {
             {isAdmin && (
               <li>
                 <button
-                  onClick={() => navigate("/admin-dashboard")}
+                  onClick={() => navigate("/admin")}
                   className="admin-link"
                 >
                   Admin Dashboard
@@ -252,54 +265,26 @@ export default function DashboardPage() {
         </section>
       </main>
       <footer className="dashboard-footer">
-        <div className="footer-content" w-tid="259">
-          <div className="footer-column" w-tid="261">
+        <div className="footer-content">
+          <div className="footer-column footer-column-contact">
             <h3>Contact Us</h3>
             <p>
-              Head Office: Shop 262/263 Block B4 HFP Shopping Complex, Abraham
-              Adesanya Roundabout Lekki Ajah. (07066313719)
+              Head Office: 8, Sowemimo Street, Agape Estate, Opp. Trade Fair,
+              Badagry Expressway, Lagos. (07062606662)
             </p>
-            <p>Branch: No 148 dopemu road Agege Lagos. (08035570086)</p>
             <p>
-              Branch: No 8 sowemimo Street Agape community badagry expressway
-              Lagos. Opposite tradefair complex. (07062606662)
+              Lekki Branch: Road 4, Block B4 Shop 262/263, HFP Shopping
+              Complex, Abraham Adesanya Roundabout, Lekki-Epe Expressway,
+              Lagos. (07066313719, 08091487116)
             </p>
-          </div>
-          <div class="footer-column">
-            <h3>Quick Links</h3>
-            <ul>
-              <li>
-                <a href="#home">Home</a>
-              </li>
-              <li>
-                <a href="#about-company">About Us</a>
-              </li>
-              <li>
-                <a href="#contact">FAQ</a>
-              </li>
-            </ul>
-          </div>
-          <div class="footer-column">
-            <h3 w-tid="301">Follow Us</h3>
-            <div class="social-links" w-tid="303">
-              <a href="#" w-tid="305">
-                <i class="fab fa-facebook-f" w-tid="307"></i>
-              </a>
-              <a href="#" w-tid="309">
-                <i class="fab fa-instagram" w-tid="311"></i>
-              </a>
-              <a href="#" w-tid="313">
-                <i class="fab fa-pinterest-p" w-tid="315"></i>
-              </a>
-            </div>
+            <p>
+              Dopemu Branch: 148, Dopemu Road, Dopemu, Agege, Lagos.
+              (08035570086)
+            </p>
           </div>
         </div>
-        <div class="footer-bottom">
-          <p>© 2025 Elroy Concepts. All Rights Reserved.</p>
-          <p>
-            <a href="#terms">Terms &amp; Conditions</a> |{" "}
-            <a href="#privacy">Privacy Policy</a>
-          </p>
+        <div className="footer-bottom">
+          <p>© {new Date().getFullYear()} Elroy Concepts. All Rights Reserved.</p>
         </div>
       </footer>
     </div>

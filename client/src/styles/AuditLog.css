@@ -1,0 +1,255 @@
+.audit-log-page {
+  padding: 25px 40px;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.audit-log-page h2 {
+  margin-bottom: 6px;
+  font-size: 1.6rem;
+  color: var(--primary-color);
+}
+
+.audit-log-subtitle {
+  margin-bottom: 20px;
+  color: var(--secondary-text);
+  font-size: 0.9rem;
+}
+
+.audit-log-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.audit-log-filters select,
+.audit-log-filters input {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.audit-log-filters button {
+  padding: 9px 16px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.audit-log-filters button:hover {
+  background: var(--primary-color-dark);
+}
+
+.audit-log-table-container {
+  width: 100%;
+  max-height: 65vh;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.audit-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.audit-log-table thead {
+  background: var(--background-light);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.audit-log-table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.audit-log-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.audit-log-table tbody tr:hover {
+  background: var(--accent-color-light);
+}
+
+.audit-when-cell {
+  white-space: nowrap;
+  color: var(--secondary-text);
+}
+
+.audit-action-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.audit-action-neutral {
+  background-color: var(--background-light);
+  color: var(--primary-color);
+}
+
+.audit-action-positive {
+  background-color: #f0fdf4;
+  color: var(--success-color);
+}
+
+.audit-action-negative {
+  background-color: var(--accent-color-light);
+  color: var(--danger-color);
+}
+
+/* =========================
+   BEFORE / AFTER DETAIL CELLS
+========================= */
+
+.audit-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 160px;
+}
+
+.audit-detail-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.audit-detail-label {
+  color: var(--secondary-text);
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.audit-item-list {
+  margin: 2px 0 0;
+  padding-left: 16px;
+  width: 100%;
+}
+
+.audit-item-list li {
+  font-size: 0.95em;
+}
+
+.audit-empty {
+  color: var(--secondary-text);
+}
+
+@media (max-width: 768px) {
+  .audit-log-page {
+    padding: 20px 15px;
+  }
+
+  .audit-log-filters input,
+  .audit-log-filters select,
+  .audit-log-filters button {
+    width: 100%;
+  }
+
+  /* Table becomes a stack of cards on phones — each entry (When / Admin /
+     Action / Before / After) reads top-to-bottom instead of requiring
+     sideways scrolling through 5 columns. */
+  .audit-log-table-container {
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .audit-log-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .audit-log-table thead {
+    display: none;
+  }
+
+  .audit-log-table tbody {
+    display: block;
+  }
+
+  .audit-log-table tr {
+    display: block;
+    margin-bottom: 14px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 4px 14px;
+  }
+
+  .audit-log-table tr,
+  .audit-log-table tr.row-alt,
+  .audit-log-table tr:hover {
+    background: white;
+  }
+
+  .audit-log-table td {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+  }
+
+  .audit-log-table td:last-child {
+    border-bottom: none;
+  }
+
+  .audit-log-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 700;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+    margin-bottom: 3px;
+  }
+
+  .audit-detail {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .audit-log-page {
+    padding: 16px 10px;
+  }
+
+  .audit-log-page h2 {
+    font-size: 1.35rem;
+  }
+
+  .audit-log-table td {
+    font-size: 0.85rem;
+  }
+}

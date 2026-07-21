@@ -1,16 +1,36 @@
 .add-product-page {
-  padding: 40px 20px;
-  max-width: 600px;
+  padding: 36px 32px;
+  max-width: 640px;
   margin: 0 auto;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.add-product-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  font-size: 1.2rem;
 }
 
 .add-product-page h2 {
-  font-size: 2em;
-  margin-bottom: 20px;
+  font-size: var(--font-size-xl);
+  margin-bottom: 6px;
   color: var(--primary-color);
+  text-align: center;
+}
+
+.add-product-subtitle {
+  margin: 0 0 22px;
+  color: var(--secondary-text);
+  font-size: 0.85rem;
   text-align: center;
 }
 
@@ -20,83 +40,209 @@
   gap: 16px;
 }
 
+.product-form-section-label {
+  margin: 0 0 -8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-color);
+}
+
+.product-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.product-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .product-form label {
-  font-weight: bold;
-  color: var(--primary-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--secondary-text);
 }
 
 .product-form input[type="text"],
-.product-form select,
 .product-form input[type="file"],
+.product-form input[type="date"],
+.product-form select,
 .product-form textarea {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   font-size: 1em;
-  resize: vertical;
+  font-family: inherit;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.product-form input[type="text"]:focus,
+.product-form input[type="date"]:focus,
+.product-form select:focus,
+.product-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-light);
 }
 
 .product-form input[type="file"] {
-  background-color: #f9f9f9;
+  background-color: var(--background-light);
 }
 
 .product-form textarea {
   min-height: 100px;
+  resize: vertical;
 }
 
 .product-form .btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background-color: var(--accent-color);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   padding: 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed), transform var(--transition-speed);
 }
 
 .product-form .btn-primary:hover {
-  background-color: #c10510;
+  background-color: var(--accent-color-dark);
+  transform: translateY(-1px);
 }
 
-.message {
-  text-align: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  border-radius: 5px;
-  background-color: #ecf0f1;
-  color: #2c3e50;
-  font-weight: bold;
+.product-form .btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Inventory per branch styling */
 .product-form h4 {
-  margin-top: 20px;
-  font-size: 1.2em;
+  margin-top: 8px;
+  margin-bottom: 2px;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.product-form-section-hint {
+  margin: 0 0 6px;
+  color: var(--secondary-text);
+  font-size: 0.8rem;
+}
+
+/* Grid layout */
+.inventory-grid {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.grid-header {
+  display: grid;
+  box-sizing: border-box;
+  gap: 10px;
+  padding: 10px;
+  font-weight: bold;
   color: var(--primary-color);
   border-bottom: 1px solid #ddd;
-  padding-bottom: 5px;
 }
 
-.branch-inventory {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/*
+  Background lives on each individual cell, not on .grid-header itself.
+  A background-color painted directly on a CSS Grid *container* can fail
+  to repaint across its full scrollable width in some browsers once it's
+  nested inside an overflow-x:auto ancestor and the grid is wider than
+  the ancestor's visible viewport (the grid tracks + inputs still lay out
+  and scroll correctly — only the container's own background paint falls
+  behind). Painting the background per-cell sidesteps that entirely,
+  since each cell's own box is always painted correctly regardless of
+  the container's overflow/scroll state.
+*/
+.grid-header-cell {
+  background-color: #f7f7f7;
+  padding: 4px 5px;
+  margin: -4px -5px;
+}
+
+.grid-row {
+  display: grid;
+  box-sizing: border-box;
   gap: 10px;
-  padding: 8px 0;
+  padding: 10px;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  box-sizing: border-box;
 }
 
-.branch-inventory label {
-  flex: 1;
+.branch-name {
+  font-weight: 600;
   color: var(--primary-color);
 }
 
-.branch-inventory input[type="number"] {
-  flex: 1;
-  padding: 8px;
+.grid-row input {
+  width: 100%;
+  padding: 6px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-size: 1em;
+  font-size: 0.9em;
+}
+
+
+
+/* Mobile layout */
+
+.mobile-inventory {
+  display: none;
+}
+
+
+.branch-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+  background-color: #fafafa;
+}
+
+.branch-card h4 {
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.mobile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  gap: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.mobile-row span {
+  flex: 1;
+  font-weight: 500;
+}
+
+.mobile-row input {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 /* ===================== */
@@ -131,17 +277,21 @@
     padding: 8px;
   }
 
-  .branch-inventory {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .branch-inventory input[type="number"] {
-    width: 100%;
+  .product-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .product-form .btn-primary {
     padding: 10px;
+  }
+
+   .inventory-grid {
+    display: none;
+  }
+
+  .mobile-inventory {
+    display: block;
   }
 }
 
@@ -166,15 +316,6 @@
   .product-form select {
     font-size: 0.9em;
     padding: 8px;
-  }
-
-  .branch-inventory label {
-    margin-bottom: 5px;
-  }
-
-  .branch-inventory input[type="number"] {
-    padding: 8px;
-    font-size: 0.9em;
   }
 
   .product-form .btn-primary {

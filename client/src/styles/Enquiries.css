@@ -1,8 +1,14 @@
+.enquiries-page {
+  padding: 25px 40px;
+}
+
 .enquiries-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  min-width: 800px;
 }
+
 
 .enquiries-table th,
 .enquiries-table td {
@@ -17,6 +23,18 @@
   color: var(--primary-color);
 }
 
+.enquiry-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.enquiries-table td ul {
+  max-height: 120px;
+  overflow-y: auto;
+  padding-left: 20px;
+}
+
+
 .enquiries-table ul {
   list-style: disc inside;
   margin: 0;
@@ -29,18 +47,18 @@
 }
 
 .delete-button {
-  background-color: #e74c3c;
+  background-color: var(--danger-color);
   color: white;
   padding: 6px 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.9em;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed);
 }
 
 .delete-button:hover {
-  background-color: #c0392b;
+  background-color: var(--danger-color-dark);
 }
 
 
@@ -53,8 +71,8 @@
     padding: 8px;
   }
 
-  .enquiries-page{
-    margin-top: 50px;
+  .enquiries-page {
+    padding: 20px 15px;
   }
 }
 
@@ -63,12 +81,14 @@
 /* ===================== */
 @media (max-width: 768px) {
 
-  .enquiries-page{
-    margin-top: 50px;
+  .enquiries-page {
+    padding: 16px 12px;
   }
+
   .enquiries-table {
     display: block;
     width: 100%;
+    min-width: 0;
     overflow-x: auto;
     border-collapse: separate;
     border-spacing: 0;
@@ -131,4 +151,5 @@
     font-size: 0.9em;
   }
 }
+
 

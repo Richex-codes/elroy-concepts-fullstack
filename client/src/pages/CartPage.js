@@ -3,14 +3,20 @@ import { jwtDecode } from "jwt-decode";
 import { CartContext } from "../context/CartContext.jsx";
 import { Link, useNavigate } from "react-router-dom";
 import logoImg from "../images/elroy_logo_cropped.png";
-import axios from "axios";
 import "../styles/CartPage.css";
+import api from "../api/axios.js"
+import { newIdempotencyKey } from "../utils/idempotencyKey.js";
+
+
+
 export default function CartPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-  const { cart, updateQuantity, removeFromCart, clearCart } =
+  const { cart, updateQuantity, removeFromCart, clearCart, updateCartItem } =
     useContext(CartContext);
   const [user, setUser] = useState({});
+  const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
+
 
   const navigate = useNavigate();
 
@@ -27,30 +33,42 @@ export default function CartPage() {
   }, []);
 
   const handleEnquiry = async () => {
-    try {
-      await axios.post(
-        "https://elroy-concepts.onrender.com/send-enquiry",
-        {
-          cart,
-          user: {
-            name: user.name,
-            email: user.email,
-            phone: user.phoneNumber,
-          },
+  if (!isCartValid) {
+    alert("Please select color for all items");
+    return;
+  }
+
+  try {
+    await api.post(
+      "/send-enquiry",
+      {
+        cart,
+        user: {
+          name: user.name,
+          email: user.email,
+          phone: user.phoneNumber,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      alert("Enquiry sent successfully!");
-      clearCart(); // Clear cart globally
-    } catch (err) {
-      console.error(err);
-      alert("Failed to send enquiry.");
-    }
-  };
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Idempotency-Key": idempotencyKey,
+        },
+      }
+    );
+
+    alert("Enquiry sent successfully!");
+    setIdempotencyKey(newIdempotencyKey()); // this enquiry is done; the next submit is a new one
+    clearCart();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to send enquiry.");
+  }
+};
+
+  const isCartValid = cart.every(
+  (item) => item.color && item.color.trim() !== ""
+);
 
   return (
     <div className="cart-page">
@@ -145,9 +163,27 @@ export default function CartPage() {
                     min="1"
                     value={item.quantity}
                     onChange={(e) =>
-                      updateQuantity(item.productId, parseInt(e.target.value))
+                      updateQuantity(item.productId, parseInt(e.target.value) || 1)
                     }
                   />
+
+                  <select
+                    value={item.color}
+                    onChange={(e) =>
+                      updateCartItem(item.productId, {
+                        color: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select Color</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Bronze">Bronze</option>
+                    <option value="Black">Black</option>
+                    <option value="Dark Bronze">Dark Bronze</option>
+                    <option value="Wood">Wood</option>
+                    <option value="No Color">No Color</option>
+                  </select>
 
                   <button onClick={() => removeFromCart(item.productId)}>
                     Remove
@@ -155,9 +191,19 @@ export default function CartPage() {
                 </li>
               ))}
             </ul>
-            <button onClick={handleEnquiry} className="enquiry-btn">
+            <button
+              onClick={handleEnquiry}
+              className="enquiry-btn"
+              disabled={!isCartValid}
+            >
               Make Enquiry
             </button>
+
+            {!isCartValid && (
+              <p style={{color:"red"}} className="warning-text">
+                Please select a color for all items before continuing.
+              </p>
+            )}
           </>
         )}
       </main>

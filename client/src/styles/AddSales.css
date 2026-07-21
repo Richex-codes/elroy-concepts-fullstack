@@ -1,0 +1,314 @@
+.AddSales-page {
+  padding: 36px 32px;
+  max-width: 820px;
+  margin: 0 auto;
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.add-sales-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  font-size: 1.2rem;
+}
+
+.AddSales-page h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: 6px;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.add-sales-subtitle {
+  margin: 0 0 22px;
+  color: var(--secondary-text);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.sales-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sales-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sales-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sales-form label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--secondary-text);
+}
+
+.sales-form input,
+.sales-form select {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 1em;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.sales-form input:focus,
+.sales-form select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-color-light);
+}
+
+.stock-display {
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-left: 4px solid var(--accent-color);
+  border-radius: 6px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-weight: bold;
+  margin-top: -8px;
+}
+
+.invoice-actions-wrapper {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--background-light);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.invoice-actions-label {
+  width: 100%;
+  margin: 0;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: left;
+}
+
+.sales-form .btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 600;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-speed), transform var(--transition-speed);
+}
+
+.sales-form .btn-primary:hover {
+  background-color: var(--accent-color-dark);
+  transform: translateY(-1px);
+}
+
+.sales-form .btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sale-items-builder {
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--background-light);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sale-items-builder h4 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.sale-item-draft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.sale-item-draft select,
+.sale-item-draft input {
+  flex: 1;
+  min-width: 110px;
+  padding: 9px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.btn-add-item {
+  padding: 9px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-speed);
+}
+
+.btn-add-item:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.sale-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sale-items-table th,
+.sale-items-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.88em;
+}
+
+.sale-items-table thead {
+  background-color: var(--background-light);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.sale-items-table tfoot td {
+  font-weight: 700;
+  color: var(--primary-color);
+  border-bottom: none;
+  border-top: 2px solid var(--border-color);
+}
+
+.btn-remove-item {
+  padding: 4px 10px;
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.btn-remove-item:hover {
+  background-color: var(--danger-color-dark);
+}
+
+
+
+
+
+/* ===================== */
+/* ✅ 768px and below */
+/* ===================== */
+@media (max-width: 768px) {
+  .AddSales-page {
+    padding: 25px 12px;
+  }
+
+  .AddSales-page h2 {
+    font-size: 1.7em;
+  }
+
+  .sales-form input,
+  .sales-form select {
+    font-size: 0.95em;
+    padding: 8px;
+  }
+
+  .sales-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sales-form .btn-primary {
+    padding: 10px;
+  }
+}
+
+/* ===================== */
+/* ✅ 480px and below */
+/* ===================== */
+@media (max-width: 480px) {
+  .AddSales-page {
+    padding: 20px 10px;
+  }
+
+  .AddSales-page h2 {
+    font-size: 1.5em;
+  }
+
+  .sales-form {
+    gap: 12px;
+  }
+
+  .sales-form input,
+  .sales-form select {
+    font-size: 0.9em;
+    padding: 8px;
+  }
+
+  .sales-form .btn-primary {
+    padding: 8px;
+    font-size: 0.95em;
+  }
+
+  .stock-display {
+    font-size: 0.9em;
+  }
+
+  .sale-item-draft {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sale-item-draft select,
+  .sale-item-draft input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .btn-add-item {
+    width: 100%;
+  }
+
+  .sale-items-table {
+    display: block;
+    overflow-x: auto;
+  }
+}

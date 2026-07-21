@@ -13,6 +13,13 @@ module.exports = {
       env: {
         NODE_ENV: "production",
       }
+    },
+    {
+      name: "inventory-worker",
+      script: "jobs/inventoryWorker.js",
+      env: {
+        NODE_ENV: "production",
+      }
     }
   ]
 };

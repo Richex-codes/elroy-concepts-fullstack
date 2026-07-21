@@ -1,35 +1,36 @@
-const Product = require("../models/productModel");
-const  { generateInventoryPDF } = require("./pdfGenerator"); 
-const sendEmailWithPDF = require("./emailSender"); // or keep logic inline here
+const { getInventorySummary, computeProductTotals } = require("./inventorySummaryUtils");
+const { generateInventoryPDF } = require("./pdfGenerator");
+const sendEmailWithPDF = require("./emailSender");
+const { notifySuperAdmins } = require("./pushNotify");
 
-async function runInventorySummaryEmail() {
+// `notifyOnComplete` is only set true by the monthly cron job (index.js) --
+// an admin manually emailing a filtered report via the Inventory page
+// already knows they just did that, so that path stays email-only.
+async function runInventorySummaryEmail(filters = {}, to, { notifyOnComplete = false } = {}) {
   try {
-    const products = await Product.find().populate("inventory.branch", "name");
+    const summary = await getInventorySummary(filters);
+    const totalSummary = computeProductTotals(summary);
+    const pdfBuffer = await generateInventoryPDF(summary, totalSummary);
 
-    const inventorySummary = products.flatMap((product) =>
-      product.inventory.map((inv) => ({
-        name: product.name,
-        branch: inv.branch.name,
-        quantity: inv.quantity,
-      }))
-    );
-
-    const totals = {};
-    inventorySummary.forEach((item) => {
-      totals[item.name] = (totals[item.name] || 0) + item.quantity;
+    await sendEmailWithPDF(pdfBuffer, to || process.env.EMAIL_USER, {
+      subject: "Inventory Summary Report",
+      text: "Attached is the inventory summary report.",
+      filename: "Inventory-Summary.pdf",
     });
-    const totalSummary = Object.entries(totals).map(([name, total]) => ({
-      name,
-      total,
-    }));
 
-    const pdfBuffer = await generateInventoryPDF(inventorySummary, totalSummary);
-    await sendEmailWithPDF(pdfBuffer);
+    console.log("✅ Inventory summary email sent");
 
-    console.log("✅ Daily inventory summary email sent.");
+    if (notifyOnComplete) {
+      const totalUnits = totalSummary.reduce((sum, p) => sum + p.total, 0);
+      await notifySuperAdmins({
+        title: "Monthly inventory report sent",
+        body: `Emailed just now — ${totalSummary.length} products, ${totalUnits.toLocaleString("en-NG")} units in stock across all branches.`,
+        url: "/admin/inventory",
+      }).catch((err) => console.error("Push notify failed:", err.message));
+    }
   } catch (err) {
-    console.error("❌ Failed to send daily inventory email:", err.message);
+    console.error("❌ Inventory email failed:", err.message);
   }
 }
 
-module.exports = runInventorySummaryEmail;
+module.exports = { runInventorySummaryEmail };

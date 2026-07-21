@@ -1,0 +1,323 @@
+/* =========================
+   SALES PAGE WRAPPER
+========================= */
+.sales-page {
+  padding: 24px 28px;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.sales-page h1 {
+  margin-bottom: 4px;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.sales-page-subtitle {
+  margin: 0 0 18px;
+  color: var(--secondary-text);
+  font-size: 0.85rem;
+}
+
+/* =========================
+   FILTERS SECTION
+========================= */
+.sales-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 24px;
+}
+
+.sales-filters input,
+.sales-filters select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+
+  width: 180px;        /* fixed base */
+  max-width: 100%;     /* prevents overflow */
+  box-sizing: border-box;
+}
+
+.sales-filters input:focus,
+.sales-filters select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+/* Search button */
+.sales-filters button {
+  padding: 9px 14px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color var(--transition-speed);
+}
+
+.sales-filters button:hover {
+  background: var(--primary-color-dark);
+}
+
+/* =========================
+   TABLE WRAPPER (SCROLL FIX)
+========================= */
+.sales-table-container {
+  width: 100%;
+  max-height: 65vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* =========================
+   TABLE STYLE
+========================= */
+.sales-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px; /* ensures horizontal scroll if needed */
+}
+
+.sales-inventory-table thead {
+  background: var(--background-light);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.sales-inventory-table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.sales-inventory-table td {
+  padding: 11px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.sales-inventory-table tbody tr:hover {
+  background: var(--accent-color-light);
+}
+
+.invoice-toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: white;
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.invoice-toggle-btn:hover {
+  background-color: var(--background-light);
+}
+
+.invoice-actions-cell {
+  background-color: var(--background-light);
+  padding: 14px !important;
+}
+
+.sale-items-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.sale-items-detail-table th,
+.sale-items-detail-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85em;
+}
+
+.sale-items-detail-table thead {
+  background-color: var(--background-light);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.sale-delete-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--danger-color);
+  border-radius: var(--radius-sm);
+  background-color: white;
+  color: var(--danger-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.sale-delete-btn:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+/* Medium screens / tablets */
+@media (max-width: 1024px) {
+  .sales-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .sales-filters input,
+  .sales-filters select {
+    width: 100%;
+  }
+
+  .sales-filters button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .sales-page {
+    padding: 16px 12px;
+  }
+
+  .sales-filters input,
+  .sales-filters select,
+  .sales-filters button {
+    width: 100%;
+  }
+
+  /* Table becomes a stack of cards on phones — easier to scan with a
+     thumb than scrolling a 9-column table sideways. */
+  .sales-table-container {
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .sales-inventory-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .sales-inventory-table thead {
+    display: none;
+  }
+
+  .sales-inventory-table tbody {
+    display: block;
+  }
+
+  .sales-inventory-table tr {
+    display: block;
+    margin-bottom: 14px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 4px 14px;
+  }
+
+  .sales-inventory-table tr,
+  .sales-inventory-table tr.row-alt,
+  .sales-inventory-table tr:hover {
+    background: white;
+  }
+
+  .sales-inventory-table td {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+  }
+
+  .sales-inventory-table td:last-child {
+    border-bottom: none;
+  }
+
+  .sales-inventory-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 700;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+    margin-bottom: 2px;
+  }
+
+  .sales-inventory-table .amount-cell {
+    text-align: left;
+  }
+
+  /* The expanded item-detail row is its own <tr>, so it would otherwise
+     render as a second boxed card below the sale's card. Pull it up
+     flush against the row above instead, so it reads as one continuous
+     card that just grew taller. */
+  .sales-inventory-table tr.sale-detail-row {
+    margin-top: -14px;
+    box-shadow: none;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding-top: 0;
+  }
+
+  .invoice-actions-cell {
+    display: block;
+    padding: 10px 0 0 !important;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .invoice-actions-cell::before {
+    content: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .sales-page {
+    padding: 14px 10px;
+  }
+
+  .sales-page h1 {
+    font-size: 1.2rem;
+  }
+
+  .sales-filters {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .sales-inventory-table td {
+    font-size: 0.85rem;
+  }
+}

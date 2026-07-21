@@ -1,0 +1,273 @@
+/* =========================
+   DEBTORS PAGE
+========================= */
+
+.debtors-page {
+  padding: 24px 28px;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.debtors-page h1 {
+  margin-bottom: 15px;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.debtors-page-subtitle {
+  margin: -10px 0 18px;
+  color: var(--secondary-text);
+  font-size: 0.85rem;
+}
+
+/* =========================
+   FILTERS
+========================= */
+
+.debtor-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.debtor-filters input,
+.debtor-filters select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  background: white;
+}
+
+.debtor-filters input:focus,
+.debtor-filters select:focus {
+  border-color: var(--accent-color);
+}
+
+.debtor-filters button {
+  padding: 9px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.debtor-filters button:hover {
+  background: var(--primary-color-dark);
+}
+
+/* =========================
+   TABLE
+========================= */
+
+.debtor-table-container {
+  width: 100%;
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.debtors-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.debtors-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--background-light);
+}
+
+.debtors-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.debtors-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.debtors-table tbody tr:hover {
+  background: var(--accent-color-light);
+}
+
+/* =========================
+   CLEAR BUTTON
+========================= */
+
+.debtor-filters button,
+.clear-btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+/* Search Button */
+.debtor-filters button {
+  background: var(--primary-color);
+  color: white;
+}
+
+.debtor-filters button:hover {
+  background: var(--primary-color-dark);
+  transform: translateY(-1px);
+}
+
+/* Clear Debt Button */
+.clear-btn {
+  background: var(--danger-color);
+  color: white;
+}
+
+.clear-btn:hover {
+  background: var(--danger-color-dark);
+  transform: translateY(-1px);
+}
+
+.clear-btn:active,
+.debtor-filters button:active {
+  transform: translateY(0);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+/* Medium screens / tablets */
+@media (max-width: 1024px) {
+  .debtor-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .debtor-filters input,
+  .debtor-filters select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .debtor-filters button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .debtors-page {
+    padding: 20px 15px;
+  }
+
+  .debtor-filters input,
+  .debtor-filters select,
+  .debtor-filters button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Table becomes a stack of cards — one row of headers-and-values per
+     debtor, instead of a horizontally-scrolled table that's hard to
+     scan with a thumb on a phone. */
+  .debtor-table-container {
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .debtors-table {
+    display: block;
+  }
+
+  .debtors-table thead {
+    display: none;
+  }
+
+  .debtors-table tbody {
+    display: block;
+  }
+
+  .debtors-table tr {
+    display: block;
+    margin-bottom: 14px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 4px 14px;
+  }
+
+  .debtors-table tr,
+  .debtors-table tr.row-alt,
+  .debtors-table tr:hover {
+    background: white;
+  }
+
+  .debtors-table td {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    white-space: normal;
+    font-size: 0.9rem;
+  }
+
+  .debtors-table td:last-child {
+    border-bottom: none;
+  }
+
+  .debtors-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 700;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+    margin-bottom: 2px;
+  }
+
+  .debtors-table .amount-cell {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .debtors-page {
+    padding: 15px 10px;
+  }
+
+  .debtors-page h1 {
+    font-size: 1.4rem;
+  }
+
+  .debtors-table td {
+    font-size: 0.85rem;
+  }
+}

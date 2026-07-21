@@ -14,17 +14,30 @@ const enquirySchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: false, 
+      required: false,
       trim: true,
     },
-    cart: {
-      type: Array, // [{ productId, name, quantity }]
-      required: false, // Optional if they just send a message
-    },
+
+    cart: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        name: String,
+        quantity: {
+          type: Number,
+          required: true,
+        },
+        color: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
   },
-  { timestamps: true } // ✅ adds createdAt & updatedAt automatically
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Enquiry", enquirySchema);
-
-

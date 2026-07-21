@@ -1,4 +1,7 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({
+  path: path.resolve(__dirname, "../.env"),
+});
 const { Worker } = require("bullmq");
 const Redis = require("ioredis");
 
@@ -6,21 +9,18 @@ const { generateEnquiryPDF } = require("../utils/generateEnquiryPDF");
 const { sendWhatsappEnquiry } = require("../utils/sendWhatsappEnquiry");
 const { sendEnquiryEmail } = require("../utils/sendEnquiryEmail");
 
-const Redisconnection = new Redis(process.env.REDIS_URL, {
-  tls: {},
-  maxRetriesPerRequest: null,   // ✅ REQUIRED
-  enableReadyCheck: false       // ✅ REQUIRED (Upstash)
+
+const connection = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
 });
-
-console.log("REDIS_URL:", process.env.REDIS_URL);
-
 
 new Worker(
   "enquiry-queue",
   async (job) => {
     const { user, cart } = job.data;
 
-    const pdfBuffer = await generateEnquiryPDF(cart);
+    const pdfBuffer = await generateEnquiryPDF(user, cart);
 
     try {
       await sendWhatsappEnquiry({ user, cart });
@@ -35,7 +35,7 @@ new Worker(
     }
   },
   {
-    connection: Redisconnection,
+    connection,
     concurrency: 2
   }
 );

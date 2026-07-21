@@ -1,10 +1,13 @@
 import { useState } from "react";
 import "../styles/ResetPassPage.css";
-import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import api from "../api/axios.js";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import logoImg from "../images/elroy_logo_cropped.png";
 
 export default function ResetPassPage() {
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("error");
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -12,59 +15,72 @@ export default function ResetPassPage() {
   const { token } = useParams();
   const navigate = useNavigate();
 
-  // handle submit
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setLoading(true);
     try {
-      await axios.post(
-        `https://elroy-concepts.onrender.com/reset-password/${token}`,
-        form
-      );
-      // Optionally, you can add a success message or redirect here
+      await api.post(`/reset-password/${token}`, form);
+      setMessageType("success");
+      setMessage("Password reset successfully! Redirecting to login...");
       setTimeout(() => {
         navigate("/login");
-      }, 1500);
+      }, 3000);
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.msg // 👈 Fix here
-      ) {
-        setError(error.response.data.msg);
-      } else {
-        setError("Failed to reset password. Please try again.");
-      }
-    } finally {
-      setTimeout(() => {
-        setError("");
-      }, 2000);
+      setMessageType("error");
+      setMessage(
+        error.response?.data?.msg ||
+          "Failed to reset password. Please try again."
+      );
+      setLoading(false);
     }
   };
 
   return (
-    <div className="reset-password">
-      <h2>Reset Password</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="password"
-          placeholder="Enter New Password"
-          required
-          value={form.newPassword}
-          onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-        />
-        <input
-          type="password"
-          placeholder="Confirm New Password"
-          required
-          value={form.confirmPassword}
-          onChange={(e) =>
-            setForm({ ...form, confirmPassword: e.target.value })
-          }
-        />
-        <button type="submit">Reset Password</button>
-        {error && <p className="error">{error}</p>}
-      </form>
+    <div className="reset-password-page">
+      <header className="reset-password-header">
+        <img src={logoImg} alt="Logo" className="logo-icon" />
+      </header>
+      <main className="reset-password-main">
+        <div className="reset-password">
+          <div className="auth-icon">
+            <i className="fas fa-unlock-keyhole"></i>
+          </div>
+          <h2>Reset Password</h2>
+          <p>Enter a new password for your account.</p>
+          {message && (
+            <div className={`alert alert-${messageType}`}>{message}</div>
+          )}
+          <form onSubmit={handleSubmit}>
+            <input
+              type="password"
+              placeholder="Enter New Password"
+              required
+              minLength={8}
+              value={form.newPassword}
+              onChange={(e) =>
+                setForm({ ...form, newPassword: e.target.value })
+              }
+            />
+            <input
+              type="password"
+              placeholder="Confirm New Password"
+              required
+              minLength={8}
+              value={form.confirmPassword}
+              onChange={(e) =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
+            />
+            <button type="submit" disabled={loading}>
+              <i className="fas fa-unlock-keyhole"></i> {loading ? "Resetting..." : "Reset Password"}
+            </button>
+          </form>
+          <p className="back-to-login">
+            <Link to="/login">Back to login</Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

@@ -1,0 +1,240 @@
+/*
+  Single source of truth for design tokens.
+  Previously :root was redeclared (with drifting values/names) in ~6 separate
+  CSS files; since :root is global, whichever file loaded last silently won
+  for the whole app. Import this once (client/src/index.css) and nowhere else
+  redeclares :root.
+*/
+
+:root {
+  /* Brand */
+  --primary-color: #3f3f46;
+  --primary-color-dark: #232326;
+  --accent-color: #e0142a;
+  --accent-color-dark: #ab0f20;
+  --accent-color-light: #fdeced;
+
+  /* Neutrals */
+  --white: #ffffff;
+  --background-color: #ffffff;
+  --background-light: #f3f4f6;
+  --card-bg-color: #ffffff;
+  --border-color: #e4e4e7;
+  --secondary-text: #71717a;
+  --text-muted: #71717a;
+
+  /* Semantic */
+  --danger-color: #dc2626;
+  --danger-color-dark: #b91c1c;
+  --success-color: #16a34a;
+  --info-color: #3f3f46;
+
+  /* Legacy aliases so existing var() usages across the app keep working */
+  --secondary-text-color: var(--secondary-text);
+  --input-border: var(--border-color);
+  --input-focus-border: var(--accent-color);
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(15, 15, 20, 0.06);
+  --shadow-md: 0 2px 10px rgba(15, 15, 20, 0.07);
+  --shadow-lg: 0 10px 28px rgba(15, 15, 20, 0.12);
+  --card-shadow: var(--shadow-md);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --border-radius: var(--radius-md);
+
+  /* Motion */
+  --transition-speed: 0.2s ease;
+
+  /* Type scale */
+  --font-size-xs: 0.8rem;
+  --font-size-sm: 0.9rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.375rem;
+  --font-size-xl: 1.75rem;
+  --font-size-2xl: 2.15rem;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Glass nav */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: blur(18px) saturate(180%);
+  --glass-shadow: 0 4px 30px rgba(15, 15, 20, 0.08);
+}
+
+/*
+  Shared nav action buttons (Logout / Admin Dashboard). Previously each
+  page redeclared these independently — three pages (Profile, Product,
+  ProductCategory) never defined them at all, leaving the buttons fully
+  unstyled there. One definition here keeps every page consistent.
+*/
+.logout-link,
+.admin-link {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed),
+    background-color var(--transition-speed);
+}
+
+.logout-link {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.logout-link:hover {
+  background-color: var(--accent-color-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.admin-link {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.admin-link:hover {
+  background-color: var(--primary-color-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .logout-link,
+  .admin-link {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+}
+
+/*
+  Shared alert/message style. Use `.alert` alongside a state modifier:
+  `.alert-success`, `.alert-error`, or `.alert-info`. Every form's status
+  message across the app should render with these classes instead of
+  one-off per-page styling.
+*/
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  animation: alert-in 0.2s ease;
+}
+
+.alert::before {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.alert-success {
+  background-color: #f0fdf4;
+  border-left-color: var(--success-color);
+  color: #166534;
+}
+
+.alert-success::before {
+  content: "\f058"; /* check-circle */
+  color: var(--success-color);
+}
+
+.alert-error {
+  background-color: var(--accent-color-light);
+  border-left-color: var(--danger-color);
+  color: var(--danger-color-dark);
+}
+
+.alert-error::before {
+  content: "\f06a"; /* exclamation-circle */
+  color: var(--danger-color);
+}
+
+.alert-info {
+  background-color: var(--background-light);
+  border-left-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.alert-info::before {
+  content: "\f05a"; /* info-circle */
+  color: var(--primary-color);
+}
+
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+  Shared data-table utilities. Sales, Debtors and the Audit Log are all
+  history/log tables people check daily — one definition here keeps their
+  money columns, zebra striping and empty states consistent instead of
+  three near-duplicate (and easy to drift) copies per page stylesheet.
+*/
+.row-alt {
+  background: var(--background-light);
+}
+
+.col-right {
+  text-align: right !important;
+}
+
+.amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.balance-cell {
+  color: var(--danger-color);
+  font-weight: 700;
+}
+
+.table-empty-state {
+  text-align: center !important;
+  padding: 36px 20px !important;
+  color: var(--secondary-text);
+  font-style: italic;
+  font-size: 0.9rem;
+  white-space: normal !important;
+}
+
+@media (max-width: 480px) {
+  .table-empty-state {
+    padding: 24px 14px !important;
+    font-size: 0.85rem;
+  }
+}

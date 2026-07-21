@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import api from "../api/axios.js";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/VerifyEmailPage.css";
 
@@ -20,8 +20,8 @@ export default function VerifyEmailPage() {
       }
       try {
         console.log("Sending verify request with token:", token);
-        const response = await axios.get(
-          `https://elroy-concepts.onrender.com/verify-email/${token}`
+        const response = await api.get(
+          `/verify-email/${token}`
         );
         console.log("Response from verify-email:", response.data);
         setMessage(response.data.msg || "Email verified successfully!");

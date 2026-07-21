@@ -1,0 +1,114 @@
+.report-actions {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.report-actions-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.report-btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed), transform var(--transition-speed);
+  white-space: nowrap;
+}
+
+.report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.report-btn-email {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.report-btn-email:hover:not(:disabled) {
+  background-color: var(--primary-color-dark);
+}
+
+.report-btn-save {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.report-btn-save:hover:not(:disabled) {
+  background-color: var(--accent-color-dark);
+}
+
+.report-btn-print {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 1.5px solid var(--border-color);
+}
+
+.report-btn-print:hover:not(:disabled) {
+  border-color: var(--primary-color);
+}
+
+.report-btn-send {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.report-btn-send:hover:not(:disabled) {
+  background-color: var(--accent-color-dark);
+}
+
+.report-email-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.report-email-form input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  min-width: 220px;
+}
+
+.report-email-form input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.report-actions-message {
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .report-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .report-actions-buttons {
+    justify-content: stretch;
+  }
+
+  .report-btn {
+    flex: 1;
+  }
+
+  .report-email-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .report-email-form input {
+    min-width: 0;
+  }
+}

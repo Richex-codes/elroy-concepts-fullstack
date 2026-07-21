@@ -1,23 +1,64 @@
+.reset-password-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-light);
+}
+
+.reset-password-header {
+  padding: 16px 24px;
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.reset-password-header .logo-icon {
+  max-height: 50px;
+  width: auto;
+}
+
+.reset-password-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
 .reset-password {
+  width: 100%;
   max-width: 400px;
-  margin: 0 auto;
-  padding: 2rem;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  margin-top: 80px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 1.75rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--white);
+  box-shadow: var(--shadow-md);
   text-align: center;
 }
 
+.auth-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  font-size: 1.2rem;
+}
+
 .reset-password h2 {
-  margin-bottom: 1rem;
-  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: var(--font-size-xl);
   color: var(--primary-color);
 }
 
 .reset-password p {
   margin-bottom: 1rem;
-  color: var(--primary-color);
+  color: var(--secondary-text);
 }
 
 .reset-password form {
@@ -28,7 +69,7 @@
 
 .reset-password input {
   padding: 0.7rem 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 1rem;
 }
@@ -40,38 +81,59 @@
 }
 
 .reset-password button {
-  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.65rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background-color: var(--accent-color);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-speed);
 }
 
-.reset-password button:hover {
-  background-color: #b0040e;
+.reset-password button:hover:not(:disabled) {
+  background-color: var(--accent-color-dark);
 }
 
-.error {
-  margin-top: 10px;
+.reset-password button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.back-to-login {
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.back-to-login a {
   color: var(--accent-color);
-  font-weight: 500;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-to-login a:hover {
+  text-decoration: underline;
 }
 
 /* ✅ Responsiveness */
 
-/* Medium Screens */
 @media (max-width: 768px) {
+  .reset-password-main {
+    padding: 24px 16px;
+  }
+
   .reset-password {
-    padding: 1.5rem 1rem;
-    margin-top: 60px;
+    padding: 1.5rem 1.25rem;
   }
 
   .reset-password h2 {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
   }
 
   .reset-password button {
@@ -79,15 +141,25 @@
   }
 }
 
-/* Small Screens */
 @media (max-width: 480px) {
+  .reset-password-header {
+    padding: 12px 16px;
+  }
+
+  .reset-password-header .logo-icon {
+    max-height: 40px;
+  }
+
+  .reset-password-main {
+    padding: 16px 12px;
+  }
+
   .reset-password {
-    padding: 1rem;
-    margin-top: 40px;
+    padding: 1.25rem 1rem;
   }
 
   .reset-password h2 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 
   .reset-password p {
