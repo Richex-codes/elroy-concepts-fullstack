@@ -59,6 +59,12 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* This is itself a grid item of .product-form-row, which defaults to
+     min-width:auto -- without this, the wrapper refuses to shrink below
+     the date/file input's intrinsic content width even though the input
+     itself is told min-width:0, and the field (and whatever's inside it)
+     pokes out past the form's edge on narrow screens. */
+  min-width: 0;
 }
 
 .product-form label {

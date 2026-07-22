@@ -26,18 +26,33 @@ html, body{
 
 #root {
   height: 100vh;
-  height: 100dvh;
+  /* svh (small viewport height), not dvh, on purpose: these are hard
+     height + overflow:hidden locks, so unlike a page's min-height, any
+     change to this value forces the whole app to reflow. dvh recalculates
+     live as Safari's toolbar *and the on-screen keyboard* show/hide --
+     on a form with several fields, that fires on every focus/blur,
+     producing the "dragging/jumping" jank. svh is fixed at the smallest
+     the viewport ever gets, so it never moves once loaded. */
+  height: 100svh;
   width: 100%;
   overflow: hidden;
 }
 
 .app-wrapper {
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   width: 100%;
   overflow-y: auto;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
+  /* Now that viewport-fit=cover lets the page paint under the notch and
+     home-indicator (html/body's background-color shows through there,
+     which is what makes it blend like GitHub instead of showing bare
+     Safari chrome), real content needs to stay clear of those physical
+     cutouts -- env(safe-area-inset-*) is 0 on devices without them, so
+     this is a no-op anywhere but a notched iPhone. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .app-wrapper::-webkit-scrollbar {

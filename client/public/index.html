@@ -4,8 +4,14 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <!-- viewport-fit=cover lets the page paint its own background under
+         the iPhone notch/Dynamic Island and the bottom home-indicator
+         area, instead of Safari showing its own bare chrome there
+         (which is the "black bar at top/bottom" difference vs. sites
+         like GitHub). theme-color tints Safari's own UI (status bar
+         area, tab switcher) to match the site instead of black. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f3f4f6" />
     <meta
       name="description"
       content="Web site created using create-react-app"

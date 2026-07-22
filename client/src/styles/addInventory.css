@@ -52,6 +52,13 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* Used both as a grid item (inside .inventory-form-row) and a flex item
+     (standalone, e.g. Stock Date) -- both layout types default to
+     min-width:auto, which refuses to shrink below the date input's
+     intrinsic content width even though the input itself has
+     min-width:0, letting it poke out past the form's edge on narrow
+     screens. */
+  min-width: 0;
 }
 
 .inventory-form label {
