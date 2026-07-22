@@ -146,6 +146,7 @@ const fetchStock = async () => {
       </p>
       <ErrorBanner message={error} onDismiss={clearError} />
 
+      <section className="inventory-section">
       {/* Filters */}
       <div className="inventory-filters">
         <select
@@ -257,10 +258,11 @@ const fetchStock = async () => {
               ))}
           </tbody>
         </table>
-        </div>  
+        </div>
       </div>
+      </section>
 
-
+      <section className="inventory-section">
       <h3>Inventory Summary by Branch</h3>
       <p className="inventory-page-subtitle">
         Always the current running total — never limited by year or date.
@@ -280,7 +282,7 @@ const fetchStock = async () => {
 
       <div className="table-container">
         {/* Total Summary Section */}
-        
+
           <div className="inventory-summary">
           <table className="inventory-table">
             <thead>
@@ -317,9 +319,12 @@ const fetchStock = async () => {
             ))}
           </tbody>
         </table>
-        
+
       </div>
       </div>
+      </section>
+
+      <section className="inventory-section">
       <div className="inventory-summary">
         <h3>Total Quantity per Product</h3>
 
@@ -347,6 +352,7 @@ const fetchStock = async () => {
           ))}
         </ul>
       </div>
+      </section>
     </div>
   );
 }

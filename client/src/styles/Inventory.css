@@ -21,6 +21,23 @@
     font-size: 0.85rem;
   }
 
+  .inventory-section {
+    background-color: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .inventory-section h3 {
+    margin: 0 0 4px;
+    color: var(--primary-color);
+    font-size: 1.15em;
+  }
+
   .inventory-filters {
     display: flex;
     flex-wrap: wrap;
@@ -150,6 +167,13 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     margin-bottom: 30px;
+  }
+
+  /* Inside a card, the card's own padding already provides the bottom
+     gap -- without this, the table's own margin-bottom stacks on top of
+     it and leaves an oversized gap before the card's edge. */
+  .inventory-section .table-container:last-child {
+    margin-bottom: 0;
   }
 
   .inventory-table thead th {
@@ -288,6 +312,11 @@
     .inventory-table .col-right {
       text-align: left !important;
     }
+
+    .inventory-section {
+      padding: 16px;
+      margin-bottom: 18px;
+    }
   }
 
   /* ===================== */
@@ -296,6 +325,11 @@
   @media (max-width: 480px) {
     .inventory-page {
       padding: 20px 10px;
+    }
+
+    .inventory-section {
+      padding: 14px;
+      margin-bottom: 14px;
     }
 
     .inventory-page h2 {
