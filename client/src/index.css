@@ -9,9 +9,19 @@
    browser-defined intrinsic content width that flex/grid items won't
    shrink below by default (min-width:auto) -- that's what causes them to
    overflow or overlap neighboring filter controls on narrow screens
-   across every module that has one. This one rule fixes all of them. */
+   across every module that has one. min-width:0 handles that.
+   Separately, iOS Safari's native appearance for type="date" can draw
+   its own control chrome at its own internal size and ignore an
+   author's width/min-width/max-width entirely -- that's the *other*
+   half of the overflow, and no amount of width fixing on this element
+   or its ancestors touches it. Turning appearance off forces it back
+   into the normal box model so the width rules above actually apply. */
 input[type="date"] {
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 /* Letting html/body/#root/.app-wrapper scroll naturally (the way GitHub
