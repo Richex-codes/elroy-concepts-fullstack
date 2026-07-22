@@ -1,8 +1,27 @@
 .dashboard-summary {
   padding: 24px;
-  background: var(--white);
+  /* Experiment: swapped with the page background below (was white) --
+     scoped to just this page so it's easy to flip back if it doesn't
+     look better. */
+  background: #f3f4f6;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+/* Only takes effect on the dashboard (the one admin page that renders
+   .dashboard-summary) -- everywhere else .admin-content keeps its normal
+   light-gray background from .admin-dashboard showing through. Swapped
+   to white here so the card above and the page behind it trade places
+   instead of both ending up the same color. */
+.admin-content:has(.dashboard-summary) {
+  background-color: #ffffff;
+}
+
+/* .admin-topbar is a sibling of .admin-content, not an ancestor of
+   .dashboard-summary, so it needs the common .admin-main ancestor to
+   scope off of instead -- same swap (was plain white). */
+.admin-main:has(.dashboard-summary) .admin-topbar {
+  background-color: #f3f4f6;
 }
 
 .dashboard-title {
