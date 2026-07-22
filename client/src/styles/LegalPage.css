@@ -12,7 +12,9 @@
   justify-content: space-between;
   padding: 16px 24px;
   position: sticky;
-  top: 0;
+  /* A flat 0 would let this slide back up under the notch once the page
+     scrolls -- body's safe-area padding only clears it on first paint. */
+  top: env(safe-area-inset-top);
   z-index: 100;
   background-color: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);

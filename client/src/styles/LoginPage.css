@@ -17,7 +17,12 @@
   align-items: center;
   padding: 12px 24px;
   position: sticky;
-  top: 0;
+  /* Not a flat 0: body's own safe-area padding only clears the notch on
+     the very first paint. Once this sticks, its "stuck" offset is
+     measured from the viewport, not from inside body's padding, so a
+     flat 0 would let it slide back up under the notch as soon as the
+     page scrolls. */
+  top: env(safe-area-inset-top);
   z-index: 1000;
   background-color: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);

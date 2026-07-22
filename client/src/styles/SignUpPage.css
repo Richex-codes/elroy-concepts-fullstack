@@ -29,7 +29,9 @@ body {
   align-items: center;
   padding: 12px 24px;
   position: sticky;
-  top: 0;
+  /* See LoginPage.css .login-header -- a flat 0 would let this slide
+     back up under the notch as soon as the page scrolls. */
+  top: env(safe-area-inset-top);
   z-index: 1000;
   background-color: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);

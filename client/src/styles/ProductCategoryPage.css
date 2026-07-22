@@ -9,7 +9,9 @@
   align-items: center;
   box-shadow: var(--glass-shadow);
   position: sticky;
-  top: 0;
+  /* A flat 0 would let this slide back up under the notch once the page
+     scrolls -- body's safe-area padding only clears it on first paint. */
+  top: env(safe-area-inset-top);
   z-index: 1000;
 }
 

@@ -14,53 +14,32 @@ input[type="date"] {
   min-width: 0;
 }
 
-html, body{
-  height: 100%;
+/* Letting html/body/#root/.app-wrapper scroll naturally (the way GitHub
+   and virtually every other site does) instead of hard-locking them to a
+   viewport height with overflow:hidden and forcing exactly one inner div
+   to be the scroll container. That locked-container pattern is what was
+   trapping content out of reach on iOS Safari (worst on Login/SignUp) --
+   vh vs dvh vs svh all still broke because the real problem was the lock
+   itself, not the unit. Pages that need a sidebar/header to stay put
+   while content scrolls (e.g. AdminDashboard) now do that locally with
+   position: sticky instead of relying on a global scroll lock. */
+html, body {
   width: 100%;
   padding: 0;
   margin: 0;
-  overflow: hidden;
-  overscroll-behavior: none;
   background-color: var(--background-light);
 }
 
-#root {
-  height: 100vh;
-  /* svh (small viewport height), not dvh, on purpose: these are hard
-     height + overflow:hidden locks, so unlike a page's min-height, any
-     change to this value forces the whole app to reflow. dvh recalculates
-     live as Safari's toolbar *and the on-screen keyboard* show/hide --
-     on a form with several fields, that fires on every focus/blur,
-     producing the "dragging/jumping" jank. svh is fixed at the smallest
-     the viewport ever gets, so it never moves once loaded. */
-  height: 100svh;
-  width: 100%;
-  overflow: hidden;
-}
-
-.app-wrapper {
-  height: 100vh;
-  height: 100svh;
-  width: 100%;
-  overflow-y: auto;
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-  /* Now that viewport-fit=cover lets the page paint under the notch and
-     home-indicator (html/body's background-color shows through there,
-     which is what makes it blend like GitHub instead of showing bare
-     Safari chrome), real content needs to stay clear of those physical
-     cutouts -- env(safe-area-inset-*) is 0 on devices without them, so
-     this is a no-op anywhere but a notched iPhone. */
+body {
+  /* viewport-fit=cover lets the page paint its own background under the
+     notch/Dynamic Island and home-indicator instead of bare Safari
+     chrome; since body is now the natural scroll container, its own
+     padding is what keeps real content clear of those cutouts -- 0 on
+     devices without them, so this is a no-op anywhere but a notched
+     iPhone. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-.app-wrapper::-webkit-scrollbar {
-  display: none;
-}
-
-
-body {
+  overscroll-behavior-y: none;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
