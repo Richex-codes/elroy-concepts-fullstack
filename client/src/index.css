@@ -5,6 +5,15 @@
   max-width: 100%;
 }
 
+/* Native date inputs (day/month/year segments + calendar icon) have a
+   browser-defined intrinsic content width that flex/grid items won't
+   shrink below by default (min-width:auto) -- that's what causes them to
+   overflow or overlap neighboring filter controls on narrow screens
+   across every module that has one. This one rule fixes all of them. */
+input[type="date"] {
+  min-width: 0;
+}
+
 html, body{
   height: 100%;
   width: 100%;
@@ -17,12 +26,14 @@ html, body{
 
 #root {
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
 }
 
 .app-wrapper {
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow-y: auto;
   overscroll-behavior-y: none;

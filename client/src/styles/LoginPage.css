@@ -1,5 +1,6 @@
 .loginpage {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background-color: var(--background-light);
@@ -258,23 +259,35 @@
 
   .nav-links {
     position: absolute;
-    top: 70px; /* below header */
+    top: 100%; /* right below the header, whatever its height */
+    left: 0;
     right: 0;
     width: 100%;
-    background-color: var(--white);
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
     flex-direction: column;
     align-items: center;
     gap: 10px;
     padding: 15px 0;
+    max-height: 0;
     opacity: 0;
+    overflow: hidden;
     pointer-events: none;
-    transition: all 0.2s ease;
+    transform: translateY(-6px);
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.25s ease, transform 0.3s ease;
     text-align: center;
+    z-index: 999;
   }
 
   .nav-links.open {
+    max-height: 240px;
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
   }
 
   .nav-links ul {
@@ -348,9 +361,5 @@
 
   .menu-toggle{
     font-size: 1.8em;
-  }
-
-  .nav-links{
-    top: 60px;
   }
 }

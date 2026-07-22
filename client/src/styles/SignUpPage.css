@@ -11,6 +11,7 @@ body {
   flex-direction: column;
   background-color: var(--background-light);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .signup-page main{
@@ -293,6 +294,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
 }
 
@@ -327,8 +329,46 @@ body {
   } */
 
   .nav-links {
-    gap: 15px;
+    position: absolute;
+    top: 100%; /* right below the header, whatever its height */
+    left: 0;
+    right: 0;
+    width: 100%;
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.25s ease, transform 0.3s ease;
+    text-align: center;
     font-size: 1em;
+    z-index: 999;
+  }
+
+  .nav-links.open {
+    max-height: 240px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .menu-toggle {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--primary-color);
+    cursor: pointer;
   }
 
   .registration-container {

@@ -5,6 +5,7 @@
   padding: 4rem 1rem;
   background-color: var(--background-light);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .profile-page nav {

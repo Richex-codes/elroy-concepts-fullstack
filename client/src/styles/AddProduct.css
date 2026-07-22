@@ -74,6 +74,12 @@
 .product-form input[type="date"],
 .product-form select,
 .product-form textarea {
+  width: 100%;
+  /* Flex/grid items default to min-width:auto, which lets a native
+     date-picker's day/month/year segments or a file input's "Choose
+     File" label force the box wider than its container instead of
+     shrinking to fit -- min-width:0 lets width:100% actually win. */
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
