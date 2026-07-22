@@ -27,6 +27,14 @@ redisConnection.on("error", (err) => {
 
 const app = express();
 
+// In production this app sits behind exactly one reverse proxy (Nginx),
+// which sets X-Forwarded-For to the real visitor's IP. Without this,
+// Express doesn't trust that header, so express-rate-limit can't safely
+// read the real client IP -- it either throws (as seen in prod logs) or,
+// worse, would silently rate-limit every visitor together under Nginx's
+// own IP instead of individually.
+app.set("trust proxy", 1);
+
 // Comma-separated list of frontend origins allowed to call this API, e.g.
 // "https://elroy-concepts-fullstack.vercel.app,http://localhost:3000" --
 // keeps prod/staging/dev URLs configurable per-deployment instead of baked
