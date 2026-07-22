@@ -50,6 +50,12 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* This is a grid item of .sales-form-row, which defaults to
+     min-width:auto -- without this, it refuses to shrink below the date
+     input's intrinsic content width and pokes the field out past the
+     form's edge on narrow screens, same as .product-form-field and
+     .inventory-form-field needed. */
+  min-width: 0;
 }
 
 .sales-form label {

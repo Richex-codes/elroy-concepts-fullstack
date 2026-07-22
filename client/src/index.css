@@ -52,3 +52,42 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Desktop/laptop browsers don't have iOS Safari's collapsing toolbar, so
+   they never had the trapped-content bug natural scrolling above fixes --
+   what they do get from it is the page's scrollbar appearing/disappearing
+   as content crosses one viewport tall, shifting the whole layout
+   sideways by the scrollbar's width each time, which reads as "shaky".
+   Restoring the original locked-viewport + single-scroll-container setup
+   here, scoped to larger screens only, brings back the solid/stable feel
+   without reintroducing the mobile bug. */
+@media (min-width: 1025px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-wrapper {
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* iOS Safari force-zooms the page in whenever a focused input's
+   font-size is under 16px, then leaves it to the user to pinch back out
+   -- dozens of per-page mobile breakpoints across this codebase shrink
+   form text below that (0.85-0.95em) for density, each unaware it was
+   also quietly triggering this. Rather than hunt every one down
+   individually (and re-break it the next time someone adds a form),
+   one global floor, loud enough to beat any of them regardless of load
+   order, is the standard fix for this specific iOS behavior. */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}

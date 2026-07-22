@@ -19,7 +19,11 @@
   top: 0;
   height: 100vh;
   height: 100svh;
-  overflow-y: auto;
+  /* Not overflow-y:auto here -- .admin-sidebar-nav below already scrolls
+     internally (flex:1; overflow-y:auto) when the nav list is tall.
+     Giving the outer box its own scroll too shows a second, pointless
+     scrollbar on the sidebar itself even though nothing in it needs it. */
+  overflow: hidden;
   width: 260px;
   flex-shrink: 0;
   display: flex;
@@ -394,7 +398,12 @@
   font-size: 1.8rem;
   border: none;
   cursor: pointer;
-  position: fixed;
+  /* absolute, not fixed: it only needs to be reachable at the top of the
+     page, not pinned there while scrolling -- the edge-swipe gesture
+     (see AdminDashboard.js) already gives persistent access to the
+     sidebar from anywhere on the page, so this is just the discoverable
+     entry point, not required to always be on screen. */
+  position: absolute;
   top: calc(env(safe-area-inset-top) + 15px);
   left: 15px;
   z-index: 1100;
