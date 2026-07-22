@@ -15,7 +15,7 @@
   padding: 8px 18px;
   font-weight: bold;
   border: 1px solid var(--primary-color);
-  background-color: #fff;
+  background-color: #f3f4f6;
   color: var(--primary-color);
   cursor: pointer;
   border-radius: 5px;
@@ -59,7 +59,7 @@
   font-size: 0.95rem;
   flex: 1;
   min-width: 150px;
-  background: white;
+  background: #f3f4f6;
   color: #333;
   cursor: pointer;
 }
@@ -111,7 +111,7 @@
 }
 
 .product-card {
-  background: #fff;
+  background: #f3f4f6;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 16px;
@@ -182,7 +182,7 @@
 }
 
 .product-table td {
-  background-color: #fafafa;
+  background-color: #ffffff;
 }
 
 .product-table .delete-btn {

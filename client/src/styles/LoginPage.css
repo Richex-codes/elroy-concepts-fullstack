@@ -3,7 +3,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background-color: var(--background-light);
+  background-color: #ffffff;
 }
 
 .loginpage main {
@@ -65,7 +65,7 @@
 }
 
 .auth-container {
-  background-color: white;
+  background-color: #f3f4f6;
   padding: 28px 36px;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
@@ -313,7 +313,7 @@
   }
 
   .nav-links ul li a:hover {
-    background-color: var(--background-light);
+    background-color: #ffffff;
     color: var(--accent-color);
   }
 

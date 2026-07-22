@@ -43,7 +43,7 @@
   font-size: 14px;
   flex: 1;
   min-width: 0;
-  background: white;
+  background: #f3f4f6;
 }
 
 .debtor-filters input:focus,
@@ -76,7 +76,7 @@
   overflow-x: auto;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: white;
+  background: #f3f4f6;
   box-shadow: var(--shadow-sm);
 }
 
@@ -89,7 +89,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--background-light);
+  background: #ffffff;
 }
 
 .debtors-table th {
@@ -218,7 +218,7 @@
   .debtors-table tr {
     display: block;
     margin-bottom: 14px;
-    background: white;
+    background: #f3f4f6;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
@@ -228,7 +228,7 @@
   .debtors-table tr,
   .debtors-table tr.row-alt,
   .debtors-table tr:hover {
-    background: white;
+    background: #f3f4f6;
   }
 
   .debtors-table td {

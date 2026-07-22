@@ -1,6 +1,6 @@
 body {
   overscroll-behavior: none;
-  background-color: var(--background-color);
+  background-color: #f3f4f6;
   color: var(--primary-color);
 }
 
@@ -9,7 +9,7 @@ body {
   color: var(--primary-color);
   display: flex;
   flex-direction: column;
-  background-color: var(--background-light);
+  background-color: #ffffff;
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -77,7 +77,7 @@ body {
   margin: 0 auto;
   text-align: center;
   padding: 28px 36px;
-  background-color:white;
+  background-color: #f3f4f6;
 }
 
 .auth-icon {

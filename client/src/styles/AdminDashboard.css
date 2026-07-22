@@ -2,7 +2,7 @@
   display: flex;
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: var(--background-light);
+  background-color: #ffffff;
 }
 
 /* ======================= */
@@ -57,7 +57,7 @@
 .admin-sidebar-brand img {
   height: 30px;
   width: auto;
-  background-color: white;
+  background-color: #f3f4f6;
   border-radius: var(--radius-sm);
   padding: 4px 8px;
 }
@@ -364,7 +364,7 @@
   align-items: center;
   gap: 14px;
   padding: 18px 30px;
-  background-color: white;
+  background-color: #f3f4f6;
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   position: relative;

@@ -78,7 +78,7 @@
   overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: white;
+  background: #f3f4f6;
   box-shadow: var(--shadow-sm);
 }
 
@@ -92,7 +92,7 @@
 }
 
 .sales-inventory-table thead {
-  background: var(--background-light);
+  background: #ffffff;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -125,7 +125,7 @@
   padding: 6px 12px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  background-color: white;
+  background-color: #f3f4f6;
   color: var(--primary-color);
   font-size: 0.8rem;
   font-weight: 600;
@@ -134,18 +134,18 @@
 }
 
 .invoice-toggle-btn:hover {
-  background-color: var(--background-light);
+  background-color: #ffffff;
 }
 
 .invoice-actions-cell {
-  background-color: var(--background-light);
+  background-color: #ffffff;
   padding: 14px !important;
 }
 
 .sale-items-detail-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #f3f4f6;
   border-radius: var(--radius-sm);
   overflow: hidden;
   margin-bottom: 12px;
@@ -160,7 +160,7 @@
 }
 
 .sale-items-detail-table thead {
-  background-color: var(--background-light);
+  background-color: #ffffff;
   font-weight: 600;
   color: var(--primary-color);
 }
@@ -169,7 +169,7 @@
   padding: 6px 12px;
   border: 1px solid var(--danger-color);
   border-radius: var(--radius-sm);
-  background-color: white;
+  background-color: #f3f4f6;
   color: var(--danger-color);
   font-size: 0.8rem;
   font-weight: 600;
@@ -241,7 +241,7 @@
   .sales-inventory-table tr {
     display: block;
     margin-bottom: 14px;
-    background: white;
+    background: #f3f4f6;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
@@ -251,7 +251,7 @@
   .sales-inventory-table tr,
   .sales-inventory-table tr.row-alt,
   .sales-inventory-table tr:hover {
-    background: white;
+    background: #f3f4f6;
   }
 
   .sales-inventory-table td {

@@ -175,7 +175,7 @@
 }
 
 .alert-info {
-  background-color: var(--background-light);
+  background-color: #ffffff;
   border-left-color: var(--primary-color);
   color: var(--primary-color);
 }
@@ -203,7 +203,7 @@
   three near-duplicate (and easy to drift) copies per page stylesheet.
 */
 .row-alt {
-  background: var(--background-light);
+  background: #ffffff;
 }
 
 .col-right {

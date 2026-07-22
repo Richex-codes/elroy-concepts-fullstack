@@ -2,7 +2,7 @@
   padding: 36px 32px;
   max-width: 820px;
   margin: 0 auto;
-  background-color: var(--white);
+  background-color: #f3f4f6;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
@@ -86,7 +86,7 @@
 
 .stock-display {
   padding: 12px;
-  background-color: #f8f9fa;
+  background-color: #ffffff;
   border-left: 4px solid var(--accent-color);
   border-radius: 6px;
   font-weight: bold;
@@ -103,7 +103,7 @@
   margin-bottom: 20px;
   padding: 14px 16px;
   border-radius: var(--radius-md);
-  background-color: var(--background-light);
+  background-color: #ffffff;
   border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -149,7 +149,7 @@
   padding: 16px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background-color: var(--background-light);
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -196,7 +196,7 @@
 .sale-items-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #f3f4f6;
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
@@ -210,7 +210,7 @@
 }
 
 .sale-items-table thead {
-  background-color: var(--background-light);
+  background-color: #ffffff;
   font-weight: 600;
   color: var(--primary-color);
 }

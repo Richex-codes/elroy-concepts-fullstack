@@ -34,7 +34,7 @@
 }
 
 .product-card {
-  background-color: white;
+  background-color: #f3f4f6;
   border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   padding: 20px;
@@ -134,7 +134,7 @@
 
 /* Styles for the modal's actual content box */
 .modal-content {
-  background-color: #fefefe; /* White background for the content box */
+  background-color: #f3f4f6;
   margin: auto; /* Auto margin will center it if flexbox isn't used or as a fallback */
   padding: 35px; /* Ample padding inside the content box */
   border-radius: 10px; /* Slightly rounded corners */

@@ -2,7 +2,7 @@ body {
   line-height: 1.6;
   font-family: "Arial", sans-serif;
   color: var(--primary-color);
-  background-color: #ffffff;
+  background-color: #f3f4f6;
 }
 
 .dashboard-page nav {
@@ -194,7 +194,7 @@ section:nth-child(even) {
 .product-card {
   width: 100%;
   max-width: 500px;
-  background-color: white;
+  background-color: #f3f4f6;
   border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   padding: 20px;
@@ -266,7 +266,7 @@ section:nth-child(even) {
 }
 
 .category-card {
-  background-color: white;
+  background-color: #f3f4f6;
   border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   padding: 20px;

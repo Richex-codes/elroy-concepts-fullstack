@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   padding: 4rem 1rem;
-  background-color: var(--background-light);
+  background-color: #ffffff;
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -31,7 +31,7 @@
 }
 
 .profile-card {
-  background-color: var(--card-bg-color);
+  background-color: #f3f4f6;
   padding: 1.75rem 2.25rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
@@ -91,7 +91,7 @@
 }
 
 .btn-outline {
-  background-color: var(--card-bg-color);
+  background-color: #f3f4f6;
   color: var(--accent-color);
   border: 2px solid var(--accent-color);
   padding: 0.6rem 1.2rem;

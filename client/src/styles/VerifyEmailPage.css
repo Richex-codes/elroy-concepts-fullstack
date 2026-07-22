@@ -7,7 +7,7 @@
   max-width: 420px;
   margin: 5rem auto;
   padding: 2rem 2.5rem;
-  background-color: var(--white);
+  background-color: #f3f4f6;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   color: var(--primary-color);

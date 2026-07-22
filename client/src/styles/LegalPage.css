@@ -3,7 +3,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background-color: var(--background-light);
+  background-color: #ffffff;
 }
 
 .legal-header {
@@ -49,7 +49,7 @@
 .legal-content {
   width: 100%;
   max-width: 720px;
-  background-color: var(--white);
+  background-color: #f3f4f6;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 44px 48px;

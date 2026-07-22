@@ -10,7 +10,7 @@
 }
 
 .confirm-modal {
-  background: #fff;
+  background: #f3f4f6;
   border-radius: 12px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   width: 100%;
@@ -66,7 +66,7 @@
 }
 
 .confirm-modal-cancel {
-  background: #eee;
+  background: #ffffff;
   color: #333;
 }
 .confirm-modal-cancel:hover {
