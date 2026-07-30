@@ -288,6 +288,61 @@ router.post("/make-admin", authMiddleware, requireSuperAdmin, async (req, res) =
   }
 });
 
+// Promote an already-registered user straight to superadmin -- unrestricted
+// access to every branch, the audit log, and the ability to create other
+// admins/superadmins. Kept as its own endpoint rather than a "role" option
+// on /make-admin: this is a materially bigger privilege grant and shouldn't
+// be one dropdown away from an ordinary branch-admin promotion.
+router.post("/make-superadmin", authMiddleware, requireSuperAdmin, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ msg: "Email is required" });
+    }
+
+    const user = await User.findOne({ email: email.trim() });
+    if (!user) {
+      return res.status(404).json({
+        msg: "No registered user found with that email. They need to sign up first.",
+      });
+    }
+    if (user.role === "superadmin") {
+      return res.status(400).json({ msg: `${user.email} is already a super admin.` });
+    }
+
+    const before = { role: user.role, adminBranches: user.adminBranches };
+
+    user.isAdmin = true;
+    user.role = "superadmin";
+    user.adminBranches = [];
+    user.adminRequested = false;
+    await user.save();
+
+    await logAudit({
+      action: "user.promoted_to_superadmin",
+      actor: req.user,
+      targetType: "User",
+      targetId: user._id,
+      before,
+      after: { role: "superadmin", name: user.name, email: user.email },
+    });
+
+    notifySuperAdmins({
+      title: "New super admin created",
+      body: `${user.name} (${user.email}) is now a super admin.`,
+      url: "/admin/make-admin",
+    }).catch((err) => console.error("Push notify failed:", err.message));
+
+    res.json({
+      msg: `${user.name} (${user.email}) is now a super admin.`,
+      user: { name: user.name, email: user.email, role: "superadmin" },
+    });
+  } catch (err) {
+    console.error("Error promoting user to super admin:", err.message);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 // Registered users who checked "I am a business admin" at signup but
 // haven't been assigned a role yet -- this is what makes them visible to
 // the superadmin in the Make Admin section, instead of promoting by blind

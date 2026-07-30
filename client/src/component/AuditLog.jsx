@@ -9,6 +9,7 @@ const ACTION_META = {
   "inventory.restocked": { label: "Inventory Restocked", tone: "positive" },
   "product.deleted": { label: "Product Deleted", tone: "negative" },
   "user.promoted_to_admin": { label: "User Made Admin", tone: "negative" },
+  "user.promoted_to_superadmin": { label: "User Made Super Admin", tone: "negative" },
 };
 
 const DATE_KEY_PATTERN = /date|at$/i;

@@ -17,6 +17,8 @@ export default function MakeAdmin() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [superAdminEmail, setSuperAdminEmail] = useState("");
+  const [superAdminLoading, setSuperAdminLoading] = useState(false);
   const { confirm, modalProps } = useConfirm();
   const formRef = useRef(null);
 
@@ -85,6 +87,35 @@ export default function MakeAdmin() {
       setMessage(err.response?.data?.msg || "Failed to promote this user.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMakeSuperAdmin = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    const confirmed = await confirm(
+      `Make "${superAdminEmail}" a super admin? They'll get full, unrestricted access to every branch, the audit log, and the ability to create other admins and super admins. Only do this for someone you'd trust with the entire system.`,
+      { title: "Make super admin", confirmLabel: "Make Super Admin", danger: true }
+    );
+    if (!confirmed) return;
+
+    setSuperAdminLoading(true);
+    try {
+      const res = await api.post(
+        "/admin/make-superadmin",
+        { email: superAdminEmail },
+        authHeaders
+      );
+      setIsError(false);
+      setMessage(res.data.msg);
+      setSuperAdminEmail("");
+      fetchAll();
+    } catch (err) {
+      setIsError(true);
+      setMessage(err.response?.data?.msg || "Failed to promote this user.");
+    } finally {
+      setSuperAdminLoading(false);
     }
   };
 
@@ -205,6 +236,30 @@ export default function MakeAdmin() {
           {loading ? "Promoting..." : "Make Admin"}
         </button>
       </form>
+
+      <div className="admin-list-section">
+        <h3>Make Super Admin</h3>
+        <p className="admin-list-hint">
+          Full, unrestricted access to every branch, the audit log, and the ability to create
+          other admins and super admins. Only promote someone you'd trust with the entire system.
+        </p>
+        <form onSubmit={handleMakeSuperAdmin} className="make-admin-form">
+          <label htmlFor="make-superadmin-email">User's email</label>
+          <input
+            id="make-superadmin-email"
+            type="email"
+            placeholder="name@example.com"
+            value={superAdminEmail}
+            onChange={(e) => setSuperAdminEmail(e.target.value)}
+            required
+          />
+
+          <button type="submit" disabled={superAdminLoading}>
+            <i className="fas fa-user-shield"></i>{" "}
+            {superAdminLoading ? "Promoting..." : "Make Super Admin"}
+          </button>
+        </form>
+      </div>
 
       {admins.length > 0 && (
         <div className="admin-list-section">
