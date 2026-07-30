@@ -60,8 +60,15 @@ ProductSchema.index({ category: 1 });
 // for the first time from their own branch's perspective) each get their
 // own separate Product document instead of two inventory lines on one --
 // splitting a single product's stock/history across duplicates. The
-// collation is what makes "30mm Pipe" and "30mm pipe" collide.
-ProductSchema.index({ name: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
+// collation is what makes "30mm Pipe" and "30mm pipe" collide. Explicitly
+// named (rather than the default "name_1") so it's created as a genuinely
+// new index instead of Mongoose trying to reconcile it with the older
+// plain, non-collated index of the same default name -- collation can't be
+// changed on an existing index in place, only by dropping and recreating.
+ProductSchema.index(
+  { name: 1 },
+  { unique: true, collation: { locale: "en", strength: 2 }, name: "name_unique_ci" }
+);
 // Dashboard "recent inventory" pipeline sorts by this after $unwind.
 ProductSchema.index({ "inventory.addedAt": -1 });
 
