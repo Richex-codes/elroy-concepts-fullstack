@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
 import { isOwnBranch } from "../utils/authUser.js";
 import { newIdempotencyKey } from "../utils/idempotencyKey.js";
 import "../styles/AddProduct.css";
 
 export default function AddProductPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -17,9 +19,20 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState([]);
   const [branches, setBranches] = useState([]); // 🟡 Store branch list
   const [inventory, setInventory] = useState([]); // 🟡 Store quantity per branch
+  const [products, setProducts] = useState([]);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Case-insensitive, trimmed match against the existing catalog -- this is
+  // what lets a branch admin who's never seen a product at their own branch
+  // (so, from where they're standing, it's brand new) get pointed at Add
+  // Inventory instead of unknowingly creating a second Product document for
+  // something another branch already stocks under the same name.
+  const duplicateMatch = products.find(
+    (p) => p.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+  );
+  const showDuplicateWarning = formData.name.trim().length > 0 && !!duplicateMatch;
 
   const COLORS = [
   "Gold",
@@ -105,8 +118,24 @@ export default function AddProductPage() {
       }
     };
 
+    // Load the existing catalog so the name field can catch a duplicate
+    // before the admin fills out (and submits) the rest of this form.
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get("/products", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setProducts(res.data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      }
+    };
+
     fetchCategories();
     fetchBranches();
+    fetchProducts();
   }, []);
 
   // 🔵 Handle form and image input
@@ -188,7 +217,10 @@ export default function AddProductPage() {
     } catch (err) {
       console.error("Error adding product:", err);
       setIsError(true);
-      setMessage("Failed to add product.");
+      // A 409 here means the name-check above raced with someone else
+      // creating the same product between page load and submit -- the
+      // server's message already tells them to use Add Inventory instead.
+      setMessage(err.response?.data?.msg || "Failed to add product.");
     } finally{
       setLoading(false);
     }
@@ -226,63 +258,82 @@ export default function AddProductPage() {
             />
           </div>
 
-          <div className="product-form-field">
-            <label>Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              required
+          {!showDuplicateWarning && (
+            <div className="product-form-field">
+              <label>Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {showDuplicateWarning && (
+          <div className="alert alert-error">
+            "{duplicateMatch.name}" already exists in the catalog. Add inventory to it instead
+            of creating a new product.
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ marginTop: 10 }}
+              onClick={() => navigate(`/admin/add-inventory?product=${duplicateMatch._id}`)}
             >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              <i className="fas fa-dolly"></i> Go to Add Inventory
+            </button>
           </div>
-        </div>
+        )}
 
-        <div className="product-form-field">
-          <label>Description</label>
-          <textarea
-            name="description"
-            placeholder="Short description shown alongside the product..."
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        {!showDuplicateWarning && (
+          <>
+            <div className="product-form-field">
+              <label>Description</label>
+              <textarea
+                name="description"
+                placeholder="Short description shown alongside the product..."
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <div className="product-form-row">
-          <div className="product-form-field">
-            <label>Product Date</label>
-            <input
-              type="date"
-              name="dateAdded"
-              value={formData.dateAdded}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <div className="product-form-row">
+              <div className="product-form-field">
+                <label>Product Date</label>
+                <input
+                  type="date"
+                  name="dateAdded"
+                  value={formData.dateAdded}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-          <div className="product-form-field">
-            <label>Product Image</label>
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              onChange={handleChange}
-            />
-          </div>
-        </div>
+              <div className="product-form-field">
+                <label>Product Image</label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
-        <h4>Set Quantity Per Branch</h4>
-        <p className="product-form-section-hint">
-          Only branches with a quantity above zero are saved as opening stock.
-        </p>
-       {/* DESKTOP GRID */}
+            <h4>Set Quantity Per Branch</h4>
+            <p className="product-form-section-hint">
+              Only branches with a quantity above zero are saved as opening stock.
+            </p>
+           {/* DESKTOP GRID */}
 <div className="inventory-grid">
   <div className="grid-header" style={gridStyle}>
     <div className="grid-header-cell">Branch</div>
@@ -363,9 +414,11 @@ export default function AddProductPage() {
   ))}
 </div>
 
-        <button type="submit" className="btn-primary" disabled={loading}>
-          <i className="fas fa-box-open"></i> {loading ? "Adding Product..." : "Add Product"}
-        </button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              <i className="fas fa-box-open"></i> {loading ? "Adding Product..." : "Add Product"}
+            </button>
+          </>
+        )}
       </form>
     </div>
   );

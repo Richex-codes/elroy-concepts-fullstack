@@ -180,6 +180,22 @@ router.post(
         return res.status(403).json({ msg: "You can only add inventory for your own branch." });
       }
 
+      // A branch admin creating "30mm pipe" for the first time at their own
+      // branch has no way of knowing another branch already stocks it under
+      // the same name -- catching that here (case-insensitively) means they
+      // get pointed at Add Inventory instead of ending up with two separate
+      // Product documents for what's really one item.
+      const existing = await Product.findOne({ name: name.trim() }).collation({
+        locale: "en",
+        strength: 2,
+      });
+      if (existing) {
+        return res.status(409).json({
+          msg: `"${existing.name}" already exists. Use Add Inventory to add stock for your branch instead of creating a new product.`,
+          existingProductId: existing._id,
+        });
+      }
+
       const newProduct = new Product({
         name,
         category,
@@ -196,6 +212,20 @@ router.post(
         .status(201)
         .json({ msg: "Product added successfully", product: newProduct });
     } catch (err) {
+      // Backstop for the rare race where two admins pass the findOne check
+      // above at nearly the same instant -- the unique collation index is
+      // what actually prevents the second write, this just turns that into
+      // the same friendly message instead of a raw 500.
+      if (err.code === 11000) {
+        const existing = await Product.findOne({ name: req.body.name?.trim() }).collation({
+          locale: "en",
+          strength: 2,
+        });
+        return res.status(409).json({
+          msg: `"${existing?.name || req.body.name}" already exists. Use Add Inventory to add stock for your branch instead of creating a new product.`,
+          existingProductId: existing?._id,
+        });
+      }
       console.error(
         "Error saving product or uploading image to Cloudinary:",
         err.message

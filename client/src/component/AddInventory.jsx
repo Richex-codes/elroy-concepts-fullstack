@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import { getOwnBranchId, isOwnBranch } from "../utils/authUser.js";
 import { newIdempotencyKey } from "../utils/idempotencyKey.js";
 import "../styles/addInventory.css";
 
 export default function AddInventoryPage() {
+  // Add Product redirects here with ?product=<id> when the admin tried to
+  // create something that already exists in the catalog, so they land
+  // straight on restocking it instead of having to find it again themselves.
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -35,6 +40,11 @@ export default function AddInventoryPage() {
           }
         );
         setProducts(productRes.data);
+
+        const preselectId = searchParams.get("product");
+        if (preselectId && productRes.data.some((p) => p._id === preselectId)) {
+          setSelectedProduct(preselectId);
+        }
 
         const branchRes = await api.get(
           "/admin/branches",
