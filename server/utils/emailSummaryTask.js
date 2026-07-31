@@ -12,7 +12,7 @@ async function runInventorySummaryEmail(filters = {}, to, { notifyOnComplete = f
     const totalSummary = computeProductTotals(summary);
     const pdfBuffer = await generateInventoryPDF(summary, totalSummary);
 
-    await sendEmailWithPDF(pdfBuffer, to || process.env.EMAIL_USER, {
+    await sendEmailWithPDF(pdfBuffer, to || process.env.EMAIL_FROM, {
       subject: "Inventory Summary Report",
       text: "Attached is the inventory summary report.",
       filename: "Inventory-Summary.pdf",

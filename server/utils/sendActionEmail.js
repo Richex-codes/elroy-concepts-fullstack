@@ -1,13 +1,5 @@
-const nodemailer = require("nodemailer");
+const { resend } = require("./resendClient");
 const { renderActionEmail } = require("./emailTemplate");
-
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 // Strips the inline HTML tags renderActionEmail wraps each line in, so the
 // same content can double as the plain-text part.
@@ -36,9 +28,9 @@ function toPlainText({ heading, bodyLines, buttonText, buttonUrl, footerNote }) 
 // Every account-related transactional email (verify, reset, resend) goes
 // through this one place, so deliverability tweaks only need to happen once.
 async function sendActionEmail(to, { subject, heading, bodyLines, buttonText, buttonUrl, footerNote }) {
-  await transporter.sendMail({
-    from: `"Elroy Concepts" <${process.env.EMAIL_USER}>`,
-    replyTo: process.env.EMAIL_USER,
+  await resend.emails.send({
+    from: `Elroy Concepts <${process.env.EMAIL_FROM}>`,
+    replyTo: process.env.EMAIL_FROM,
     to,
     subject,
     html: renderActionEmail({ heading, bodyLines, buttonText, buttonUrl, footerNote }),

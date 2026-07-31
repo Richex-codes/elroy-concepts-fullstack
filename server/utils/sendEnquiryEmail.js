@@ -1,18 +1,10 @@
 require("dotenv").config();
-const nodemailer = require("nodemailer");
+const { resend } = require("./resendClient");
 
 async function sendEnquiryEmail({ user, cart, pdfBuffer }) {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.ENQUIRY_NOTIFICATION_EMAIL || process.env.EMAIL_USER,
+  await resend.emails.send({
+    from: `Elroy Concepts <${process.env.EMAIL_FROM}>`,
+    to: process.env.ENQUIRY_NOTIFICATION_EMAIL || process.env.EMAIL_FROM,
     subject: "New Product Enquiry",
     text:
     `New product enquiry by ${user?.name || "N/A"} ` +
@@ -33,9 +25,7 @@ async function sendEnquiryEmail({ user, cart, pdfBuffer }) {
         content: pdfBuffer
       }
     ]
-  };
-
-  await transporter.sendMail(mailOptions);
+  });
 
   console.log("Enquiry email sent successfully.");
 }
