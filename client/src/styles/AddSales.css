@@ -320,3 +320,18 @@
     overflow-x: auto;
   }
 }
+
+/* ===================== */
+/* ✅ 360px and below -- folded-phone cover screens (e.g. Z Fold 5, ~344px) */
+/* ===================== */
+@media (max-width: 360px) {
+  .AddSales-page {
+    padding: 16px 8px;
+  }
+
+  .sales-form input,
+  .sales-form select {
+    padding: 8px 6px;
+    font-size: 0.85em;
+  }
+}

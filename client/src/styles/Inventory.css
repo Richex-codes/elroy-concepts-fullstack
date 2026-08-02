@@ -362,3 +362,18 @@
       font-size: 0.9em;
     }
   }
+
+  /* ===================== */
+  /* ✅ 360px and below -- folded-phone cover screens (e.g. Z Fold 5, ~344px) */
+  /* ===================== */
+  @media (max-width: 360px) {
+    .inventory-page {
+      padding: 16px 8px;
+    }
+
+    .inventory-filters input,
+    .inventory-filters select {
+      padding: 6px 8px;
+      font-size: 0.8rem;
+    }
+  }

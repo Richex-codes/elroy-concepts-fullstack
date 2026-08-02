@@ -168,7 +168,8 @@
   }
 
   .inventory-form select,
-  .inventory-form input[type="number"] {
+  .inventory-form input[type="number"],
+  .inventory-form input[type="date"] {
     padding: 8px;
     font-size: 0.9em;
   }
@@ -176,5 +177,22 @@
   .inventory-form .btn-primary {
     padding: 8px;
     font-size: 0.95em;
+  }
+}
+
+/* ===================== */
+/* ✅ 360px and below -- folded-phone cover screens (e.g. Z Fold 5, ~344px) */
+/* ===================== */
+@media (max-width: 360px) {
+  .add-inventory-page {
+    padding: 16px 8px;
+  }
+
+  .inventory-form select,
+  .inventory-form input[type="number"],
+  .inventory-form input[type="date"],
+  .inventory-form textarea {
+    padding: 8px 6px;
+    font-size: 0.85em;
   }
 }

@@ -319,13 +319,32 @@ export default function AddProductPage() {
               </div>
 
               <div className="product-form-field">
-                <label>Product Image</label>
+                <label htmlFor="product-image-input">Product Image</label>
+                {/* The native file input's own "Choose File" control is
+                    drawn by the OS/browser and doesn't reliably respect CSS
+                    width the way text inputs do -- rendering varies enough
+                    across browsers (this is the same class of thing as the
+                    iOS date-input appearance bug) that on a genuinely narrow
+                    screen it can still overflow even though the box itself
+                    is correctly sized. Hiding it (not display:none, which
+                    breaks label-click/keyboard access in some browsers) and
+                    driving it entirely through this label + our own
+                    filename text sidesteps that rendering difference
+                    completely, on every device. */}
                 <input
+                  id="product-image-input"
                   type="file"
                   name="image"
                   accept="image/*"
                   onChange={handleChange}
+                  className="visually-hidden-file-input"
                 />
+                <label htmlFor="product-image-input" className="file-input-button">
+                  <i className="fas fa-upload"></i> Choose File
+                  <span className="file-input-name">
+                    {formData.image ? formData.image.name : "No file chosen"}
+                  </span>
+                </label>
               </div>
             </div>
 
