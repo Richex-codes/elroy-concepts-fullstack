@@ -222,6 +222,7 @@ const fetchStock = async () => {
                 <th>Product</th>
                 <th>Branch</th>
               <th>Color</th>
+              <th>Length</th>
               <th className="col-right">Quantity</th>
               <th>Description</th>
               <th>Added At</th>
@@ -230,14 +231,14 @@ const fetchStock = async () => {
           <tbody>
             {loading && stock.length === 0 && (
               <tr>
-                <td colSpan={6} className="table-empty-state">
+                <td colSpan={7} className="table-empty-state">
                   Loading inventory...
                 </td>
               </tr>
             )}
             {!loading && stock.length === 0 && (
               <tr>
-                <td colSpan={6} className="table-empty-state">
+                <td colSpan={7} className="table-empty-state">
                   No inventory entries found for this period.
                 </td>
               </tr>
@@ -246,7 +247,10 @@ const fetchStock = async () => {
               <tr key={item._id} className={idx % 2 === 1 ? "row-alt" : ""}>
                <td data-label="Product">{item.product}</td>
                 <td data-label="Branch">{item.branch}</td>
-                <td data-label="Color">{item.color}</td>
+                <td data-label="Color">{item.color || "-"}</td>
+                <td data-label="Length">
+                  {item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-"}
+                </td>
                 <td className="col-right" data-label="Quantity">{item.quantity}</td>
                 <td data-label="Description">
                   {item.description || "-"}
@@ -290,6 +294,7 @@ const fetchStock = async () => {
                 <th>Branch</th>
                 <th>Product</th>
                 <th>Color</th>
+                <th>Length</th>
                 <th className="col-right">Total Qty</th>
               </tr>
             </thead>
@@ -297,14 +302,14 @@ const fetchStock = async () => {
             <tbody>
             {loading && summary.length === 0 && (
               <tr>
-                <td colSpan={4} className="table-empty-state">
+                <td colSpan={5} className="table-empty-state">
                   Loading summary...
                 </td>
               </tr>
             )}
             {!loading && summary.length === 0 && (
               <tr>
-                <td colSpan={4} className="table-empty-state">
+                <td colSpan={5} className="table-empty-state">
                   No inventory summary data found.
                 </td>
               </tr>
@@ -313,7 +318,10 @@ const fetchStock = async () => {
               <tr key={index} className={index % 2 === 1 ? "row-alt" : ""}>
                 <td data-label="Branch">{item.branch}</td>
                 <td data-label="Product">{item.product}</td>
-                <td data-label="Color">{item.color}</td>
+                <td data-label="Color">{item.color || "-"}</td>
+                <td data-label="Length">
+                  {item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-"}
+                </td>
                 <td className="col-right" data-label="Total Qty">{item.totalQuantity}</td>
               </tr>
             ))}

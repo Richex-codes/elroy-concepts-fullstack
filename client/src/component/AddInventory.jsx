@@ -22,11 +22,15 @@ export default function AddInventoryPage() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [color, setColor] = useState("");
+  const [length, setLength] = useState("");
   const [dateAdded, setDateAdded] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
   const COLORS = ["Gold", "Silver", "Bronze", "Black", "Dark Bronze", "Wood", "No Color"];
+
+  const selectedProductObj = products.find((p) => p._id === selectedProduct);
+  const isPipe = selectedProductObj?.unitType === "length";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,10 +72,10 @@ export default function AddInventoryPage() {
     try {
       await api.post(
         `/products/${selectedProduct}/add-inventory`,
-         { 
+         {
            branch: selectedBranch,
            quantity: parseInt(quantity),
-           color,
+           ...(isPipe ? { length: Number(length) } : { color }),
            description,
            addedAt: dateAdded
           },
@@ -86,6 +90,7 @@ export default function AddInventoryPage() {
       setMessage("Inventory added!");
       setIdempotencyKey(newIdempotencyKey()); // this restock is done; the next submit is a new one
       setQuantity("");
+      setLength("");
       setDescription("")
     } catch (err) {
       console.error("Error adding inventory:", err);
@@ -150,28 +155,43 @@ export default function AddInventoryPage() {
         </div>
 
         <div className="inventory-form-row">
-          <div className="inventory-form-field">
-            <label>Color</label>
-            <select
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              required
-            >
-            <option value="">Select Color</option>
-            {COLORS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-              ))}
-            </select>
-          </div>
+          {isPipe ? (
+            <div className="inventory-form-field">
+              <label>Length (m)</label>
+              <input
+                type="number"
+                min="0.1"
+                step="0.1"
+                placeholder="e.g. 5.8"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+                required
+              />
+            </div>
+          ) : (
+            <div className="inventory-form-field">
+              <label>Color</label>
+              <select
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                required
+              >
+              <option value="">Select Color</option>
+              {COLORS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="inventory-form-field">
-            <label>Quantity</label>
+            <label>{isPipe ? "Number of sticks at this length" : "Quantity"}</label>
             <input
               type="number"
               min="1"
-              placeholder="e.g. 20"
+              placeholder={isPipe ? "e.g. 24" : "e.g. 20"}
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required

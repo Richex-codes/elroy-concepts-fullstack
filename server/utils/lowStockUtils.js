@@ -49,10 +49,16 @@ async function getLowStock({ branchId } = {}) {
           product: "$_id",
           branch: "$inventory.branch",
           color: "$inventory.color",
+          // "length" (pipe) products are grouped per stick-length too, so a
+          // batch of 6m sticks and a batch of 5.8m sticks (or a remnant at
+          // some other length) are separate low-stock lines instead of
+          // being lumped into one misleading combined count.
+          length: "$inventory.length",
         },
         name: { $first: "$name" },
         category: { $first: "$categoryInfo.name" },
         branchName: { $first: "$branchInfo.name" },
+        isRemnant: { $max: "$inventory.isRemnant" },
         quantity: { $sum: "$inventory.quantity" },
         addedAt: { $max: "$inventory.addedAt" },
       },
@@ -66,6 +72,8 @@ async function getLowStock({ branchId } = {}) {
         category: { $ifNull: ["$category", "N/A"] },
         branchName: { $ifNull: ["$branchName", "N/A"] },
         color: "$_id.color",
+        length: "$_id.length",
+        isRemnant: { $ifNull: ["$isRemnant", false] },
         quantity: 1,
         addedAt: 1,
       },

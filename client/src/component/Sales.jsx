@@ -289,7 +289,7 @@ const handleDelete = async (sale) => {
                                 <thead>
                                   <tr>
                                     <th>Product</th>
-                                    <th>Color</th>
+                                    <th>Color / Length</th>
                                     <th>Qty</th>
                                     <th className="col-right">Rate</th>
                                     <th className="col-right">Amount</th>
@@ -299,7 +299,7 @@ const handleDelete = async (sale) => {
                                   {sale.items?.map((item, i) => (
                                     <tr key={i}>
                                       <td>{item.productName}</td>
-                                      <td>{item.color}</td>
+                                      <td>{item.length != null ? `${item.length}m` : item.color}</td>
                                       <td>{item.quantitySold}</td>
                                       <td className="amount-cell">
                                         {item.rate != null ? formatNaira(item.rate) : "-"}

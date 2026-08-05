@@ -49,15 +49,17 @@ function generateInvoicePDF(sale) {
       drawTable(
         doc,
         [
-          { key: "product", label: "PRODUCT", width: 190 },
-          { key: "color", label: "COLOR", width: 85 },
-          { key: "qty", label: "QTY", width: 50, align: "right" },
-          { key: "rate", label: "RATE", width: 100, align: "right" },
-          { key: "amount", label: "AMOUNT", width: 95, align: "right" },
+          { key: "product", label: "PRODUCT", width: 160 },
+          { key: "color", label: "COLOR", width: 70 },
+          { key: "length", label: "LENGTH", width: 60, align: "right" },
+          { key: "qty", label: "QTY", width: 45, align: "right" },
+          { key: "rate", label: "RATE", width: 90, align: "right" },
+          { key: "amount", label: "AMOUNT", width: 85, align: "right" },
         ],
         items.map((item) => ({
           product: item.productName || "N/A",
           color: item.color || "-",
+          length: item.length != null ? `${item.length}m` : "-",
           qty: item.quantitySold,
           rate: item.rate != null ? formatNaira(item.rate) : "-",
           amount: formatNaira(item.amount),

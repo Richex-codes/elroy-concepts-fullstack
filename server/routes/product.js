@@ -158,7 +158,8 @@ router.post(
   upload.single("image"), // Use the Cloudinary-configured Multer
   async (req, res) => {
     try {
-      const { name, category, dateAdded } = req.body;
+      const { name, category, dateAdded, unitType, pipeShape, pipeSize, pipeThickness } = req.body;
+      const resolvedUnitType = unitType === "length" ? "length" : "piece";
 
       let imageUrl = "";
       if (req.file) {
@@ -178,6 +179,18 @@ router.post(
       const outsideBranchEntry = inventory.find((item) => isOutsideOwnBranch(req, item.branch));
       if (outsideBranchEntry) {
         return res.status(403).json({ msg: "You can only add inventory for your own branch." });
+      }
+
+      if (resolvedUnitType === "length") {
+        const badLine = inventory.find((item) => !item.length || Number(item.length) <= 0);
+        if (badLine) {
+          return res.status(400).json({ msg: "Each length batch needs a valid length in meters." });
+        }
+      } else {
+        const badLine = inventory.find((item) => !item.color);
+        if (badLine) {
+          return res.status(400).json({ msg: "Each inventory line needs a color." });
+        }
       }
 
       // A branch admin creating "30mm pipe" for the first time at their own
@@ -200,8 +213,15 @@ router.post(
         name,
         category,
         image: imageUrl,
+        unitType: resolvedUnitType,
+        ...(resolvedUnitType === "length" && {
+          pipeShape: pipeShape || "",
+          pipeSize: pipeSize || "",
+          ...(pipeThickness && { pipeThickness: Number(pipeThickness) }),
+        }),
         inventory: inventory.map((item) => ({
           ...item,
+          ...(resolvedUnitType === "length" && { length: Number(item.length) }),
           addedAt: dateAdded || Date.now(),
         })),
         dateAdded,
@@ -341,7 +361,7 @@ router.get("/product-inventory", authMiddleware, requireAdmin, async (req, res) 
 // Add inventory to existing product
 router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inventory.add"), async (req, res) => {
   const productId = req.params.id;
-  const { branch, quantity, color, description, addedAt } = req.body;
+  const { branch, quantity, color, length, description, addedAt } = req.body;
 
   if (!branch || !quantity || isNaN(quantity)) {
     return res
@@ -357,10 +377,19 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ msg: "Product not found" });
 
+    const isPipe = product.unitType === "length";
+    if (isPipe) {
+      if (!length || isNaN(length) || Number(length) <= 0) {
+        return res.status(400).json({ msg: "A valid length in meters is required for this product." });
+      }
+    } else if (!color) {
+      return res.status(400).json({ msg: "Color is required for this product." });
+    }
+
     product.inventory.push({
       branch,
       quantity: parseInt(quantity),
-      color,
+      ...(isPipe ? { length: Number(length) } : { color }),
       description,
       addedAt
     });
@@ -377,7 +406,7 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
       after: {
         branchName: branchDoc?.name,
         quantity: parseInt(quantity),
-        color,
+        ...(isPipe ? { length: Number(length) } : { color }),
         description,
       },
       metadata: { productName: product.name },
@@ -583,6 +612,8 @@ function recentInventoryPipeline(matchBranchId) {
         branch: "$branchInfo.name",
         quantity: "$inventory.quantity",
         color: "$inventory.color",
+        length: "$inventory.length",
+        isRemnant: { $ifNull: ["$inventory.isRemnant", false] },
         description: { $ifNull: ["$inventory.description", "N/A"] },
         addedAt: "$inventory.addedAt",
       },

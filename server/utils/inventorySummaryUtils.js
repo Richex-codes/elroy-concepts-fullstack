@@ -56,8 +56,12 @@ async function getInventorySummary({ product, branch, color } = {}) {
           productId: "$_id",
           branch: { $ifNull: ["$branchInfo.name", "N/A"] },
           color: "$inventory.color",
+          // Keeps each stick-length its own row for "length" (pipe)
+          // products, same reasoning as the low-stock grouping.
+          length: "$inventory.length",
         },
         product: { $first: "$name" },
+        isRemnant: { $max: "$inventory.isRemnant" },
         totalQuantity: { $sum: "$inventory.quantity" },
       },
     },
@@ -69,6 +73,8 @@ async function getInventorySummary({ product, branch, color } = {}) {
         product: 1,
         branch: "$_id.branch",
         color: "$_id.color",
+        length: "$_id.length",
+        isRemnant: { $ifNull: ["$isRemnant", false] },
         totalQuantity: 1,
       },
     },

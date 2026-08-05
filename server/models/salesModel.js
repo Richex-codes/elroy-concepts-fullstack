@@ -11,9 +11,10 @@ const SaleItemSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
+    // Required for "piece" products, unused for "length" products.
     color: {
       type: String,
-      required: true,
+      default: "",
     },
     quantitySold: {
       type: Number,
@@ -28,6 +29,24 @@ const SaleItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    // --- "length" (pipe) products only, below ---
+    // Length in meters sold per piece (quantitySold counts pieces of this
+    // length, same way it counts pieces of a color for "piece" products).
+    length: {
+      type: Number,
+    },
+    // Provenance of which original stick lengths this line was cut from,
+    // e.g. [{fromLength: 5.8, pieces: 2}, {fromLength: 6, pieces: 1}].
+    // Lets sale deletion restore stock (and undo any remnant it created)
+    // without needing to store the remnant length redundantly -- it's
+    // deterministically fromLength - length, recomputed at restore time.
+    cuts: [
+      {
+        fromLength: { type: Number, required: true },
+        pieces: { type: Number, required: true },
+        _id: false,
+      },
+    ],
   },
   { _id: false }
 );

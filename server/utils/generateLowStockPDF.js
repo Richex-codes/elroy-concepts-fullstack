@@ -24,17 +24,19 @@ function generateLowStockPDF(lowStock) {
     drawTable(
       doc,
       [
-        { key: "name", label: "PRODUCT", width: 165 },
-        { key: "category", label: "CATEGORY", width: 90 },
-        { key: "branchName", label: "BRANCH", width: 100 },
-        { key: "color", label: "COLOR", width: 75 },
-        { key: "quantity", label: "QTY LEFT", width: 85, align: "right" },
+        { key: "name", label: "PRODUCT", width: 150 },
+        { key: "category", label: "CATEGORY", width: 80 },
+        { key: "branchName", label: "BRANCH", width: 90 },
+        { key: "color", label: "COLOR", width: 65 },
+        { key: "length", label: "LENGTH", width: 55, align: "right" },
+        { key: "quantity", label: "QTY LEFT", width: 75, align: "right" },
       ],
       lowStock.map((item) => ({
         name: item.name,
         category: item.category,
         branchName: item.branchName,
-        color: item.color,
+        color: item.color || "-",
+        length: item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-",
         quantity: item.quantity,
       }))
     );

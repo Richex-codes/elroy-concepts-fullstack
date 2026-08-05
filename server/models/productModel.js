@@ -17,6 +17,17 @@ const ProductSchema = new Schema(
       type: String,
       required: false,
     },
+    // "piece" = counted normally (existing behaviour). "length" = pipes sold
+    // by the meter, stocked as discrete sticks (see inventory.length below).
+    unitType: {
+      type: String,
+      enum: ["piece", "length"],
+      default: "piece",
+    },
+    // Only meaningful when unitType === "length".
+    pipeShape: { type: String, default: "" },
+    pipeSize: { type: String, default: "" },
+    pipeThickness: { type: Number },
     inventory: [
       {
         branch: {
@@ -29,9 +40,24 @@ const ProductSchema = new Schema(
           required: true,
           default: 0,
         },
+        // Required for "piece" products, unused for "length" products --
+        // enforced at the route layer since it's conditional on the parent
+        // product's unitType, not expressible as a plain schema constraint.
         color: {
           type: String,
-          required: true,
+          default: "",
+        },
+        // Meters per stick in this batch. Only set for "length" products --
+        // each line represents a count of physically identical-length
+        // sticks, the same way a color line represents identical-color units.
+        length: {
+          type: Number,
+        },
+        // True for a line auto-created from a sale's leftover offcut,
+        // rather than stock an admin explicitly restocked.
+        isRemnant: {
+          type: Boolean,
+          default: false,
         },
         description: {
           type: String,

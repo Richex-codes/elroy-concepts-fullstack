@@ -21,15 +21,17 @@ function generateInventoryPDF(summary, totalSummary) {
   drawTable(
     doc,
     [
-      { key: "product", label: "PRODUCT", width: 220 },
-      { key: "branch", label: "BRANCH", width: 140 },
-      { key: "color", label: "COLOR", width: 100 },
+      { key: "product", label: "PRODUCT", width: 190 },
+      { key: "branch", label: "BRANCH", width: 120 },
+      { key: "color", label: "COLOR", width: 80 },
+      { key: "length", label: "LENGTH", width: 55, align: "right" },
       { key: "totalQuantity", label: "QTY", width: 55, align: "right" },
     ],
     summary.map((item) => ({
       product: item.product,
       branch: item.branch,
-      color: item.color,
+      color: item.color || "-",
+      length: item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-",
       totalQuantity: item.totalQuantity,
     }))
   );

@@ -19,6 +19,7 @@ const User = require("../models/usersModel.js");
 const PushSubscription = require("../models/pushSubscriptionModel.js");
 const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify.js");
 const { idempotent } = require("../utils/idempotency.js");
+const { eligiblePipeLines, deductPipeLength, restorePipeLength } = require("../utils/pipeStock.js");
 const mongoose = require("mongoose");
 
 function escapeRegex(string) {
@@ -737,13 +738,36 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
       const resolved = [];
       for (const line of items) {
         const qty = Number(line.quantitySold);
-        if (!line.productId || !line.color || !qty || qty <= 0 || line.amount == null) {
-          throw Object.assign(new Error("Each item needs a product, color, valid quantity, and amount"), { statusCode: 400 });
+        const isPipeLine = line.length != null && line.length !== "";
+
+        if (!line.productId || !qty || qty <= 0 || line.amount == null || (!isPipeLine && !line.color)) {
+          throw Object.assign(new Error("Each item needs a product, color/length, valid quantity, and amount"), { statusCode: 400 });
         }
 
         const product = productById.get(line.productId);
         if (!product) {
           throw Object.assign(new Error(`Product not found: ${line.productId}`), { statusCode: 404 });
+        }
+
+        const rate = line.rate != null && line.rate !== "" ? Number(line.rate) : undefined;
+
+        if (isPipeLine || product.unitType === "length") {
+          const requestedLength = Number(line.length);
+          if (product.unitType !== "length" || !requestedLength || requestedLength <= 0) {
+            throw Object.assign(new Error(`"${product.name}" is not sold by length`), { statusCode: 400 });
+          }
+          // Best-effort pre-check only -- pass 2 re-reads live inventory and
+          // is the authoritative guard, since two lines in this same sale
+          // can draw from overlapping sticks (a 6m stick is eligible for
+          // both a 2m and a 3m request), which a simple claimed-quantity
+          // map (as used for color below) can't track exactly.
+          const eligible = eligiblePipeLines(product, branch, requestedLength);
+          const totalAvailable = eligible.reduce((sum, i) => sum + i.quantity, 0);
+          if (totalAvailable < qty) {
+            throw Object.assign(new Error(`Insufficient stock for "${product.name}" at ${requestedLength}m`), { statusCode: 400 });
+          }
+          resolved.push({ product, qty, length: requestedLength, amount: Number(line.amount), rate, isPipe: true });
+          continue;
         }
 
         const invEntries = product.inventory.filter(
@@ -761,15 +785,42 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         }
         claimedByKey.set(key, alreadyClaimed + qty);
 
-        const rate = line.rate != null && line.rate !== "" ? Number(line.rate) : undefined;
-        resolved.push({ product, invEntries, qty, color: line.color, amount: Number(line.amount), rate });
+        resolved.push({ product, invEntries, qty, color: line.color, amount: Number(line.amount), rate, isPipe: false });
       }
 
       // Pass 2: everything validated, now actually deduct + save.
       itemsForSale = [];
       lowStockLines = [];
       const dirtyProducts = new Set();
-      for (const { product, invEntries, qty, color, amount, rate } of resolved) {
+      for (const resolvedItem of resolved) {
+        const { product, qty, amount, rate, isPipe } = resolvedItem;
+        dirtyProducts.add(product);
+
+        if (isPipe) {
+          const { length } = resolvedItem;
+          // Re-reads live inventory (not the pass-1 snapshot) and throws if
+          // it can't fully satisfy `qty` -- see the pass-1 comment above.
+          const cuts = deductPipeLength(product, branch, length, qty);
+          itemsForSale.push({
+            product: product._id,
+            quantitySold: qty,
+            length,
+            cuts,
+            amount,
+            ...(rate != null && { rate }),
+          });
+
+          const remainingQty = eligiblePipeLines(product, branch, length).reduce(
+            (sum, i) => sum + i.quantity,
+            0
+          );
+          if (remainingQty <= LOW_STOCK_THRESHOLD) {
+            lowStockLines.push({ productName: product.name, color: `${length}m`, remainingQty });
+          }
+          continue;
+        }
+
+        const { invEntries, color } = resolvedItem;
         let remaining = qty;
         for (const i of invEntries) {
           if (remaining <= 0) break;
@@ -781,7 +832,6 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
             i.quantity = 0;
           }
         }
-        dirtyProducts.add(product);
         itemsForSale.push({
           product: product._id,
           color,
@@ -843,6 +893,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           quantitySold: i.quantitySold,
           rate: i.rate,
           amount: i.amount,
+          ...(i.length != null && { length: i.length, cuts: i.cuts }),
         })),
         amount: sale.amount,
         amountPaid: sale.amountPaid,
@@ -897,6 +948,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           quantitySold: i.quantitySold,
           rate: i.rate,
           amount: i.amount,
+          ...(i.length != null && { length: i.length, cuts: i.cuts }),
         })),
         amount: sale.amount,
         amountPaid: sale.amountPaid,
@@ -991,6 +1043,7 @@ router.get("/sales", authMiddleware, async (req, res) => {
         quantitySold: item.quantitySold,
         rate: item.rate,
         amount: item.amount,
+        ...(item.length != null && { length: item.length }),
       })),
       amount: sale.amount,
       amountPaid: sale.amountPaid,
@@ -1027,6 +1080,13 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
       for (const line of sale.items) {
         const product = line.product; // populated Product doc, or null if deleted
         if (!product) continue;
+
+        if (line.length != null && line.cuts?.length) {
+          restorePipeLength(product, sale.branch.toString(), line.length, line.cuts);
+          productsToSave.set(product._id.toString(), product);
+          restoredCount++;
+          continue;
+        }
 
         const invItem = product.inventory.find(
           (i) => i.branch.toString() === sale.branch.toString() && i.color === line.color
@@ -1069,6 +1129,7 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
           quantitySold: line.quantitySold,
           rate: line.rate,
           amount: line.amount,
+          ...(line.length != null && { length: line.length, cuts: line.cuts }),
         })),
         amount: sale.amount,
         amountPaid: sale.amountPaid,
@@ -1113,6 +1174,7 @@ async function loadSaleForInvoice(id) {
       quantitySold: line.quantitySold,
       rate: line.rate,
       amount: line.amount,
+      ...(line.length != null && { length: line.length }),
     })),
     amount: sale.amount,
     amountPaid: sale.amountPaid,
@@ -1528,6 +1590,8 @@ router.get(
             branch: { $ifNull: ["$branchInfo.name", "Deleted branch"] },
             branchId: "$branchInfo._id",
             color: "$inventory.color",
+            length: "$inventory.length",
+            isRemnant: { $ifNull: ["$inventory.isRemnant", false] },
             quantity: "$inventory.quantity",
             description: "$inventory.description",
             addedAt: "$inventory.addedAt",
