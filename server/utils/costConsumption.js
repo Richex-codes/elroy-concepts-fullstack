@@ -122,4 +122,27 @@ function findBatchById(product, batchId) {
   return { line: null, batch: null };
 }
 
-module.exports = { consumeStock, drainLineBatches, findBatchById };
+// Reverses consumeStock for a deleted sale: restores each referenced batch
+// by id, precisely, rather than bumping the line's maintained `quantity`
+// directly. Mirrors pipeStock.js's restorePipeLength. `quantity` is derived
+// from batches[] via recomputeInventoryQuantity (see productModel.js), so
+// restoring it any other way leaves quantity and the batches it's supposed
+// to summarize out of sync -- a later consumeStock call touching the same
+// line recomputes quantity from the still-understated batches and silently
+// erases the restoration. Tolerant of a since-deleted batch (best-effort,
+// same spirit as the existing restoredCount tolerance elsewhere).
+function restoreStock(product, costBatchRefs) {
+  let restored = 0;
+  for (const ref of costBatchRefs || []) {
+    if (!ref.batchId) continue;
+    const { line, batch } = findBatchById(product, ref.batchId);
+    if (batch) {
+      batch.quantityRemaining += ref.quantityDrawn;
+      Product.recomputeInventoryQuantity(line);
+      restored += ref.quantityDrawn;
+    }
+  }
+  return restored;
+}
+
+module.exports = { consumeStock, drainLineBatches, findBatchById, restoreStock };

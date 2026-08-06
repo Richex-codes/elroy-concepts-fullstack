@@ -20,7 +20,7 @@ const PushSubscription = require("../models/pushSubscriptionModel.js");
 const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify.js");
 const { idempotent } = require("../utils/idempotency.js");
 const { eligiblePipeLines, deductPipeLength, restorePipeLength } = require("../utils/pipeStock.js");
-const { consumeStock } = require("../utils/costConsumption.js");
+const { consumeStock, restoreStock } = require("../utils/costConsumption.js");
 const {
   getProfitSummary,
   getInventoryTurnover,
@@ -1129,6 +1129,17 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
           continue;
         }
 
+        if (line.costBatchRefs?.length) {
+          const restoredQty = restoreStock(product, line.costBatchRefs);
+          if (restoredQty > 0) {
+            productsToSave.set(product._id.toString(), product);
+            restoredCount++;
+          }
+          continue;
+        }
+
+        // Pre-Phase-1 sale with no cost/batch data recorded -- nothing to
+        // reverse precisely, so fall back to the old direct-quantity bump.
         const invItem = product.inventory.find(
           (i) => i.branch.toString() === sale.branch.toString() && i.color === line.color
         );
