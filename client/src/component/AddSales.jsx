@@ -14,9 +14,17 @@ export default function AddSales() {
   // below, in `branches` -- is the only option they're offered.
   const [branch, setBranch] = useState(getOwnBranchId);
   const [amountPaid, setAmountPaid] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [saleDate, setSaleDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+
+  const PAYMENT_METHODS = [
+    { value: "cash", label: "Cash" },
+    { value: "transfer", label: "Transfer" },
+    { value: "pos", label: "POS" },
+    { value: "cheque", label: "Cheque" },
+  ];
 
   // the line item currently being configured, before it's added to `items`
   const [draftProduct, setDraftProduct] = useState("");
@@ -230,6 +238,11 @@ export default function AddSales() {
       setMessage("Add at least one item to this sale.");
       return;
     }
+    if (!paymentMethod) {
+      setIsError(true);
+      setMessage("Select a payment method.");
+      return;
+    }
 
     const validAmountPaid =
       !amountPaid || Number(amountPaid) < 0 ? 0 : Number(amountPaid);
@@ -250,6 +263,7 @@ export default function AddSales() {
             amount: i.amount,
           })),
           amountPaid: validAmountPaid,
+          paymentMethod,
           saleDate,
         },
         {
@@ -270,6 +284,7 @@ export default function AddSales() {
       setBranch("");
       setItems([]);
       setAmountPaid("");
+      setPaymentMethod("");
       setSaleDate(new Date().toISOString().split("T")[0]);
 
       const res = await api.get("/products", {
@@ -490,6 +505,22 @@ export default function AddSales() {
 
         <div className="sales-form-row">
         <div className="sales-form-field">
+        <label>Payment Method</label>
+        <select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          required
+        >
+          <option value="">Select Payment Method</option>
+          {PAYMENT_METHODS.map((pm) => (
+            <option key={pm.value} value={pm.value}>
+              {pm.label}
+            </option>
+          ))}
+        </select>
+        </div>
+
+        <div className="sales-form-field">
         <label>Amount Paid</label>
         <input
           type="number"
@@ -499,7 +530,9 @@ export default function AddSales() {
           onChange={(e) => setAmountPaid(e.target.value)}
         />
         </div>
+        </div>
 
+        <div className="sales-form-row">
         <div className="sales-form-field">
         <label>Sale Date</label>
         <input
