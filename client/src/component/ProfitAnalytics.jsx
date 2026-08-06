@@ -43,6 +43,8 @@ export default function ProfitAnalytics({ selectedBranch }) {
   const [trend, setTrend] = useState(null);
   const [deadStock, setDeadStock] = useState([]);
   const [debtorAging, setDebtorAging] = useState(null);
+  const [topProducts, setTopProducts] = useState(null);
+  const [topProductsSortBy, setTopProductsSortBy] = useState("profit");
 
   const [thresholdInput, setThresholdInput] = useState("90");
   const [appliedThreshold, setAppliedThreshold] = useState(90);
@@ -51,11 +53,13 @@ export default function ProfitAnalytics({ selectedBranch }) {
   const [loadingTrend, setLoadingTrend] = useState(true);
   const [loadingDeadStock, setLoadingDeadStock] = useState(true);
   const [loadingAging, setLoadingAging] = useState(true);
+  const [loadingTopProducts, setLoadingTopProducts] = useState(true);
 
   const periodRequestId = useRef(0);
   const trendRequestId = useRef(0);
   const deadStockRequestId = useRef(0);
   const agingRequestId = useRef(0);
+  const topProductsRequestId = useRef(0);
 
   const authHeaders = {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -170,6 +174,35 @@ export default function ProfitAnalytics({ selectedBranch }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBranch]);
 
+  // Top Products: period + branch scoped like Profit/Turnover/Cash, but
+  // also keyed on sortBy since toggling it changes which rows Mongo
+  // returns (top-by-profit and top-by-revenue are genuinely different
+  // sets, not a client-side re-sort of the same 10 rows).
+  useEffect(() => {
+    if (!fromDate || !toDate) return;
+    const fetchTopProducts = async () => {
+      setLoadingTopProducts(true);
+      const requestId = ++topProductsRequestId.current;
+      try {
+        const res = await api.get("/admin/top-products", {
+          ...authHeaders,
+          params: { from: fromDate, to: toDate, ...branchParam, sortBy: topProductsSortBy, limit: 10 },
+        });
+        if (requestId !== topProductsRequestId.current) return;
+        setTopProducts(res.data);
+      } catch (err) {
+        console.error("Failed to load top products", err);
+        if (requestId === topProductsRequestId.current) {
+          showError(err, "Failed to load top products.");
+        }
+      } finally {
+        if (requestId === topProductsRequestId.current) setLoadingTopProducts(false);
+      }
+    };
+    fetchTopProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBranch, fromDate, toDate, topProductsSortBy]);
+
   const handleApplyThreshold = () => {
     const parsed = parseInt(thresholdInput, 10);
     setAppliedThreshold(!parsed || parsed <= 0 ? 90 : parsed);
@@ -201,6 +234,10 @@ export default function ProfitAnalytics({ selectedBranch }) {
 
       <div className="analytics-card analytics-chart-card">
         <h3>Revenue &amp; Profit Trend (Last 12 Months)</h3>
+        <p className="analytics-note analytics-chart-note">
+          Always the trailing 12 months, independent of the date range above -- that range applies
+          to the cards below only.
+        </p>
         {loadingTrend ? (
           <p className="loading-message">Loading trend...</p>
         ) : !trend?.months?.length ? (
@@ -330,6 +367,75 @@ export default function ProfitAnalytics({ selectedBranch }) {
             </>
           )}
         </div>
+      </div>
+
+      <div className="analytics-card">
+        <div className="analytics-card-header">
+          <h3>Top Products</h3>
+          <div className="analytics-sort-toggle">
+            <button
+              type="button"
+              className={"btn-toggle" + (topProductsSortBy === "profit" ? " active" : "")}
+              onClick={() => setTopProductsSortBy("profit")}
+            >
+              By Profit
+            </button>
+            <button
+              type="button"
+              className={"btn-toggle" + (topProductsSortBy === "revenue" ? " active" : "")}
+              onClick={() => setTopProductsSortBy("revenue")}
+            >
+              By Revenue
+            </button>
+          </div>
+        </div>
+
+        {loadingTopProducts ? (
+          <p className="loading-message">Loading top products...</p>
+        ) : !topProducts?.products?.length ? (
+          <p className="table-empty-state">No sales in this period.</p>
+        ) : (
+          <>
+            <div className="analytics-table-wrapper">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th className="col-right">Units Sold</th>
+                    <th className="col-right">Revenue</th>
+                    <th className="col-right">Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topProducts.products.map((p, index) => (
+                    <tr key={p.productId || index} className={index % 2 === 1 ? "row-alt" : ""}>
+                      <td data-label="Product">{p.productName}</td>
+                      <td className="col-right" data-label="Units Sold">{p.unitsSold}</td>
+                      <td className="col-right" data-label="Revenue">{formatNaira(p.revenue)}</td>
+                      <td className="col-right" data-label="Profit">
+                        {formatNaira(p.profit)}
+                        {p.estimatedShare > 0 && (
+                          <i
+                            className="fas fa-triangle-exclamation analytics-estimated-badge"
+                            title={`${p.estimatedShare}% of this profit rests on estimated (not real) cost data`}
+                          ></i>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {topProductsSortBy === "profit" &&
+              topProducts.products.some((p) => p.estimatedShare > 0) && (
+                <p className="analytics-note">
+                  <i className="fas fa-triangle-exclamation"></i> marks a product whose profit here
+                  partly rests on estimated (not real) cost data -- treat its ranking as approximate
+                  until that stock sells through. Revenue ranking has no such caveat.
+                </p>
+              )}
+          </>
+        )}
       </div>
 
       <div className="analytics-card">

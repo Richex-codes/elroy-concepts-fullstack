@@ -28,6 +28,7 @@ const {
   getRevenueTrend,
   getDebtorAging,
   getCashCollectedVsInvoiced,
+  getTopProducts,
 } = require("../utils/analyticsUtils.js");
 const mongoose = require("mongoose");
 
@@ -1797,6 +1798,27 @@ router.get("/cash-collected", authMiddleware, async (req, res) => {
     res.json({ range: { from: from || null, to: to || null }, branch: branch || "all", ...result });
   } catch (err) {
     console.error("Error computing cash collected vs invoiced:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/top-products", authMiddleware, async (req, res) => {
+  try {
+    const { from, to, branch, limit, sortBy } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view top products for your own branch." });
+    }
+    const result = await getTopProducts({
+      branches: scope.branches,
+      fromDate: from,
+      toDate: to,
+      limit: limit ? Number(limit) : 10,
+      sortBy: sortBy === "revenue" ? "revenue" : "profit",
+    });
+    res.json({ range: { from: from || null, to: to || null }, branch: branch || "all", ...result });
+  } catch (err) {
+    console.error("Error computing top products:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

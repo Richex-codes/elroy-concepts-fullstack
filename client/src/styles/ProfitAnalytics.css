@@ -141,6 +141,16 @@
   font-style: italic;
 }
 
+.analytics-note i {
+  color: var(--danger-color);
+  margin-right: 4px;
+}
+
+.analytics-chart-note {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
 .analytics-card-single-stat {
   display: flex;
   flex-direction: column;
@@ -197,6 +207,41 @@
 
 .analytics-threshold-control .btn-primary:hover {
   background-color: var(--accent-color-dark);
+}
+
+.analytics-sort-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-toggle {
+  padding: 6px 14px;
+  background-color: #f3f4f6;
+  color: var(--secondary-text);
+  font-weight: 600;
+  font-size: 0.85em;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.btn-toggle:hover {
+  background-color: var(--accent-color-light);
+}
+
+.btn-toggle.active {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+.analytics-estimated-badge {
+  color: var(--danger-color);
+  margin-left: 6px;
+  font-size: 0.85em;
+  cursor: help;
 }
 
 .table-empty-state {

@@ -334,6 +334,86 @@ async function getCashCollectedVsInvoiced({ branches, fromDate, toDate }) {
   };
 }
 
+// Ranks products by revenue or profit over a period. profit per line =
+// items.amount - (landedCostAtSale × quantitySold), same formula
+// getProfitSummary uses -- works uniformly for pipe and piece lines since
+// both populate landedCostAtSale (Phase 1). estimatedShare is the % of a
+// product's profit that comes from costEstimated lines specifically (not
+// just % of cogs, like getProfitSummary's estimatedCogs) -- it answers
+// "how much of *this number* should I not fully trust yet."
+async function getTopProducts({ branches, fromDate, toDate, limit = 10, sortBy = "profit" }) {
+  const sortField = sortBy === "revenue" ? "revenue" : "profit";
+  const match = {
+    ...saleDateMatch(fromDate, toDate),
+    ...branchMatchStage("branch", branches),
+  };
+
+  const results = await Sales.aggregate([
+    { $match: match },
+    { $unwind: "$items" },
+    {
+      $group: {
+        _id: "$items.product",
+        unitsSold: { $sum: "$items.quantitySold" },
+        revenue: { $sum: "$items.amount" },
+        cogs: {
+          $sum: {
+            $multiply: [{ $ifNull: ["$items.landedCostAtSale", 0] }, "$items.quantitySold"],
+          },
+        },
+        estimatedProfit: {
+          $sum: {
+            $cond: [
+              { $eq: ["$items.costEstimated", true] },
+              {
+                $subtract: [
+                  "$items.amount",
+                  { $multiply: [{ $ifNull: ["$items.landedCostAtSale", 0] }, "$items.quantitySold"] },
+                ],
+              },
+              0,
+            ],
+          },
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "products",
+        localField: "_id",
+        foreignField: "_id",
+        as: "productInfo",
+      },
+    },
+    { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: 0,
+        productId: "$_id",
+        productName: { $ifNull: ["$productInfo.name", "Deleted product"] },
+        unitsSold: 1,
+        revenue: 1,
+        profit: { $subtract: ["$revenue", "$cogs"] },
+        estimatedProfit: 1,
+      },
+    },
+    { $sort: { [sortField]: -1 } },
+    { $limit: limit },
+  ]);
+
+  return {
+    sortBy: sortField,
+    products: results.map((r) => ({
+      productId: r.productId,
+      productName: r.productName,
+      unitsSold: r.unitsSold,
+      revenue: round2(r.revenue),
+      profit: round2(r.profit),
+      estimatedShare: r.profit > 0 ? round2((r.estimatedProfit / r.profit) * 100) : 0,
+    })),
+  };
+}
+
 module.exports = {
   getProfitSummary,
   getInventoryTurnover,
@@ -341,4 +421,5 @@ module.exports = {
   getRevenueTrend,
   getDebtorAging,
   getCashCollectedVsInvoiced,
+  getTopProducts,
 };
