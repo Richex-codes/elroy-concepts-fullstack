@@ -243,28 +243,37 @@ export default function ProfitAnalytics({ selectedBranch }) {
         ) : !trend?.months?.length ? (
           <p className="table-empty-state">No trend data available.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={trend.months} margin={{ left: 10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis
-                tick={{ fontSize: 12 }}
-                tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`}
-                width={60}
-              />
-              <Tooltip formatter={(value) => formatNaira(value)} />
-              <Legend />
-              <Bar dataKey="revenue" name="Revenue" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
-              <Line
-                type="monotone"
-                dataKey="grossProfit"
-                name="Gross Profit"
-                stroke="var(--primary-color)"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+          // 12 months of tick labels need real room -- shrinking the whole
+          // chart to fit a phone-width container (ResponsiveContainer's
+          // default behavior) squeezes them until they overlap. Instead,
+          // this inner wrapper holds a comfortable minimum width and the
+          // card scrolls horizontally on narrow screens (same pattern as
+          // this app's wide tables), so labels stay legible instead of
+          // shrinking into each other.
+          <div className="analytics-chart-inner">
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={trend.months} margin={{ left: 10, right: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`}
+                  width={60}
+                />
+                <Tooltip formatter={(value) => formatNaira(value)} />
+                <Legend />
+                <Bar dataKey="revenue" name="Revenue" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
+                <Line
+                  type="monotone"
+                  dataKey="grossProfit"
+                  name="Gross Profit"
+                  stroke="var(--primary-color)"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
 

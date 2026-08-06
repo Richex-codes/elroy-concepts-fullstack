@@ -65,6 +65,14 @@
 
 .analytics-chart-card {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 12 monthly ticks need this much room to stay readable -- on screens
+   narrower than this, .analytics-chart-card (above) scrolls horizontally
+   instead of Recharts squeezing the labels until they overlap. */
+.analytics-chart-inner {
+  min-width: 640px;
 }
 
 .analytics-cards-row {
