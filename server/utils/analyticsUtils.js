@@ -6,6 +6,7 @@
 const mongoose = require("mongoose");
 const Product = require("../models/productModel");
 const Sales = require("../models/salesModel");
+const StockValueSnapshot = require("../models/stockValueSnapshotModel");
 
 function round2(n) {
   return Math.round(n * 100) / 100;
@@ -19,7 +20,7 @@ function branchMatchStage(fieldPath, branches) {
   return { [fieldPath]: ids.length === 1 ? ids[0] : { $in: ids } };
 }
 
-function saleDateMatch(fromDate, toDate) {
+function dateRangeMatch(fieldPath, fromDate, toDate) {
   if (!fromDate && !toDate) return {};
   const range = {};
   if (fromDate) range.$gte = new Date(fromDate);
@@ -28,7 +29,11 @@ function saleDateMatch(fromDate, toDate) {
     end.setHours(23, 59, 59, 999);
     range.$lte = end;
   }
-  return { saleDate: range };
+  return { [fieldPath]: range };
+}
+
+function saleDateMatch(fromDate, toDate) {
+  return dateRangeMatch("saleDate", fromDate, toDate);
 }
 
 // revenue = Σ items.amount (already a line total).
@@ -98,14 +103,42 @@ async function getProfitSummary({ branches, fromDate, toDate }) {
   };
 }
 
-// turnover = cogs (over the period) ÷ currentStockValue (a live snapshot,
-// not a period average -- flagged to the caller via `note`, per the
-// approved proposal, since no historical stock-value snapshots exist yet).
+// turnover = cogs (over the period) ÷ average stock value over that same
+// period. The average comes from stockValueSnapshotTask.js's nightly
+// per-branch snapshots (StockValueSnapshot): one total per day across the
+// branches in scope, averaged across however many days fall in the range.
+// Before enough history has accumulated for a given range (e.g. right after
+// this feature shipped, or a range further back than the snapshots go),
+// falls back to a live "right now" stock value -- same approximation this
+// endpoint used exclusively before snapshotting existed.
 async function getInventoryTurnover({ branches, fromDate, toDate }) {
   const { cogs } = await getProfitSummary({ branches, fromDate, toDate });
 
-  const branchMatch = branchMatchStage("inventory.branch", branches);
+  const snapshotMatch = {
+    ...branchMatchStage("branch", branches),
+    ...dateRangeMatch("date", fromDate, toDate),
+  };
 
+  const dailyTotals = await StockValueSnapshot.aggregate([
+    { $match: snapshotMatch },
+    { $group: { _id: "$date", totalValue: { $sum: "$stockValue" } } },
+  ]);
+
+  if (dailyTotals.length > 0) {
+    const stockValue = round2(
+      dailyTotals.reduce((sum, d) => sum + d.totalValue, 0) / dailyTotals.length
+    );
+    return {
+      cogs,
+      stockValue,
+      turnoverRatio: stockValue > 0 ? round2(cogs / stockValue) : null,
+      basis: "snapshotAverage",
+      snapshotDaysUsed: dailyTotals.length,
+      note: `Averaged across ${dailyTotals.length} daily stock-value snapshot${dailyTotals.length === 1 ? "" : "s"} recorded during this period.`,
+    };
+  }
+
+  const branchMatch = branchMatchStage("inventory.branch", branches);
   const stockResult = await Product.aggregate([
     { $unwind: "$inventory" },
     ...(Object.keys(branchMatch).length ? [{ $match: branchMatch }] : []),
@@ -125,16 +158,18 @@ async function getInventoryTurnover({ branches, fromDate, toDate }) {
     },
   ]);
 
-  const currentStockValue = stockResult[0]?.stockValue || 0;
+  const stockValue = stockResult[0]?.stockValue || 0;
 
   return {
     cogs,
-    currentStockValue,
-    turnoverRatio: currentStockValue > 0 ? round2(cogs / currentStockValue) : null,
+    stockValue,
+    turnoverRatio: stockValue > 0 ? round2(cogs / stockValue) : null,
+    basis: "liveSnapshot",
+    snapshotDaysUsed: 0,
     note:
-      "currentStockValue is a live snapshot taken now, not an average over the requested period -- " +
-      "historical stock-value snapshots aren't kept yet. If stock levels moved a lot during the " +
-      "period, this ratio will be skewed. Treat as approximate.",
+      "No daily stock-value history recorded yet for this period, so this uses a live snapshot " +
+      "taken just now instead of a period average. Becomes a real average automatically once " +
+      "daily snapshots build up for the range you're viewing.",
   };
 }
 
@@ -329,7 +364,7 @@ async function getCashCollectedVsInvoiced({ branches, fromDate, toDate }) {
     collectionRatePct: r.invoiced > 0 ? round2((r.collected / r.invoiced) * 100) : 0,
     note:
       "\"Collected\" reflects each sale's amountPaid as it stands today, not when the payment " +
-      "was actually received -- there's no dated payment ledger. A balance cleared today for " +
+      "was actually received. There's no dated payment ledger, so a balance cleared today for " +
       "an older sale counts against that sale's original period, not today.",
   };
 }

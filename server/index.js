@@ -9,6 +9,7 @@ const Redis = require("ioredis");
 const cron = require("node-cron");
 const { runInventorySummaryEmail } = require("./utils/emailSummaryTask");
 const { runLowStockDigest } = require("./utils/lowStockDigestTask");
+const { runStockValueSnapshot } = require("./utils/stockValueSnapshotTask");
 const User = require("./models/usersModel");
 
 
@@ -86,6 +87,13 @@ cron.schedule("0 8 1 * *", async () => {
 // why this is separate from the existing real-time low-stock push).
 cron.schedule("0 7 * * *", async () => {
   await runLowStockDigest();
+});
+
+// every day 1am -- records that day's total stock value per branch, so
+// getInventoryTurnover (analyticsUtils.js) can build up a real period
+// average instead of relying on a live "right now" snapshot.
+cron.schedule("0 1 * * *", async () => {
+  await runStockValueSnapshot();
 });
 
 const PORT = process.env.PORT || 3001;

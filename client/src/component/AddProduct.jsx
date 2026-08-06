@@ -514,7 +514,7 @@ export default function AddProductPage() {
             </p>
 
             <div className="product-form-field">
-              <label>Unit Landed Cost (₦, optional -- applies to all opening stock above)</label>
+              <label>Unit Landed Cost (₦, optional — applies to all opening stock above)</label>
               <input
                 type="number"
                 min="0"
@@ -525,7 +525,7 @@ export default function AddProductPage() {
               />
             </div>
             <p className="product-form-section-hint">
-              Leave blank if you don't know it yet -- opening stock will be marked as an
+              Leave blank if you don't know it yet. Opening stock will be marked as an
               estimated cost. If different colors/branches cost different amounts, leave this
               blank and set costs per line afterward via Add Inventory.
             </p>

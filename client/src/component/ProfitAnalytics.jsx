@@ -235,7 +235,7 @@ export default function ProfitAnalytics({ selectedBranch }) {
       <div className="analytics-card analytics-chart-card">
         <h3>Revenue &amp; Profit Trend (Last 12 Months)</h3>
         <p className="analytics-note analytics-chart-note">
-          Always the trailing 12 months, independent of the date range above -- that range applies
+          Always the trailing 12 months, independent of the date range above. That range applies
           to the cards below only.
         </p>
         {loadingTrend ? (
@@ -310,9 +310,9 @@ export default function ProfitAnalytics({ selectedBranch }) {
                   <i className="fas fa-triangle-exclamation"></i>
                   <span>
                     <strong>{profit.estimatedCogs.percentOfCogs}%</strong> of this profit's cost
-                    ({formatNaira(profit.estimatedCogs.amount)}) is <strong>estimated</strong> --
-                    from un-costed or migrated stock. Treat this figure as approximate until
-                    those batches sell through.
+                    ({formatNaira(profit.estimatedCogs.amount)}) is <strong>estimated</strong> from
+                    uncosted or migrated stock. Treat this figure as approximate until those
+                    batches sell through.
                   </span>
                 </div>
               )}
@@ -370,8 +370,7 @@ export default function ProfitAnalytics({ selectedBranch }) {
                 {turnover.turnoverRatio != null ? turnover.turnoverRatio : "N/A"}
               </p>
               <small className="summary-card-note">
-                Current stock value snapshot ({formatNaira(turnover.currentStockValue)}) -- not
-                a period average. Approximate.
+                Stock value used: {formatNaira(turnover.stockValue)}. {turnover.note}
               </small>
             </>
           )}
@@ -439,7 +438,7 @@ export default function ProfitAnalytics({ selectedBranch }) {
               topProducts.products.some((p) => p.estimatedShare > 0) && (
                 <p className="analytics-note">
                   <i className="fas fa-triangle-exclamation"></i> marks a product whose profit here
-                  partly rests on estimated (not real) cost data -- treat its ranking as approximate
+                  partly rests on estimated (not real) cost data. Treat its ranking as approximate
                   until that stock sells through. Revenue ranking has no such caveat.
                 </p>
               )}
@@ -476,7 +475,7 @@ export default function ProfitAnalytics({ selectedBranch }) {
               ))}
             </div>
             <small className="summary-card-note">
-              Total outstanding: {formatNaira(debtorAging.totalOutstanding)} -- aged from each
+              Total outstanding: {formatNaira(debtorAging.totalOutstanding)}. Aged from each
               sale's date, not a formal due date.
             </small>
           </>
