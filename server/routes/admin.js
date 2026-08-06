@@ -1649,6 +1649,7 @@ router.get(
             _id: 0,
             product: "$name",
             productId: "$_id",
+            inventoryId: "$inventory._id",
             branch: { $ifNull: ["$branchInfo.name", "Deleted branch"] },
             branchId: "$branchInfo._id",
             color: "$inventory.color",
@@ -1657,6 +1658,7 @@ router.get(
             quantity: "$inventory.quantity",
             description: "$inventory.description",
             addedAt: "$inventory.addedAt",
+            batches: { $ifNull: ["$inventory.batches", []] },
           },
         },
 

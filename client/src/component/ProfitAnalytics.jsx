@@ -369,9 +369,6 @@ export default function ProfitAnalytics({ selectedBranch }) {
               <p className="analytics-big-stat">
                 {turnover.turnoverRatio != null ? turnover.turnoverRatio : "N/A"}
               </p>
-              <small className="summary-card-note">
-                Stock value used: {formatNaira(turnover.stockValue)}. {turnover.note}
-              </small>
             </>
           )}
         </div>

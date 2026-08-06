@@ -551,6 +551,85 @@ router.delete("/:productId/inventory/:inventoryId", authMiddleware, requireAdmin
   }
 });
 
+// Correct a batch's landed cost after the fact -- e.g. it was unknown at
+// entry time (marked estimated) and a supplier invoice later arrived with
+// the real figure. Only ever affects sales that draw from this batch going
+// forward; it does not retroactively change landedCostAtSale on sales
+// already recorded, since that field is a snapshot of what the batch cost
+// at the moment it sold, not a live reference to it.
+router.patch(
+  "/:productId/inventory/:inventoryId/batches/:batchId",
+  authMiddleware,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { productId, inventoryId, batchId } = req.params;
+      const { unitLandedCost, supplierRef } = req.body;
+
+      if (unitLandedCost == null || isNaN(unitLandedCost) || Number(unitLandedCost) < 0) {
+        return res.status(400).json({ message: "A valid, non-negative cost is required" });
+      }
+
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const line = product.inventory.id(inventoryId);
+      if (!line) {
+        return res.status(404).json({ message: "Inventory line not found" });
+      }
+
+      if (isOutsideOwnBranch(req, line.branch)) {
+        return res.status(403).json({ message: "You can only edit inventory for your own branch." });
+      }
+
+      const batch = line.batches.id(batchId);
+      if (!batch) {
+        return res.status(404).json({ message: "Batch not found" });
+      }
+
+      const before = {
+        unitLandedCost: batch.unitLandedCost,
+        costEstimated: batch.costEstimated,
+        supplierRef: batch.supplierRef,
+      };
+
+      batch.unitLandedCost = Number(unitLandedCost);
+      batch.costEstimated = false; // a real cost has now been provided
+      if (supplierRef !== undefined) batch.supplierRef = supplierRef;
+
+      await product.save();
+
+      const branchDoc = await Branch.findById(line.branch);
+
+      await logAudit({
+        action: "inventory.cost_corrected",
+        actor: req.user,
+        targetType: "Product",
+        targetId: product._id,
+        before,
+        after: {
+          unitLandedCost: batch.unitLandedCost,
+          costEstimated: batch.costEstimated,
+          supplierRef: batch.supplierRef,
+        },
+        metadata: {
+          productName: product.name,
+          branchName: branchDoc?.name,
+          color: line.color,
+          length: line.length,
+        },
+      });
+
+      res.json({ message: "Cost updated successfully" });
+    } catch (err) {
+      console.error("Error updating batch cost:", err);
+      res.status(500).json({ message: "Error updating cost" });
+    }
+  }
+);
+
 // recent product added
 router.get("/recent-products", authMiddleware, async (req, res) => {
   try {
