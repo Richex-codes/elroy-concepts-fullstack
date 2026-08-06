@@ -22,6 +22,28 @@ export default function InventoryPage() {
   const [toDate, setToDate] = useState("");
   const latestRequestId = useRef(0);
 
+  // Cost-editing modal: costModalItem is the stock row (with its batches)
+  // currently open for editing, or null when closed. batchDrafts holds the
+  // in-progress input values per batch id, separate from the batch's actual
+  // stored values, so typing doesn't mutate anything until Save is pressed.
+  const [costModalItem, setCostModalItem] = useState(null);
+  const [batchDrafts, setBatchDrafts] = useState({});
+  const [savingBatchId, setSavingBatchId] = useState(null);
+  const [costModalMessage, setCostModalMessage] = useState("");
+  const [costModalError, setCostModalError] = useState(false);
+
+  const formatNaira = (value) => `₦${(Number(value) || 0).toLocaleString("en-NG")}`;
+
+  const weightedAvgCost = (batches) => {
+    const totalQty = (batches || []).reduce((sum, b) => sum + (b.quantityRemaining || 0), 0);
+    if (totalQty === 0) return null;
+    const totalCost = (batches || []).reduce(
+      (sum, b) => sum + (b.quantityRemaining || 0) * (b.unitLandedCost || 0),
+      0
+    );
+    return totalCost / totalQty;
+  };
+
 
 
 
@@ -138,6 +160,60 @@ const fetchStock = async () => {
     }
   };
 
+  const openCostModal = (item) => {
+    setCostModalItem(item);
+    const drafts = {};
+    (item.batches || []).forEach((b) => {
+      drafts[b._id] = { unitLandedCost: b.unitLandedCost ?? 0, supplierRef: b.supplierRef || "" };
+    });
+    setBatchDrafts(drafts);
+    setCostModalMessage("");
+    setCostModalError(false);
+  };
+
+  const closeCostModal = () => {
+    setCostModalItem(null);
+    setBatchDrafts({});
+  };
+
+  const handleSaveBatch = async (batchId) => {
+    const draft = batchDrafts[batchId];
+    if (!draft || draft.unitLandedCost === "" || Number(draft.unitLandedCost) < 0) {
+      setCostModalError(true);
+      setCostModalMessage("Enter a valid, non-negative cost.");
+      return;
+    }
+    setSavingBatchId(batchId);
+    setCostModalMessage("");
+    setCostModalError(false);
+    try {
+      await api.patch(
+        `/products/${costModalItem.productId}/inventory/${costModalItem.inventoryId}/batches/${batchId}`,
+        { unitLandedCost: Number(draft.unitLandedCost), supplierRef: draft.supplierRef },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setCostModalMessage("Cost updated.");
+      setCostModalError(false);
+      // Reflect the change immediately in the open modal (costEstimated is
+      // always cleared server-side once a real cost is provided) without
+      // waiting on a full refetch.
+      setCostModalItem((prev) => ({
+        ...prev,
+        batches: prev.batches.map((b) =>
+          b._id === batchId
+            ? { ...b, unitLandedCost: Number(draft.unitLandedCost), supplierRef: draft.supplierRef, costEstimated: false }
+            : b
+        ),
+      }));
+      fetchStock(); // background refresh so the table's cost summary is current once the modal closes
+    } catch (err) {
+      setCostModalError(true);
+      setCostModalMessage(err.response?.data?.message || "Failed to update cost.");
+    } finally {
+      setSavingBatchId(null);
+    }
+  };
+
   return (
     <div className="inventory-page">
       <h2>Inventory by Branch</h2>
@@ -224,6 +300,7 @@ const fetchStock = async () => {
               <th>Color</th>
               <th>Length</th>
               <th className="col-right">Quantity</th>
+              <th className="col-right">Cost</th>
               <th>Description</th>
               <th>Added At</th>
             </tr>
@@ -231,35 +308,48 @@ const fetchStock = async () => {
           <tbody>
             {loading && stock.length === 0 && (
               <tr>
-                <td colSpan={7} className="table-empty-state">
+                <td colSpan={8} className="table-empty-state">
                   Loading inventory...
                 </td>
               </tr>
             )}
             {!loading && stock.length === 0 && (
               <tr>
-                <td colSpan={7} className="table-empty-state">
+                <td colSpan={8} className="table-empty-state">
                   No inventory entries found for this period.
                 </td>
               </tr>
             )}
-            {stock.map((item, idx) => (
-              <tr key={item._id} className={idx % 2 === 1 ? "row-alt" : ""}>
-               <td data-label="Product">{item.product}</td>
-                <td data-label="Branch">{item.branch}</td>
-                <td data-label="Color">{item.color || "-"}</td>
-                <td data-label="Length">
-                  {item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-"}
-                </td>
-                <td className="col-right" data-label="Quantity">{item.quantity}</td>
-                <td data-label="Description">
-                  {item.description || "-"}
-                </td>
-                <td data-label="Added At">
-                  {new Date(item.addedAt).toLocaleDateString()}
-                </td>
-              </tr>
-              ))}
+            {stock.map((item, idx) => {
+              const avgCost = weightedAvgCost(item.batches);
+              const anyEstimated = (item.batches || []).some((b) => b.costEstimated);
+              return (
+                <tr key={item.inventoryId || idx} className={idx % 2 === 1 ? "row-alt" : ""}>
+                 <td data-label="Product">{item.product}</td>
+                  <td data-label="Branch">{item.branch}</td>
+                  <td data-label="Color">{item.color || "-"}</td>
+                  <td data-label="Length">
+                    {item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-"}
+                  </td>
+                  <td className="col-right" data-label="Quantity">{item.quantity}</td>
+                  <td className="col-right" data-label="Cost">
+                    {avgCost != null ? formatNaira(avgCost) : "-"}
+                    {anyEstimated && <span className="cost-estimated-badge">Est.</span>}
+                    {item.inventoryId && (
+                      <button type="button" className="btn-edit-cost" onClick={() => openCostModal(item)}>
+                        Edit
+                      </button>
+                    )}
+                  </td>
+                  <td data-label="Description">
+                    {item.description || "-"}
+                  </td>
+                  <td data-label="Added At">
+                    {new Date(item.addedAt).toLocaleDateString()}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         </div>
@@ -361,6 +451,90 @@ const fetchStock = async () => {
         </ul>
       </div>
       </section>
+
+      {costModalItem && (
+        <div className="cost-modal-backdrop" onClick={closeCostModal}>
+          <div className="cost-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              Edit Cost — {costModalItem.product} ({costModalItem.color || "-"}
+              {costModalItem.length != null ? ` · ${costModalItem.length}m` : ""})
+            </h3>
+            <p className="cost-modal-subtitle">
+              {costModalItem.branch}. Correcting a cost here only affects future sales that draw
+              from this batch -- sales already recorded keep their original cost.
+            </p>
+
+            {costModalMessage && (
+              <div className={`alert ${costModalError ? "alert-error" : "alert-success"}`}>
+                {costModalMessage}
+              </div>
+            )}
+
+            <div className="cost-modal-table-wrapper">
+              <table className="cost-modal-table">
+                <thead>
+                  <tr>
+                    <th>Arrived</th>
+                    <th className="col-right">Qty Remaining</th>
+                    <th>Unit Cost (₦)</th>
+                    <th>Supplier Ref</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(costModalItem.batches || []).map((batch) => (
+                    <tr key={batch._id}>
+                      <td data-label="Arrived">{new Date(batch.arrivalDate).toLocaleDateString()}</td>
+                      <td className="col-right" data-label="Qty Remaining">{batch.quantityRemaining}</td>
+                      <td data-label="Unit Cost (₦)">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={batchDrafts[batch._id]?.unitLandedCost ?? ""}
+                          onChange={(e) =>
+                            setBatchDrafts((prev) => ({
+                              ...prev,
+                              [batch._id]: { ...prev[batch._id], unitLandedCost: e.target.value },
+                            }))
+                          }
+                        />
+                        {batch.costEstimated && <span className="cost-estimated-badge">Estimated</span>}
+                      </td>
+                      <td data-label="Supplier Ref">
+                        <input
+                          type="text"
+                          value={batchDrafts[batch._id]?.supplierRef ?? ""}
+                          onChange={(e) =>
+                            setBatchDrafts((prev) => ({
+                              ...prev,
+                              [batch._id]: { ...prev[batch._id], supplierRef: e.target.value },
+                            }))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          disabled={savingBatchId === batch._id}
+                          onClick={() => handleSaveBatch(batch._id)}
+                        >
+                          {savingBatchId === batch._id ? "Saving..." : "Save"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button type="button" className="cost-modal-close" onClick={closeCostModal}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
