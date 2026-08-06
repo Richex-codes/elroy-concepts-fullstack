@@ -29,7 +29,11 @@ export default function AddSales() {
   // the line item currently being configured, before it's added to `items`
   const [draftProduct, setDraftProduct] = useState("");
   const [draftColor, setDraftColor] = useState("");
-  const [draftLength, setDraftLength] = useState("");
+  // Pipes are only ever sold as a full stick or exactly half of one --
+  // never a custom cut -- so staff pick which stick length in stock
+  // they're selling from, then whether it's Full or Half of that stick.
+  const [draftStickLength, setDraftStickLength] = useState("");
+  const [draftCutType, setDraftCutType] = useState("");
   const [draftQuantity, setDraftQuantity] = useState("");
   const [draftRate, setDraftRate] = useState("");
   const [draftAmount, setDraftAmount] = useState("");
@@ -40,14 +44,15 @@ export default function AddSales() {
   // Rate is optional. When it's set (alongside a quantity), amount is
   // derived automatically; leave rate blank to type a total manually
   // (e.g. a negotiated lump sum with no clean per-unit price). For pipes,
-  // rate is per meter, so the derived amount also factors in the length
-  // per piece (isPipeProduct/draftLength are declared further down, but
-  // this closure only reads them once the handler actually fires, by
-  // which point the render that defined them has already completed).
+  // rate is per meter, so the derived amount also factors in the length of
+  // ONE piece -- half the stick length, or the whole thing (isPipeProduct/
+  // draftPieceLength are declared further down, but this closure only reads
+  // them once the handler actually fires, by which point the render that
+  // defined them has already completed).
   const handleDraftQuantityChange = (value) => {
     setDraftQuantity(value);
     if (draftRate !== "" && value !== "") {
-      const unitLength = isPipeProduct ? Number(draftLength) || 0 : 1;
+      const unitLength = isPipeProduct ? draftPieceLength : 1;
       setDraftAmount(String(Number(value) * Number(draftRate) * unitLength));
     }
   };
@@ -55,7 +60,7 @@ export default function AddSales() {
   const handleDraftRateChange = (value) => {
     setDraftRate(value);
     if (value !== "" && draftQuantity !== "") {
-      const unitLength = isPipeProduct ? Number(draftLength) || 0 : 1;
+      const unitLength = isPipeProduct ? draftPieceLength : 1;
       setDraftAmount(String(Number(draftQuantity) * Number(value) * unitLength));
     }
   };
@@ -123,32 +128,50 @@ export default function AddSales() {
       .filter((item) => item.productId === productId && item.color === color && item.length == null)
       .reduce((total, item) => total + item.quantitySold, 0);
 
-  // Pieces of this exact product/color/length already staged -- same
+  // Pieces of this exact product/color/piece-length already staged -- same
   // purpose as alreadyStagedQty above, keyed by color+length since pipe
-  // stock isn't a fixed enum the way piece colors are.
+  // stock isn't a fixed enum the way piece colors are. Full and Half of the
+  // same stick land under different piece lengths (e.g. 6m vs 3m), so they
+  // never collide here.
   const alreadyStagedPieces = (productId, color, len) =>
     items
       .filter((item) => item.productId === productId && item.color === color && item.length === len)
       .reduce((total, item) => total + item.quantitySold, 0);
 
+  // Distinct stick lengths in stock for this product/branch/color. A
+  // length can be sold "Full" as long as any stock exists at it; "Half" is
+  // only offered if a FRESH (non-remnant) stick of that length exists --
+  // pipes here are only ever sold whole or exactly halved, never a further
+  // cut of an already-halved offcut.
+  const stickLengthOptions = (() => {
+    if (!selectedProduct || !branch || !draftColor || !isPipeProduct) return [];
+    const lines = selectedProduct.inventory.filter(
+      (inv) => inv.branch._id === branch && inv.color === draftColor && inv.quantity > 0
+    );
+    const freshLengths = new Set(lines.filter((l) => !l.isRemnant).map((l) => l.length));
+    return [...new Set(lines.map((l) => l.length))]
+      .sort((a, b) => b - a)
+      .map((length) => ({ length, canHalf: freshLengths.has(length) }));
+  })();
+
+  const draftStickLengthNum = Number(draftStickLength) || 0;
+  const draftCanHalf = stickLengthOptions.find((o) => o.length === draftStickLengthNum)?.canHalf;
+  // Length of ONE piece being sold: the whole stick, or exactly half of it.
+  const draftPieceLength = draftCutType === "half" ? draftStickLengthNum / 2 : draftStickLengthNum;
+
   const availableStock = (() => {
     if (!selectedProduct || !branch || !draftColor) return 0;
     if (isPipeProduct) {
-      const requestedLength = Number(draftLength);
-      if (!draftLength || requestedLength <= 0) return 0;
-      // Best-fit: any stick at least this long could supply this piece,
-      // mirroring the server's eligiblePipeLines (server/utils/pipeStock.js).
-      return (
+      if (!draftStickLengthNum || !draftCutType) return 0;
+      const linesAt = (len) =>
         selectedProduct.inventory
-          .filter(
-            (inv) =>
-              inv.branch._id === branch &&
-              inv.color === draftColor &&
-              (inv.length || 0) >= requestedLength
-          )
-          .reduce((total, inv) => total + inv.quantity, 0) -
-        alreadyStagedPieces(selectedProduct._id, draftColor, requestedLength)
-      );
+          .filter((inv) => inv.branch._id === branch && inv.color === draftColor && inv.length === len)
+          .reduce((total, inv) => total + inv.quantity, 0);
+      // Half can also be fulfilled by cutting a fresh whole stick, so its
+      // available count includes stock at the full stick length too.
+      const total =
+        draftCutType === "half" ? linesAt(draftPieceLength) + linesAt(draftStickLengthNum) : linesAt(draftPieceLength);
+      return total - alreadyStagedPieces(selectedProduct._id, draftColor, draftPieceLength);
     }
     return (
       selectedProduct.inventory
@@ -164,7 +187,8 @@ export default function AddSales() {
     setBranch(e.target.value);
     setDraftProduct("");
     setDraftColor("");
-    setDraftLength("");
+    setDraftStickLength("");
+    setDraftCutType("");
     setDraftQuantity("");
     setDraftRate("");
     setDraftAmount("");
@@ -174,8 +198,10 @@ export default function AddSales() {
   const handleAddItem = () => {
     setItemMessage("");
 
-    if (!draftProduct || !draftColor || (isPipeProduct && !draftLength)) {
-      setItemMessage(isPipeProduct ? "Select a product, color, and length." : "Select a product and color.");
+    if (!draftProduct || !draftColor || (isPipeProduct && (!draftStickLength || !draftCutType))) {
+      setItemMessage(
+        isPipeProduct ? "Select a product, color, stick length, and Full or Half." : "Select a product and color."
+      );
       return;
     }
     const qty = Number(draftQuantity);
@@ -203,7 +229,7 @@ export default function AddSales() {
         productId: selectedProduct._id,
         productName: selectedProduct.name,
         color: draftColor,
-        ...(isPipeProduct && { length: Number(draftLength) }),
+        ...(isPipeProduct && { length: draftPieceLength, cutType: draftCutType }),
         quantitySold: qty,
         rate: draftRate !== "" ? Number(draftRate) : undefined,
         amount: lineAmount,
@@ -212,7 +238,8 @@ export default function AddSales() {
 
     setDraftProduct("");
     setDraftColor("");
-    setDraftLength("");
+    setDraftStickLength("");
+    setDraftCutType("");
     setDraftQuantity("");
     setDraftRate("");
     setDraftAmount("");
@@ -258,6 +285,7 @@ export default function AddSales() {
             productId: i.productId,
             color: i.color,
             length: i.length,
+            cutType: i.cutType,
             quantitySold: i.quantitySold,
             rate: i.rate,
             amount: i.amount,
@@ -367,7 +395,8 @@ export default function AddSales() {
                 onChange={(e) => {
                   setDraftProduct(e.target.value);
                   setDraftColor("");
-                  setDraftLength("");
+                  setDraftStickLength("");
+                  setDraftCutType("");
                   setDraftQuantity("");
                   setDraftRate("");
                   setDraftAmount("");
@@ -385,7 +414,8 @@ export default function AddSales() {
                 value={draftColor}
                 onChange={(e) => {
                   setDraftColor(e.target.value);
-                  setDraftLength("");
+                  setDraftStickLength("");
+                  setDraftCutType("");
                   setDraftQuantity("");
                   setDraftRate("");
                   setDraftAmount("");
@@ -401,20 +431,41 @@ export default function AddSales() {
               </select>
 
               {isPipeProduct && (
-                <input
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  placeholder="Length needed (m)"
-                  value={draftLength}
+                <select
+                  value={draftStickLength}
                   onChange={(e) => {
-                    setDraftLength(e.target.value);
+                    setDraftStickLength(e.target.value);
+                    setDraftCutType("");
                     setDraftQuantity("");
                     setDraftRate("");
                     setDraftAmount("");
                   }}
                   disabled={!draftColor}
-                />
+                >
+                  <option value="">Stick Length</option>
+                  {stickLengthOptions.map((opt) => (
+                    <option key={opt.length} value={opt.length}>
+                      {opt.length}m
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {isPipeProduct && (
+                <select
+                  value={draftCutType}
+                  onChange={(e) => {
+                    setDraftCutType(e.target.value);
+                    setDraftQuantity("");
+                    setDraftRate("");
+                    setDraftAmount("");
+                  }}
+                  disabled={!draftStickLength}
+                >
+                  <option value="">Full or Half?</option>
+                  <option value="full">Full ({draftStickLengthNum}m)</option>
+                  {draftCanHalf && <option value="half">Half ({draftStickLengthNum / 2}m)</option>}
+                </select>
               )}
 
               <input
@@ -424,7 +475,7 @@ export default function AddSales() {
                 placeholder={isPipeProduct ? "Pieces" : "Qty"}
                 value={draftQuantity}
                 onChange={(e) => handleDraftQuantityChange(e.target.value)}
-                disabled={isPipeProduct ? !draftLength : !draftColor}
+                disabled={isPipeProduct ? !draftCutType : !draftColor}
               />
 
               <input
@@ -433,7 +484,7 @@ export default function AddSales() {
                 placeholder={isPipeProduct ? "Rate per meter (optional)" : "Rate (optional)"}
                 value={draftRate}
                 onChange={(e) => handleDraftRateChange(e.target.value)}
-                disabled={isPipeProduct ? !draftLength : !draftColor}
+                disabled={isPipeProduct ? !draftCutType : !draftColor}
               />
 
               <input
@@ -449,10 +500,10 @@ export default function AddSales() {
               </button>
             </div>
 
-            {draftColor && (!isPipeProduct || draftLength) && (
+            {draftColor && (!isPipeProduct || draftCutType) && (
               <div className="stock-display">
                 Available Stock: {availableStock}
-                {isPipeProduct ? " piece(s) at this length or longer" : ""}
+                {isPipeProduct ? ` piece(s) at ${draftPieceLength}m (${draftCutType === "half" ? "Half" : "Full"})` : ""}
               </div>
             )}
 
@@ -474,7 +525,11 @@ export default function AddSales() {
                   {items.map((item, index) => (
                     <tr key={index}>
                       <td>{item.productName}</td>
-                      <td>{item.length != null ? `${item.color} · ${item.length}m` : item.color}</td>
+                      <td>
+                        {item.length != null
+                          ? `${item.color} · ${item.cutType === "half" ? "Half" : "Full"} ${item.length}m`
+                          : item.color}
+                      </td>
                       <td>{item.quantitySold}</td>
                       <td className="amount-cell">
                         {item.rate != null ? formatNaira(item.rate) : "-"}

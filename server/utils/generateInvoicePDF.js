@@ -59,7 +59,7 @@ function generateInvoicePDF(sale) {
         items.map((item) => ({
           product: item.productName || "N/A",
           color: item.color || "-",
-          length: item.length != null ? `${item.length}m` : "-",
+          length: item.length != null ? `${item.cutType === "half" ? "Half " : ""}${item.length}m` : "-",
           qty: item.quantitySold,
           rate: item.rate != null ? formatNaira(item.rate) : "-",
           amount: formatNaira(item.amount),

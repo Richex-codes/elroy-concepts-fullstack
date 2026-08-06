@@ -48,8 +48,15 @@ const SaleItemSchema = new mongoose.Schema(
     // --- "length" (pipe) products only, below ---
     // Length in meters sold per piece (quantitySold counts pieces of this
     // length, same way it counts pieces of a color for "piece" products).
+    // Pipes are only ever sold as a full stick or exactly half of one --
+    // never a custom cut -- so this is always either a stick's own length
+    // (cutType "full") or exactly half of it (cutType "half").
     length: {
       type: Number,
+    },
+    cutType: {
+      type: String,
+      enum: ["full", "half"],
     },
     // Provenance of which original stick lengths this line was cut from,
     // e.g. [{fromLength: 5.8, pieces: 2}, {fromLength: 6, pieces: 1}].
