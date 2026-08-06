@@ -65,6 +65,27 @@
     box-shadow: 0 0 5px var(--accent-color);
   }
 
+  .inventory-filters .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: 600;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--transition-speed), transform var(--transition-speed);
+  }
+
+  .inventory-filters .btn-primary:hover {
+    background-color: var(--accent-color-dark);
+    transform: translateY(-1px);
+  }
+
   .date-filters {
     display: flex;
     gap: 10px;
@@ -110,6 +131,17 @@
     text-align: left;
     border-bottom: 1px solid var(--border-color);
     white-space: nowrap;
+  }
+
+  .inventory-table .col-right {
+    text-align: right;
+  }
+
+  .table-empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--secondary-text);
+    font-style: italic;
   }
 
   .inventory-table tbody tr.row-alt {

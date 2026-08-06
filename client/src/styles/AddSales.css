@@ -209,6 +209,11 @@
   font-size: 0.88em;
 }
 
+.sale-items-table .col-right,
+.sale-items-table .amount-cell {
+  text-align: right;
+}
+
 .sale-items-table thead {
   background-color: #ffffff;
   font-weight: 600;

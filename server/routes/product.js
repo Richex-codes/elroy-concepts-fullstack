@@ -181,15 +181,14 @@ router.post(
         return res.status(403).json({ msg: "You can only add inventory for your own branch." });
       }
 
+      const badColorLine = inventory.find((item) => !item.color);
+      if (badColorLine) {
+        return res.status(400).json({ msg: "Each inventory line needs a color." });
+      }
       if (resolvedUnitType === "length") {
         const badLine = inventory.find((item) => !item.length || Number(item.length) <= 0);
         if (badLine) {
           return res.status(400).json({ msg: "Each length batch needs a valid length in meters." });
-        }
-      } else {
-        const badLine = inventory.find((item) => !item.color);
-        if (badLine) {
-          return res.status(400).json({ msg: "Each inventory line needs a color." });
         }
       }
 
@@ -219,11 +218,26 @@ router.post(
           pipeSize: pipeSize || "",
           ...(pipeThickness && { pipeThickness: Number(pipeThickness) }),
         }),
-        inventory: inventory.map((item) => ({
-          ...item,
-          ...(resolvedUnitType === "length" && { length: Number(item.length) }),
-          addedAt: dateAdded || Date.now(),
-        })),
+        inventory: inventory.map((item) => {
+          const receivedQty = Number(item.quantity) || 0;
+          const line = {
+            ...item,
+            ...(resolvedUnitType === "length" && { length: Number(item.length) }),
+            addedAt: dateAdded || Date.now(),
+            batches: [
+              {
+                quantityReceived: receivedQty,
+                quantityRemaining: receivedQty,
+                unitLandedCost: item.unitLandedCost != null ? Number(item.unitLandedCost) : 0,
+                arrivalDate: dateAdded || Date.now(),
+                costEstimated: item.unitLandedCost == null,
+                supplierRef: item.supplierRef || "",
+              },
+            ],
+          };
+          Product.recomputeInventoryQuantity(line);
+          return line;
+        }),
         dateAdded,
       });
 
@@ -361,7 +375,7 @@ router.get("/product-inventory", authMiddleware, requireAdmin, async (req, res) 
 // Add inventory to existing product
 router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inventory.add"), async (req, res) => {
   const productId = req.params.id;
-  const { branch, quantity, color, length, description, addedAt } = req.body;
+  const { branch, quantity, color, length, description, addedAt, unitLandedCost, supplierRef } = req.body;
 
   if (!branch || !quantity || isNaN(quantity)) {
     return res
@@ -378,21 +392,34 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
     if (!product) return res.status(404).json({ msg: "Product not found" });
 
     const isPipe = product.unitType === "length";
-    if (isPipe) {
-      if (!length || isNaN(length) || Number(length) <= 0) {
-        return res.status(400).json({ msg: "A valid length in meters is required for this product." });
-      }
-    } else if (!color) {
+    if (!color) {
       return res.status(400).json({ msg: "Color is required for this product." });
     }
+    if (isPipe && (!length || isNaN(length) || Number(length) <= 0)) {
+      return res.status(400).json({ msg: "A valid length in meters is required for this product." });
+    }
 
-    product.inventory.push({
+    const receivedQty = parseInt(quantity);
+    const hasCost = unitLandedCost != null && unitLandedCost !== "";
+    const newLine = {
       branch,
-      quantity: parseInt(quantity),
-      ...(isPipe ? { length: Number(length) } : { color }),
+      color,
+      ...(isPipe && { length: Number(length) }),
       description,
-      addedAt
-    });
+      addedAt,
+      batches: [
+        {
+          quantityReceived: receivedQty,
+          quantityRemaining: receivedQty,
+          unitLandedCost: hasCost ? Number(unitLandedCost) : 0,
+          arrivalDate: addedAt || Date.now(),
+          costEstimated: !hasCost,
+          supplierRef: supplierRef || "",
+        },
+      ],
+    };
+    Product.recomputeInventoryQuantity(newLine);
+    product.inventory.push(newLine);
 
     await product.save();
 
@@ -405,9 +432,12 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
       targetId: product._id,
       after: {
         branchName: branchDoc?.name,
-        quantity: parseInt(quantity),
-        ...(isPipe ? { length: Number(length) } : { color }),
+        quantity: receivedQty,
+        color,
+        ...(isPipe && { length: Number(length) }),
         description,
+        unitLandedCost: hasCost ? Number(unitLandedCost) : 0,
+        costEstimated: !hasCost,
       },
       metadata: { productName: product.name },
     });

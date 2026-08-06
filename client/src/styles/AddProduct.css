@@ -78,6 +78,7 @@
 .product-form input[type="text"],
 .product-form input[type="file"],
 .product-form input[type="date"],
+.product-form input[type="number"],
 .product-form select,
 .product-form textarea {
   width: 100%;
@@ -96,6 +97,7 @@
 
 .product-form input[type="text"]:focus,
 .product-form input[type="date"]:focus,
+.product-form input[type="number"]:focus,
 .product-form select:focus,
 .product-form textarea:focus {
   outline: none;
@@ -247,6 +249,13 @@
   color: var(--primary-color);
 }
 
+.grid-cell {
+  /* Grid item of .grid-row, which defaults to min-width:auto -- without
+     this it refuses to shrink below the input's intrinsic content width,
+     same reasoning as .product-form-field elsewhere in this file. */
+  min-width: 0;
+}
+
 .grid-row input {
   width: 100%;
   padding: 6px;
@@ -256,6 +265,66 @@
 }
 
 
+
+/* Pipe length-batch builder */
+.pipe-batch-draft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.pipe-batch-draft select,
+.pipe-batch-draft input {
+  flex: 1;
+  min-width: 110px;
+}
+
+.btn-add-batch {
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.btn-add-batch:hover {
+  background-color: var(--accent-color-dark);
+}
+
+.pipe-batches-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.9em;
+}
+
+.pipe-batches-table th,
+.pipe-batches-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.btn-remove-batch {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--secondary-text);
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.btn-remove-batch:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
 
 /* Mobile layout */
 
@@ -345,6 +414,21 @@
 
   .mobile-inventory {
     display: block;
+  }
+
+  .pipe-batch-draft {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pipe-batch-draft select,
+  .pipe-batch-draft input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .btn-add-batch {
+    width: 100%;
   }
 }
 

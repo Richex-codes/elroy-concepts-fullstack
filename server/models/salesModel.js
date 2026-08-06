@@ -29,6 +29,22 @@ const SaleItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    // --- cost tracking, "piece" products only (see costConsumption.js) ---
+    // Weighted-average unit cost of the batches actually drawn for this line.
+    landedCostAtSale: { type: Number },
+    // Traceability: which batches (or, for an underflow shortfall, a
+    // synthetic null-batchId entry) supplied this line and at what cost.
+    costBatchRefs: [
+      {
+        batchId: { type: mongoose.Schema.Types.ObjectId, default: null },
+        quantityDrawn: { type: Number, required: true },
+        unitLandedCost: { type: Number, required: true },
+        _id: false,
+      },
+    ],
+    // True if any drawn batch (or an underflow shortfall) had an
+    // estimated, not real, cost.
+    costEstimated: { type: Boolean, default: false },
     // --- "length" (pipe) products only, below ---
     // Length in meters sold per piece (quantitySold counts pieces of this
     // length, same way it counts pieces of a color for "piece" products).
@@ -40,10 +56,26 @@ const SaleItemSchema = new mongoose.Schema(
     // Lets sale deletion restore stock (and undo any remnant it created)
     // without needing to store the remnant length redundantly -- it's
     // deterministically fromLength - length, recomputed at restore time.
+    // Also carries cost provenance per cut so deletion can reverse batch
+    // consumption precisely, not just quantities.
     cuts: [
       {
         fromLength: { type: Number, required: true },
         pieces: { type: Number, required: true },
+        costBatchRefs: [
+          {
+            batchId: { type: mongoose.Schema.Types.ObjectId, default: null },
+            quantityDrawn: { type: Number, required: true },
+            unitLandedCost: { type: Number, required: true },
+            _id: false,
+          },
+        ],
+        // The remnant batch this cut created (if any), so deletion can
+        // undo exactly that batch instead of guessing by length match.
+        remnantBatchId: { type: mongoose.Schema.Types.ObjectId, default: null },
+        // True for a phantom cut covering an underflow shortfall -- no
+        // real stick was ever consumed, so nothing physical to restore.
+        isShortfall: { type: Boolean, default: false },
         _id: false,
       },
     ],
@@ -98,6 +130,23 @@ const SalesSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+
+  // Reconciliation/accountability fields (Phase 4). Deliberately no
+  // `required`/`default` at the schema level -- both are enforced instead
+  // at the point of creation (routes/admin.js POST /sales), so existing
+  // sales that predate this phase read back honestly as "not recorded"
+  // instead of silently appearing to have a fabricated value.
+  paymentMethod: {
+    type: String,
+    enum: ["cash", "transfer", "pos", "cheque"],
+  },
+
+  // Never trust a client-supplied value for this -- always derived
+  // server-side from the authenticated admin (req.user.id) at creation.
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
 });
 

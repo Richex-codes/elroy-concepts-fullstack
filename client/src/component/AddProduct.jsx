@@ -32,10 +32,19 @@ export default function AddProductPage() {
   // Pipe products don't fit the fixed color grid below -- lengths are
   // arbitrary, so batches are built one at a time (draft-then-add-to-list,
   // same pattern AddSales.jsx uses for sale line items).
-  const [pipeBatches, setPipeBatches] = useState([]); // {branch, length, quantity}
+  const [pipeBatches, setPipeBatches] = useState([]); // {branch, length, color, quantity, unitLandedCost}
   const [draftBatchBranch, setDraftBatchBranch] = useState("");
   const [draftBatchLength, setDraftBatchLength] = useState("");
+  const [draftBatchColor, setDraftBatchColor] = useState("");
   const [draftBatchQuantity, setDraftBatchQuantity] = useState("");
+  const [draftBatchUnitLandedCost, setDraftBatchUnitLandedCost] = useState("");
+
+  // The color x branch grid below has one quantity per cell already --
+  // asking for a cost per cell too would double the grid's width. Opening
+  // stock is usually one shipment anyway, so a single cost applies to every
+  // cell in this submission; per-color cost variation can be set afterward
+  // via Add Inventory, which prices each restock individually.
+  const [openingStockUnitLandedCost, setOpeningStockUnitLandedCost] = useState("");
 
   // Case-insensitive, trimmed match against the existing catalog -- this is
   // what lets a branch admin who's never seen a product at their own branch
@@ -184,6 +193,11 @@ export default function AddProductPage() {
       setMessage("Select a branch and enter a valid length.");
       return;
     }
+    if (!draftBatchColor) {
+      setIsError(true);
+      setMessage("Select a color.");
+      return;
+    }
     if (!quantity || quantity <= 0) {
       setIsError(true);
       setMessage("Enter a valid number of sticks.");
@@ -192,9 +206,20 @@ export default function AddProductPage() {
 
     setIsError(false);
     setMessage("");
-    setPipeBatches((prev) => [...prev, { branch: draftBatchBranch, length, quantity }]);
+    setPipeBatches((prev) => [
+      ...prev,
+      {
+        branch: draftBatchBranch,
+        length,
+        color: draftBatchColor,
+        quantity,
+        unitLandedCost: draftBatchUnitLandedCost !== "" ? Number(draftBatchUnitLandedCost) : undefined,
+      },
+    ]);
     setDraftBatchLength("");
+    setDraftBatchColor("");
     setDraftBatchQuantity("");
+    setDraftBatchUnitLandedCost("");
   };
 
   const handleRemovePipeBatch = (index) => {
@@ -218,8 +243,10 @@ export default function AddProductPage() {
       inventoryPayload = pipeBatches.map((batch) => ({
         branch: batch.branch,
         length: batch.length,
+        color: batch.color,
         quantity: batch.quantity,
         description: formData.description,
+        ...(batch.unitLandedCost != null && { unitLandedCost: batch.unitLandedCost }),
       }));
     } else {
       inventoryPayload = inventory
@@ -227,6 +254,9 @@ export default function AddProductPage() {
         .map((item) => ({
           ...item,
           description: formData.description, // ✅ SAME DESC FOR ALL
+          ...(openingStockUnitLandedCost !== "" && {
+            unitLandedCost: Number(openingStockUnitLandedCost),
+          }),
         }));
 
       if (inventoryPayload.length === 0) {
@@ -275,6 +305,7 @@ export default function AddProductPage() {
         pipeThickness: "",
       });
       setPipeBatches([]);
+      setOpeningStockUnitLandedCost("");
       const resetInventory = [];
       branches.forEach((branch) => {
         COLORS.forEach((color) => {
@@ -481,6 +512,23 @@ export default function AddProductPage() {
             <p className="product-form-section-hint">
               Only branches with a quantity above zero are saved as opening stock.
             </p>
+
+            <div className="product-form-field">
+              <label>Unit Landed Cost (₦, optional -- applies to all opening stock above)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 4500"
+                value={openingStockUnitLandedCost}
+                onChange={(e) => setOpeningStockUnitLandedCost(e.target.value)}
+              />
+            </div>
+            <p className="product-form-section-hint">
+              Leave blank if you don't know it yet -- opening stock will be marked as an
+              estimated cost. If different colors/branches cost different amounts, leave this
+              blank and set costs per line afterward via Add Inventory.
+            </p>
            {/* DESKTOP GRID */}
 <div className="inventory-grid">
   <div className="grid-header" style={gridStyle}>
@@ -572,7 +620,7 @@ export default function AddProductPage() {
                   sticks at 6m.
                 </p>
 
-                <div className="sale-item-draft">
+                <div className="pipe-batch-draft">
                   <select
                     value={draftBatchBranch}
                     onChange={(e) => setDraftBatchBranch(e.target.value)}
@@ -594,6 +642,18 @@ export default function AddProductPage() {
                     onChange={(e) => setDraftBatchLength(e.target.value)}
                   />
 
+                  <select
+                    value={draftBatchColor}
+                    onChange={(e) => setDraftBatchColor(e.target.value)}
+                  >
+                    <option value="">Select Color</option>
+                    {COLORS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+
                   <input
                     type="number"
                     min="1"
@@ -602,18 +662,29 @@ export default function AddProductPage() {
                     onChange={(e) => setDraftBatchQuantity(e.target.value)}
                   />
 
-                  <button type="button" className="btn-add-item" onClick={handleAddPipeBatch}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Cost per stick (₦, optional)"
+                    value={draftBatchUnitLandedCost}
+                    onChange={(e) => setDraftBatchUnitLandedCost(e.target.value)}
+                  />
+
+                  <button type="button" className="btn-add-batch" onClick={handleAddPipeBatch}>
                     + Add Batch
                   </button>
                 </div>
 
                 {pipeBatches.length > 0 && (
-                  <table className="sale-items-table">
+                  <table className="pipe-batches-table">
                     <thead>
                       <tr>
                         <th>Branch</th>
                         <th>Length</th>
+                        <th>Color</th>
                         <th>Sticks</th>
+                        <th>Cost</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -622,11 +693,13 @@ export default function AddProductPage() {
                         <tr key={index}>
                           <td>{branches.find((b) => b._id === batch.branch)?.name || batch.branch}</td>
                           <td>{batch.length}m</td>
+                          <td>{batch.color}</td>
                           <td>{batch.quantity}</td>
+                          <td>{batch.unitLandedCost != null ? `₦${batch.unitLandedCost}` : "-"}</td>
                           <td>
                             <button
                               type="button"
-                              className="btn-remove-item"
+                              className="btn-remove-batch"
                               onClick={() => handleRemovePipeBatch(index)}
                             >
                               Remove

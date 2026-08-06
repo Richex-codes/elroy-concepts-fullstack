@@ -67,6 +67,18 @@ const ProductSchema = new Schema(
           type: Date,
           default: Date.now,
         },
+        // quantity = sum of batches[].quantityRemaining, kept in sync via
+        // recomputeInventoryQuantity() below.
+        batches: [
+          {
+            quantityReceived: { type: Number, required: true },
+            quantityRemaining: { type: Number, required: true },
+            unitLandedCost: { type: Number, default: 0 },
+            arrivalDate: { type: Date, default: Date.now },
+            costEstimated: { type: Boolean, default: false },
+            supplierRef: { type: String, default: "" },
+          },
+        ],
       },
     ],
     dateAdded:{
@@ -98,4 +110,16 @@ ProductSchema.index(
 // Dashboard "recent inventory" pipeline sorts by this after $unwind.
 ProductSchema.index({ "inventory.addedAt": -1 });
 
-module.exports = mongoose.model("Product", ProductSchema);
+// Not a pre-save hook -- the sales write path mutates quantity directly
+// and would get silently reverted by one. Call explicitly on batch changes.
+function recomputeInventoryQuantity(line) {
+  line.quantity = (line.batches || []).reduce(
+    (sum, b) => sum + b.quantityRemaining,
+    0
+  );
+}
+
+const Product = mongoose.model("Product", ProductSchema);
+Product.recomputeInventoryQuantity = recomputeInventoryQuantity;
+
+module.exports = Product;

@@ -20,6 +20,15 @@ const PushSubscription = require("../models/pushSubscriptionModel.js");
 const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify.js");
 const { idempotent } = require("../utils/idempotency.js");
 const { eligiblePipeLines, deductPipeLength, restorePipeLength } = require("../utils/pipeStock.js");
+const { consumeStock } = require("../utils/costConsumption.js");
+const {
+  getProfitSummary,
+  getInventoryTurnover,
+  getDeadStock,
+  getRevenueTrend,
+  getDebtorAging,
+  getCashCollectedVsInvoiced,
+} = require("../utils/analyticsUtils.js");
 const mongoose = require("mongoose");
 
 function escapeRegex(string) {
@@ -696,11 +705,17 @@ router.delete("/enquiries/:id", authMiddleware, async (req, res) => {
 });
 
 
+const PAYMENT_METHODS = ["cash", "transfer", "pos", "cheque"];
+
 router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res) => {
-  const { customerName, branch, items, amountPaid, saleDate } = req.body;
+  const { customerName, branch, items, amountPaid, saleDate, paymentMethod } = req.body;
 
   if (!customerName || !branch) {
     return res.status(400).json({ message: "Customer name and branch are required" });
+  }
+
+  if (!paymentMethod || !PAYMENT_METHODS.includes(paymentMethod)) {
+    return res.status(400).json({ message: "A valid payment method is required" });
   }
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -722,10 +737,10 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
 
   try {
     await session.withTransaction(async () => {
-      // Pass 1: validate every line item before touching any inventory, so
-      // a bad item later in the list can't leave earlier items
-      // half-deducted. Fetch every referenced product in one round-trip
-      // instead of one query per item.
+      // Pass 1: validate every line item (including stock sufficiency)
+      // before touching any inventory, so a bad item later in the list
+      // can't leave earlier items half-deducted. Fetch every referenced
+      // product in one round-trip instead of one query per item.
       const productIds = [...new Set(items.map((line) => line.productId).filter(Boolean))];
       const products = await Product.find({ _id: { $in: productIds } }).session(session);
       const productById = new Map(products.map((p) => [p._id.toString(), p]));
@@ -740,8 +755,8 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         const qty = Number(line.quantitySold);
         const isPipeLine = line.length != null && line.length !== "";
 
-        if (!line.productId || !qty || qty <= 0 || line.amount == null || (!isPipeLine && !line.color)) {
-          throw Object.assign(new Error("Each item needs a product, color/length, valid quantity, and amount"), { statusCode: 400 });
+        if (!line.productId || !line.color || !qty || qty <= 0 || line.amount == null) {
+          throw Object.assign(new Error("Each item needs a product, color, valid quantity, and amount"), { statusCode: 400 });
         }
 
         const product = productById.get(line.productId);
@@ -756,17 +771,18 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           if (product.unitType !== "length" || !requestedLength || requestedLength <= 0) {
             throw Object.assign(new Error(`"${product.name}" is not sold by length`), { statusCode: 400 });
           }
-          // Best-effort pre-check only -- pass 2 re-reads live inventory and
-          // is the authoritative guard, since two lines in this same sale
-          // can draw from overlapping sticks (a 6m stick is eligible for
-          // both a 2m and a 3m request), which a simple claimed-quantity
-          // map (as used for color below) can't track exactly.
-          const eligible = eligiblePipeLines(product, branch, requestedLength);
+          // Best-effort pre-check only -- pass 2 (deductPipeLength) re-reads
+          // live inventory and is the authoritative guard, since two lines
+          // in this same sale can draw from overlapping sticks (a 6m stick
+          // is eligible for both a 2m and a 3m request), which a simple
+          // claimed-quantity map (as used for color below) can't track
+          // exactly.
+          const eligible = eligiblePipeLines(product, branch, line.color, requestedLength);
           const totalAvailable = eligible.reduce((sum, i) => sum + i.quantity, 0);
           if (totalAvailable < qty) {
-            throw Object.assign(new Error(`Insufficient stock for "${product.name}" at ${requestedLength}m`), { statusCode: 400 });
+            throw Object.assign(new Error(`Insufficient stock for "${product.name}" (${line.color}) at ${requestedLength}m`), { statusCode: 400 });
           }
-          resolved.push({ product, qty, length: requestedLength, amount: Number(line.amount), rate, isPipe: true });
+          resolved.push({ product, qty, color: line.color, length: requestedLength, amount: Number(line.amount), rate, isPipe: true });
           continue;
         }
 
@@ -785,7 +801,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         }
         claimedByKey.set(key, alreadyClaimed + qty);
 
-        resolved.push({ product, invEntries, qty, color: line.color, amount: Number(line.amount), rate, isPipe: false });
+        resolved.push({ product, qty, color: line.color, amount: Number(line.amount), rate, isPipe: false });
       }
 
       // Pass 2: everything validated, now actually deduct + save.
@@ -797,52 +813,64 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         dirtyProducts.add(product);
 
         if (isPipe) {
-          const { length } = resolvedItem;
+          const { length, color } = resolvedItem;
           // Re-reads live inventory (not the pass-1 snapshot) and throws if
           // it can't fully satisfy `qty` -- see the pass-1 comment above.
-          const cuts = deductPipeLength(product, branch, length, qty);
+          const { cuts, landedCostAtSale, costBatchRefs, costEstimated } = deductPipeLength(
+            product,
+            branch,
+            color,
+            length,
+            qty
+          );
+
           itemsForSale.push({
             product: product._id,
             quantitySold: qty,
+            color,
             length,
             cuts,
             amount,
+            landedCostAtSale,
+            costBatchRefs,
+            costEstimated,
             ...(rate != null && { rate }),
           });
 
-          const remainingQty = eligiblePipeLines(product, branch, length).reduce(
+          const remainingQty = eligiblePipeLines(product, branch, color, length).reduce(
             (sum, i) => sum + i.quantity,
             0
           );
           if (remainingQty <= LOW_STOCK_THRESHOLD) {
-            lowStockLines.push({ productName: product.name, color: `${length}m`, remainingQty });
+            lowStockLines.push({ productName: product.name, color: `${color} · ${length}m`, remainingQty });
           }
           continue;
         }
 
-        const { invEntries, color } = resolvedItem;
-        let remaining = qty;
-        for (const i of invEntries) {
-          if (remaining <= 0) break;
-          if (i.quantity >= remaining) {
-            i.quantity -= remaining;
-            remaining = 0;
-          } else {
-            remaining -= i.quantity;
-            i.quantity = 0;
-          }
-        }
+        const { color } = resolvedItem;
+        const { landedCostAtSale, costBatchRefs, costEstimated } = consumeStock(
+          product,
+          branch,
+          color,
+          qty
+        );
+
         itemsForSale.push({
           product: product._id,
           color,
           quantitySold: qty,
           amount,
+          landedCostAtSale,
+          costBatchRefs,
+          costEstimated,
           ...(rate != null && { rate }),
         });
 
         // Combined remaining stock for this exact product+branch+color,
         // now that this sale's deduction has been applied above.
-        const remainingQty = invEntries.reduce((sum, i) => sum + i.quantity, 0);
+        const remainingQty = product.inventory
+          .filter((i) => i.branch.toString() === branch && i.color === color)
+          .reduce((sum, i) => sum + i.quantity, 0);
         if (remainingQty <= LOW_STOCK_THRESHOLD) {
           lowStockLines.push({ productName: product.name, color, remainingQty });
         }
@@ -861,6 +889,11 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         amountPaid: Number(amountPaid || 0),
         balance,
         saleDate: saleDate ? new Date(saleDate) : new Date(),
+        paymentMethod,
+        // Never trust a client-supplied value -- always the authenticated
+        // admin recording this sale, derived from the JWT, same as every
+        // other actor field in this codebase (e.g. logAudit's actor).
+        createdBy: req.user.id,
       });
       await sale.save({ session });
 
@@ -894,10 +927,15 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           rate: i.rate,
           amount: i.amount,
           ...(i.length != null && { length: i.length, cuts: i.cuts }),
+          ...(i.landedCostAtSale != null && {
+            landedCostAtSale: i.landedCostAtSale,
+            costEstimated: i.costEstimated,
+          }),
         })),
         amount: sale.amount,
         amountPaid: sale.amountPaid,
         balance: sale.balance,
+        paymentMethod: sale.paymentMethod,
       },
     });
 
@@ -954,6 +992,8 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         amountPaid: sale.amountPaid,
         balance: sale.balance,
         saleDate: sale.saleDate,
+        paymentMethod: sale.paymentMethod,
+        createdBy: sale.createdBy,
       },
     });
 
@@ -1082,7 +1122,7 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
         if (!product) continue;
 
         if (line.length != null && line.cuts?.length) {
-          restorePipeLength(product, sale.branch.toString(), line.length, line.cuts);
+          restorePipeLength(product, sale.branch.toString(), line.color, line.length, line.cuts);
           productsToSave.set(product._id.toString(), product);
           restoredCount++;
           continue;
@@ -1135,6 +1175,7 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
         amountPaid: sale.amountPaid,
         balance: sale.balance,
         saleDate: sale.saleDate,
+        paymentMethod: sale.paymentMethod,
       },
       metadata: { itemsRestored: restoredCount, totalItems: sale.items.length },
     });
@@ -1657,6 +1698,106 @@ router.get("/audit-log", authMiddleware, requireSuperAdmin, async (req, res) => 
   } catch (err) {
     console.error("Audit log fetch error:", err);
     res.status(500).json({ message: "Error fetching audit log" });
+  }
+});
+
+// --- Phase 2 analytics: read-only, built on Phase 0/1 batch cost data ---
+
+router.get("/profit", authMiddleware, async (req, res) => {
+  try {
+    const { from, to, branch } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view profit for your own branch." });
+    }
+    const result = await getProfitSummary({ branches: scope.branches, fromDate: from, toDate: to });
+    res.json({ range: { from: from || null, to: to || null }, branch: branch || "all", ...result });
+  } catch (err) {
+    console.error("Error computing profit:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/turnover", authMiddleware, async (req, res) => {
+  try {
+    const { from, to, branch } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view turnover for your own branch." });
+    }
+    const result = await getInventoryTurnover({ branches: scope.branches, fromDate: from, toDate: to });
+    res.json({ range: { from: from || null, to: to || null }, branch: branch || "all", ...result });
+  } catch (err) {
+    console.error("Error computing turnover:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/dead-stock", authMiddleware, async (req, res) => {
+  try {
+    const { branch, thresholdDays, limit } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view dead stock for your own branch." });
+    }
+    const result = await getDeadStock({
+      branches: scope.branches,
+      thresholdDays: thresholdDays ? Number(thresholdDays) : 90,
+      limit: limit ? Number(limit) : 50,
+    });
+    res.json(result);
+  } catch (err) {
+    console.error("Error computing dead stock:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/revenue-trend", authMiddleware, async (req, res) => {
+  try {
+    const { branch } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view revenue trend for your own branch." });
+    }
+    const result = await getRevenueTrend({ branches: scope.branches });
+    res.json({ branch: branch || "all", ...result });
+  } catch (err) {
+    console.error("Error computing revenue trend:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/debtor-aging", authMiddleware, async (req, res) => {
+  try {
+    const { branch } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view debtor aging for your own branch." });
+    }
+    const result = await getDebtorAging({ branches: scope.branches });
+    res.json({ branch: branch || "all", ...result });
+  } catch (err) {
+    console.error("Error computing debtor aging:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/cash-collected", authMiddleware, async (req, res) => {
+  try {
+    const { from, to, branch } = req.query;
+    const scope = resolveBranchScope(req, branch);
+    if (scope.forbidden) {
+      return res.status(403).json({ message: "You can only view this for your own branch." });
+    }
+    const result = await getCashCollectedVsInvoiced({
+      branches: scope.branches,
+      fromDate: from,
+      toDate: to,
+    });
+    res.json({ range: { from: from || null, to: to || null }, branch: branch || "all", ...result });
+  } catch (err) {
+    console.error("Error computing cash collected vs invoiced:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

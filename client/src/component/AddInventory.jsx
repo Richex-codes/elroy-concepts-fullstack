@@ -25,6 +25,8 @@ export default function AddInventoryPage() {
   const [length, setLength] = useState("");
   const [dateAdded, setDateAdded] = useState("");
   const [description, setDescription] = useState("");
+  const [unitLandedCost, setUnitLandedCost] = useState("");
+  const [supplierRef, setSupplierRef] = useState("");
   const [loading, setLoading] = useState(false);
 
   const COLORS = ["Gold", "Silver", "Bronze", "Black", "Dark Bronze", "Wood", "No Color"];
@@ -75,9 +77,12 @@ export default function AddInventoryPage() {
          {
            branch: selectedBranch,
            quantity: parseInt(quantity),
-           ...(isPipe ? { length: Number(length) } : { color }),
+           color,
+           ...(isPipe && { length: Number(length) }),
            description,
-           addedAt: dateAdded
+           addedAt: dateAdded,
+           ...(unitLandedCost !== "" && { unitLandedCost: Number(unitLandedCost) }),
+           ...(supplierRef !== "" && { supplierRef }),
           },
         {
           headers: {
@@ -92,6 +97,8 @@ export default function AddInventoryPage() {
       setQuantity("");
       setLength("");
       setDescription("")
+      setUnitLandedCost("");
+      setSupplierRef("");
     } catch (err) {
       console.error("Error adding inventory:", err);
       setIsError(true);
@@ -155,7 +162,23 @@ export default function AddInventoryPage() {
         </div>
 
         <div className="inventory-form-row">
-          {isPipe ? (
+          <div className="inventory-form-field">
+            <label>Color</label>
+            <select
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              required
+            >
+            <option value="">Select Color</option>
+            {COLORS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+              ))}
+            </select>
+          </div>
+
+          {isPipe && (
             <div className="inventory-form-field">
               <label>Length (m)</label>
               <input
@@ -167,22 +190,6 @@ export default function AddInventoryPage() {
                 onChange={(e) => setLength(e.target.value)}
                 required
               />
-            </div>
-          ) : (
-            <div className="inventory-form-field">
-              <label>Color</label>
-              <select
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                required
-              >
-              <option value="">Select Color</option>
-              {COLORS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-                ))}
-              </select>
             </div>
           )}
 
@@ -208,6 +215,34 @@ export default function AddInventoryPage() {
             required
           />
         </div>
+
+        <div className="inventory-form-row">
+          <div className="inventory-form-field">
+            <label>Unit Landed Cost (₦, optional)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="e.g. 4500"
+              value={unitLandedCost}
+              onChange={(e) => setUnitLandedCost(e.target.value)}
+            />
+          </div>
+
+          <div className="inventory-form-field">
+            <label>Supplier Reference (optional)</label>
+            <input
+              type="text"
+              placeholder="e.g. invoice #, supplier name"
+              value={supplierRef}
+              onChange={(e) => setSupplierRef(e.target.value)}
+            />
+          </div>
+        </div>
+        <p className="inventory-form-hint">
+          Leave cost blank if you don't know it yet — this batch will be recorded at ₦0 and
+          marked as an estimated cost, and profit/turnover reports will flag it as such.
+        </p>
 
         <div className="inventory-form-field">
           <label>Description (optional)</label>

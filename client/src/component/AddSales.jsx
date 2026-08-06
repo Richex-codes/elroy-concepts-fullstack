@@ -97,7 +97,7 @@ export default function AddSales() {
 
   // only colors with actual combined stock (qty > 0) for this product/branch
   const availableColors = (() => {
-    if (!selectedProduct || !branch || isPipeProduct) return [];
+    if (!selectedProduct || !branch) return [];
     const qtyByColor = {};
     selectedProduct.inventory
       .filter((inv) => inv.branch._id === branch)
@@ -112,19 +112,19 @@ export default function AddSales() {
   // claim more than is actually in stock.
   const alreadyStagedQty = (productId, color) =>
     items
-      .filter((item) => item.productId === productId && item.color === color)
+      .filter((item) => item.productId === productId && item.color === color && item.length == null)
       .reduce((total, item) => total + item.quantitySold, 0);
 
-  // Pieces of this exact product/length already staged -- same purpose as
-  // alreadyStagedQty above, keyed by length instead of color since pipe
-  // stock isn't a fixed enum.
-  const alreadyStagedPieces = (productId, len) =>
+  // Pieces of this exact product/color/length already staged -- same
+  // purpose as alreadyStagedQty above, keyed by color+length since pipe
+  // stock isn't a fixed enum the way piece colors are.
+  const alreadyStagedPieces = (productId, color, len) =>
     items
-      .filter((item) => item.productId === productId && item.length === len)
+      .filter((item) => item.productId === productId && item.color === color && item.length === len)
       .reduce((total, item) => total + item.quantitySold, 0);
 
   const availableStock = (() => {
-    if (!selectedProduct || !branch) return 0;
+    if (!selectedProduct || !branch || !draftColor) return 0;
     if (isPipeProduct) {
       const requestedLength = Number(draftLength);
       if (!draftLength || requestedLength <= 0) return 0;
@@ -132,12 +132,16 @@ export default function AddSales() {
       // mirroring the server's eligiblePipeLines (server/utils/pipeStock.js).
       return (
         selectedProduct.inventory
-          .filter((inv) => inv.branch._id === branch && (inv.length || 0) >= requestedLength)
+          .filter(
+            (inv) =>
+              inv.branch._id === branch &&
+              inv.color === draftColor &&
+              (inv.length || 0) >= requestedLength
+          )
           .reduce((total, inv) => total + inv.quantity, 0) -
-        alreadyStagedPieces(selectedProduct._id, requestedLength)
+        alreadyStagedPieces(selectedProduct._id, draftColor, requestedLength)
       );
     }
-    if (!draftColor) return 0;
     return (
       selectedProduct.inventory
         .filter((inv) => inv.branch._id === branch && inv.color === draftColor)
@@ -162,8 +166,8 @@ export default function AddSales() {
   const handleAddItem = () => {
     setItemMessage("");
 
-    if (!draftProduct || (isPipeProduct ? !draftLength : !draftColor)) {
-      setItemMessage(isPipeProduct ? "Select a product and length." : "Select a product and color.");
+    if (!draftProduct || !draftColor || (isPipeProduct && !draftLength)) {
+      setItemMessage(isPipeProduct ? "Select a product, color, and length." : "Select a product and color.");
       return;
     }
     const qty = Number(draftQuantity);
@@ -190,7 +194,8 @@ export default function AddSales() {
       {
         productId: selectedProduct._id,
         productName: selectedProduct.name,
-        ...(isPipeProduct ? { length: Number(draftLength) } : { color: draftColor }),
+        color: draftColor,
+        ...(isPipeProduct && { length: Number(draftLength) }),
         quantitySold: qty,
         rate: draftRate !== "" ? Number(draftRate) : undefined,
         amount: lineAmount,
@@ -361,7 +366,26 @@ export default function AddSales() {
                 ))}
               </select>
 
-              {isPipeProduct ? (
+              <select
+                value={draftColor}
+                onChange={(e) => {
+                  setDraftColor(e.target.value);
+                  setDraftLength("");
+                  setDraftQuantity("");
+                  setDraftRate("");
+                  setDraftAmount("");
+                }}
+                disabled={!draftProduct}
+              >
+                <option value="">Select Color</option>
+                {availableColors.map((color) => (
+                  <option key={color} value={color}>
+                    {color}
+                  </option>
+                ))}
+              </select>
+
+              {isPipeProduct && (
                 <input
                   type="number"
                   min="0.1"
@@ -374,26 +398,8 @@ export default function AddSales() {
                     setDraftRate("");
                     setDraftAmount("");
                   }}
-                  disabled={!draftProduct}
+                  disabled={!draftColor}
                 />
-              ) : (
-                <select
-                  value={draftColor}
-                  onChange={(e) => {
-                    setDraftColor(e.target.value);
-                    setDraftQuantity("");
-                    setDraftRate("");
-                    setDraftAmount("");
-                  }}
-                  disabled={!draftProduct}
-                >
-                  <option value="">Select Color</option>
-                  {availableColors.map((color) => (
-                    <option key={color} value={color}>
-                      {color}
-                    </option>
-                  ))}
-                </select>
               )}
 
               <input
@@ -428,7 +434,7 @@ export default function AddSales() {
               </button>
             </div>
 
-            {draftProduct && (isPipeProduct ? draftLength : draftColor) && (
+            {draftColor && (!isPipeProduct || draftLength) && (
               <div className="stock-display">
                 Available Stock: {availableStock}
                 {isPipeProduct ? " piece(s) at this length or longer" : ""}
@@ -453,7 +459,7 @@ export default function AddSales() {
                   {items.map((item, index) => (
                     <tr key={index}>
                       <td>{item.productName}</td>
-                      <td>{item.length != null ? `${item.length}m` : item.color}</td>
+                      <td>{item.length != null ? `${item.color} · ${item.length}m` : item.color}</td>
                       <td>{item.quantitySold}</td>
                       <td className="amount-cell">
                         {item.rate != null ? formatNaira(item.rate) : "-"}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import api from "../api/axios.js";
 import ReportActions from "./ReportActions.jsx";
+import ProfitAnalytics from "./ProfitAnalytics.jsx";
 import { getOwnBranchId } from "../utils/authUser.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
@@ -252,6 +253,8 @@ export default function DashboardSummary() {
             </div>
 
           </div>
+
+          <ProfitAnalytics selectedBranch={selectedBranch} />
 
           {/* ✅ Recent Activity Section */}
           <div className="recent-activity">

@@ -117,8 +117,29 @@
   font-size: 14px;
 }
 
+.sales-inventory-table .col-right,
+.sales-inventory-table .amount-cell {
+  text-align: right;
+}
+
+.sales-inventory-table .balance-cell {
+  color: var(--danger-color);
+  font-weight: 700;
+}
+
+.sales-inventory-table tbody tr.row-alt {
+  background-color: #ffffff;
+}
+
 .sales-inventory-table tbody tr:hover {
   background: var(--accent-color-light);
+}
+
+.table-empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--secondary-text);
+  font-style: italic;
 }
 
 .invoice-toggle-btn {

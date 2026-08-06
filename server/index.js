@@ -8,6 +8,7 @@ const ProductRoute = require("./routes/product");
 const Redis = require("ioredis");
 const cron = require("node-cron");
 const { runInventorySummaryEmail } = require("./utils/emailSummaryTask");
+const { runLowStockDigest } = require("./utils/lowStockDigestTask");
 const User = require("./models/usersModel");
 
 
@@ -79,6 +80,12 @@ cron.schedule("0 8 1 * *", async () => {
   // no filters = full report; also pushes a notification to superadmins so
   // they know it went out even if they never open the email.
   await runInventorySummaryEmail({}, undefined, { notifyOnComplete: true });
+});
+
+// every day 7am -- proactive low-stock sweep (see lowStockDigestTask.js for
+// why this is separate from the existing real-time low-stock push).
+cron.schedule("0 7 * * *", async () => {
+  await runLowStockDigest();
 });
 
 const PORT = process.env.PORT || 3001;

@@ -1,0 +1,368 @@
+.profit-analytics {
+  padding: 24px;
+  margin-bottom: 30px;
+  background: #f3f4f6;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* This component is always rendered inside DashboardSummary, which already
+   defines .dashboard-title/.summary-card-note in its own stylesheet -- so
+   omitting them here would still render correctly today. Defined locally
+   anyway to keep this file self-contained, matching every other component
+   in this codebase (each one re-declares its own .btn-primary/.col-right/
+   etc. rather than relying on another file being loaded first). */
+.dashboard-title {
+  color: var(--primary-color);
+  font-size: var(--font-size-xl);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.summary-card-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--secondary-text);
+  font-size: 0.7em;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.analytics-date-range {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.analytics-date-range label {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.analytics-date-range input[type="date"] {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.analytics-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 20px 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.analytics-card h3 {
+  margin: 0 0 14px;
+  color: var(--primary-color);
+  font-size: 1.1em;
+}
+
+.analytics-chart-card {
+  overflow-x: auto;
+}
+
+.analytics-cards-row {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.analytics-cards-row .analytics-card {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.analytics-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.analytics-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analytics-stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--secondary-text);
+}
+
+.analytics-stat-value {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.analytics-stat-value-danger {
+  color: var(--danger-color);
+}
+
+.analytics-stat-sublabel {
+  font-size: 0.75em;
+  color: var(--secondary-text);
+}
+
+.analytics-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background-color: var(--accent-color-light);
+  border-left: 4px solid var(--danger-color);
+  border-radius: 6px;
+  font-size: 0.88em;
+  color: #2c3e50;
+  line-height: 1.5;
+}
+
+.analytics-warning-banner i {
+  color: var(--danger-color);
+  font-size: 1.1em;
+  margin-top: 2px;
+}
+
+.analytics-note {
+  margin: 10px 0 0;
+  font-size: 0.8em;
+  color: var(--secondary-text);
+  font-style: italic;
+}
+
+.analytics-card-single-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.analytics-big-stat {
+  margin: 0;
+  font-size: 2.4em;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.analytics-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.analytics-card-header h3 {
+  margin: 0;
+}
+
+.analytics-threshold-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.9em;
+  color: var(--secondary-text);
+}
+
+.analytics-threshold-control input[type="number"] {
+  width: 70px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.analytics-threshold-control .btn-primary {
+  padding: 7px 16px;
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.analytics-threshold-control .btn-primary:hover {
+  background-color: var(--accent-color-dark);
+}
+
+.table-empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--secondary-text);
+  font-style: italic;
+}
+
+.loading-message {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}
+
+.analytics-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analytics-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-color);
+  background-color: #f9fafb;
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.analytics-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.analytics-table .col-right {
+  text-align: right;
+}
+
+.analytics-table tbody tr.row-alt {
+  background-color: #f9fafb;
+}
+
+.analytics-table tbody tr:hover {
+  background-color: var(--accent-color-light);
+}
+
+/* ===================== */
+/* 1024px and below */
+/* ===================== */
+@media (max-width: 1024px) {
+  .profit-analytics {
+    padding: 20px;
+  }
+
+  .analytics-big-stat {
+    font-size: 2em;
+  }
+}
+
+/* ===================== */
+/* 768px and below */
+/* ===================== */
+@media (max-width: 768px) {
+  .analytics-date-range {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .analytics-cards-row {
+    flex-direction: column;
+  }
+
+  .analytics-card {
+    padding: 16px 18px;
+  }
+
+  .analytics-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Same "stack into cards" pattern as Inventory.css / Sales.css tables. */
+  .analytics-table {
+    display: block;
+  }
+
+  .analytics-table thead {
+    display: none;
+  }
+
+  .analytics-table tbody {
+    display: block;
+  }
+
+  .analytics-table tr {
+    display: block;
+    margin-bottom: 14px;
+    background: #f9fafb;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 4px 14px;
+  }
+
+  .analytics-table tr,
+  .analytics-table tr.row-alt,
+  .analytics-table tr:hover {
+    background: #f9fafb;
+  }
+
+  .analytics-table td {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left !important;
+    white-space: normal;
+    font-size: 0.9rem;
+  }
+
+  .analytics-table td:last-child {
+    border-bottom: none;
+  }
+
+  .analytics-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 700;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+    margin-bottom: 2px;
+  }
+}
+
+/* ===================== */
+/* 480px and below */
+/* ===================== */
+@media (max-width: 480px) {
+  .profit-analytics {
+    padding: 15px 10px;
+  }
+
+  .analytics-card {
+    padding: 14px 16px;
+  }
+
+  .analytics-stat-value {
+    font-size: 1.1em;
+  }
+
+  .analytics-big-stat {
+    font-size: 1.8em;
+  }
+
+  .analytics-date-range input[type="date"] {
+    width: 100%;
+  }
+}
