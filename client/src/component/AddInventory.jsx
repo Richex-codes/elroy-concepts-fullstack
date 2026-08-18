@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
+import SearchableSelect from "./SearchableSelect.jsx";
 import { getOwnBranchId, isOwnBranch } from "../utils/authUser.js";
 import { newIdempotencyKey } from "../utils/idempotencyKey.js";
 import "../styles/addInventory.css";
@@ -125,18 +126,12 @@ export default function AddInventoryPage() {
         <div className="inventory-form-row">
           <div className="inventory-form-field">
             <label>Product</label>
-            <select
+            <SearchableSelect
+              options={products.map((p) => ({ value: p._id, label: p.name }))}
               value={selectedProduct}
-              onChange={(e) => setSelectedProduct(e.target.value)}
-              required
-            >
-              <option value="">Select</option>
-              {products.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedProduct}
+              placeholder="Select Product"
+            />
           </div>
 
           <div className="inventory-form-field">

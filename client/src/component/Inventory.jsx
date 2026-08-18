@@ -1,10 +1,31 @@
 import React, { useEffect, useState, useRef } from "react";
 import api from "../api/axios.js";
 import ReportActions from "./ReportActions.jsx";
+import SearchableSelect from "./SearchableSelect.jsx";
 import { getOwnBranchId } from "../utils/authUser.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
 import "../styles/Inventory.css";
+
+const PAGE_SIZE = 40;
+
+function Pagination({ page, setPage, totalItems, pageSize }) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (totalPages <= 1) return null;
+  return (
+    <div className="pagination-controls">
+      <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+        Previous
+      </button>
+      <span className="pagination-status">
+        Page {page} of {totalPages}
+      </span>
+      <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+        Next
+      </button>
+    </div>
+  );
+}
 
 export default function InventoryPage() {
   const { error, showError, clearError } = useApiError();
@@ -21,6 +42,8 @@ export default function InventoryPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const latestRequestId = useRef(0);
+  const [stockPage, setStockPage] = useState(1);
+  const [summaryPage, setSummaryPage] = useState(1);
 
   // Cost-editing modal: costModalItem is the stock row (with its batches)
   // currently open for editing, or null when closed. batchDrafts holds the
@@ -96,6 +119,7 @@ export default function InventoryPage() {
     if (requestId !== latestRequestId.current) return;
     clearError();
     setSummary(res.data);
+    setSummaryPage(1);
   } catch (err) {
     console.error(
       "Error fetching inventory summary:",
@@ -127,6 +151,7 @@ const fetchStock = async () => {
     if (requestId !== latestRequestId.current) return;
     clearError();
     setStock(res.data);
+    setStockPage(1);
   } catch (err) {
     console.error("Error fetching stock:", err);
     if (requestId === latestRequestId.current) {
@@ -222,18 +247,15 @@ const fetchStock = async () => {
       <section className="inventory-section">
       {/* Filters */}
       <div className="inventory-filters">
-        <select
+        <SearchableSelect
+          options={[
+            { value: "", label: "All Products" },
+            ...products.map((product) => ({ value: product._id, label: product.name })),
+          ]}
           value={selectedProduct}
-          onChange={(e) => setSelectedProduct(e.target.value)}
-        >
-          <option value="">All Products</option>
-
-          {products.map((product) => (
-            <option key={product._id} value={product._id}>
-              {product.name}
-            </option>
-          ))}
-        </select>
+          onChange={setSelectedProduct}
+          placeholder="All Products"
+        />
 
          <select
             value={selectedBranch}
@@ -318,7 +340,7 @@ const fetchStock = async () => {
                 </td>
               </tr>
             )}
-            {stock.map((item, idx) => {
+            {stock.slice((stockPage - 1) * PAGE_SIZE, stockPage * PAGE_SIZE).map((item, idx) => {
               const avgCost = weightedAvgCost(item.batches);
               const anyEstimated = (item.batches || []).some((b) => b.costEstimated);
               return (
@@ -352,6 +374,7 @@ const fetchStock = async () => {
         </table>
         </div>
       </div>
+      <Pagination page={stockPage} setPage={setStockPage} totalItems={stock.length} pageSize={PAGE_SIZE} />
       </section>
 
       <section className="inventory-section">
@@ -399,7 +422,7 @@ const fetchStock = async () => {
                 </td>
               </tr>
             )}
-            {summary.map((item, index) => (
+            {summary.slice((summaryPage - 1) * PAGE_SIZE, summaryPage * PAGE_SIZE).map((item, index) => (
               <tr key={index} className={index % 2 === 1 ? "row-alt" : ""}>
                 <td data-label="Branch">{item.branch}</td>
                 <td data-label="Product">{item.product}</td>
@@ -415,6 +438,7 @@ const fetchStock = async () => {
 
       </div>
       </div>
+      <Pagination page={summaryPage} setPage={setSummaryPage} totalItems={summary.length} pageSize={PAGE_SIZE} />
       </section>
 
       <section className="inventory-section">

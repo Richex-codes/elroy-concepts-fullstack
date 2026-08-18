@@ -177,6 +177,14 @@
   font-size: 0.9em;
 }
 
+/* SearchableSelect renders its own <input>, styled by its own stylesheet --
+   this just gives the wrapper <div> the same flex sizing the plain <select>
+   it replaced had, so the layout doesn't shift. */
+.sale-item-draft .searchable-select {
+  flex: 1;
+  min-width: 110px;
+}
+
 .btn-add-item {
   padding: 9px 16px;
   background-color: var(--primary-color);
@@ -311,7 +319,8 @@
   }
 
   .sale-item-draft select,
-  .sale-item-draft input {
+  .sale-item-draft input,
+  .sale-item-draft .searchable-select {
     min-width: 0;
     width: 100%;
   }

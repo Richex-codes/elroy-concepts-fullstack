@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/axios";
 import ReportActions from "./ReportActions.jsx";
+import SearchableSelect from "./SearchableSelect.jsx";
 import { getOwnBranchId, isOwnBranch } from "../utils/authUser.js";
 import { newIdempotencyKey } from "../utils/idempotencyKey.js";
 import "../styles/AddSales.css";
@@ -387,10 +388,11 @@ export default function AddSales() {
             <h4>Add Items</h4>
 
             <div className="sale-item-draft">
-              <select
+              <SearchableSelect
+                options={availableProducts.map((p) => ({ value: p._id, label: p.name }))}
                 value={draftProduct}
-                onChange={(e) => {
-                  setDraftProduct(e.target.value);
+                onChange={(newValue) => {
+                  setDraftProduct(newValue);
                   setDraftColor("");
                   setDraftStickLength("");
                   setDraftCutType("");
@@ -398,14 +400,8 @@ export default function AddSales() {
                   setDraftRate("");
                   setDraftAmount("");
                 }}
-              >
-                <option value="">Select Product</option>
-                {availableProducts.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select Product"
+              />
 
               <select
                 value={draftColor}

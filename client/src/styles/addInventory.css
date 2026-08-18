@@ -96,6 +96,14 @@
   resize: vertical;
 }
 
+/* SearchableSelect renders its own <input>, styled by its own stylesheet --
+   this just gives the wrapper <div> the same full-width sizing the plain
+   <select> it replaced had. */
+.inventory-form .searchable-select {
+  width: 100%;
+  min-width: 0;
+}
+
 .inventory-form select:focus,
 .inventory-form input:focus,
 .inventory-form textarea:focus {
