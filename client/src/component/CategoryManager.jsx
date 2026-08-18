@@ -38,9 +38,6 @@ export default function AddCategoryPage() {
         <i className="fas fa-layer-group"></i>
       </div>
       <h2>Add Category</h2>
-      <p className="add-category-subtitle">
-        Categories group products in the catalog and filters — a quick, one-off action.
-      </p>
 
       {message && (
         <div className={`alert ${isError ? "alert-error" : "alert-success"}`}>

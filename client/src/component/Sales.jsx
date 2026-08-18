@@ -127,9 +127,6 @@ const handleDelete = async (sale) => {
     return (
         <div className="sales-page">
             <h1>Sales Summary</h1>
-            <p className="sales-page-subtitle">
-              Showing this year by default — pick a date range to look further back.
-            </p>
             <ErrorBanner message={error} onDismiss={clearError} />
             <div className="sales-filters">
                 {/* Customer */}    

@@ -168,10 +168,6 @@ export default function MakeAdmin() {
         <i className="fas fa-user-shield"></i>
       </div>
       <h2>Make Admin</h2>
-      <p className="make-admin-subtitle">
-        Grant an already-registered user branch admin access. The user must sign up first —
-        this only upgrades an existing account, it doesn't create one.
-      </p>
 
       {message && (
         <div className={`alert ${isError ? "alert-error" : "alert-success"}`}>
@@ -182,10 +178,6 @@ export default function MakeAdmin() {
       {pending.length > 0 && (
         <div className="admin-list-section">
           <h3>Pending Admin Requests</h3>
-          <p className="admin-list-hint">
-            These accounts checked "I am a business admin" at signup and are waiting for a
-            role. Click one to fill in the form below.
-          </p>
           <ul className="admin-list">
             {pending.map((p) => (
               <li key={p._id} className="admin-list-item">

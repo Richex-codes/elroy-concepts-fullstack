@@ -114,9 +114,6 @@ export default function AddInventoryPage() {
         <i className="fas fa-dolly"></i>
       </div>
       <h2>Add Inventory to Existing Product</h2>
-      <p className="add-inventory-subtitle">
-        Restock an existing product at a branch. This is logged permanently for the audit trail.
-      </p>
 
       {message && (
         <div className={`alert ${isError ? "alert-error" : "alert-success"}`}>

@@ -217,9 +217,6 @@ const fetchStock = async () => {
   return (
     <div className="inventory-page">
       <h2>Inventory by Branch</h2>
-      <p className="inventory-page-subtitle">
-        Inventory log below shows this year by default — pick a date range to look further back.
-      </p>
       <ErrorBanner message={error} onDismiss={clearError} />
 
       <section className="inventory-section">
@@ -358,9 +355,6 @@ const fetchStock = async () => {
 
       <section className="inventory-section">
       <h3>Inventory Summary by Branch</h3>
-      <p className="inventory-page-subtitle">
-        Always the current running total — never limited by year or date.
-      </p>
       <div className="inventory-actions">
         <ReportActions
           pdfEndpoint="/admin/inventory-summary/pdf"

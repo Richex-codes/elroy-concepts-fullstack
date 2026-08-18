@@ -103,9 +103,6 @@ export default function DebtorPage(){
     return(
         <div className="debtors-page">
             <h1>Debtors</h1>
-            <p className="debtors-page-subtitle">
-              Every outstanding balance, regardless of how old the sale is — this list is never limited by year.
-            </p>
             <ErrorBanner message={error} onDismiss={clearError} />
             <div className="debtor-filters">
                 <input

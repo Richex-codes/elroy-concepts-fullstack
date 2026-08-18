@@ -340,9 +340,6 @@ export default function AddProductPage() {
         <i className="fas fa-box-open"></i>
       </div>
       <h2>Add New Product</h2>
-      <p className="add-product-subtitle">
-        Create a new catalog item, then set its opening stock per branch.
-      </p>
 
       {message && (
         <div className={`alert ${isError ? "alert-error" : "alert-success"}`}>
@@ -513,9 +510,6 @@ export default function AddProductPage() {
             {!isPipe && (
               <>
             <h4>Set Quantity Per Branch</h4>
-            <p className="product-form-section-hint">
-              Only branches with a quantity above zero are saved as opening stock.
-            </p>
 
             <div className="product-form-field">
               <label>Unit Landed Cost (₦, optional — applies to all opening stock above)</label>
@@ -619,10 +613,6 @@ export default function AddProductPage() {
             {isPipe && (
               <>
                 <h4>Add Length Batches</h4>
-                <p className="product-form-section-hint">
-                  Add one row per stick length you're stocking, e.g. 24 sticks at 5.8m and 89
-                  sticks at 6m.
-                </p>
 
                 <div className="pipe-batch-draft">
                   <select

@@ -336,9 +336,6 @@ export default function AddSales() {
         <i className="fas fa-cash-register"></i>
       </div>
       <h2>Record Sale</h2>
-      <p className="add-sales-subtitle">
-        One customer, one or more products, one invoice.
-      </p>
 
       {message && (
         <div className={`alert ${isError ? "alert-error" : "alert-success"}`}>

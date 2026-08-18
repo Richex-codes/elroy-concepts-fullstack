@@ -117,11 +117,6 @@ export default function AuditLog() {
   return (
     <div className="audit-log-page">
       <h2>Audit Log</h2>
-      <p className="audit-log-subtitle">
-        A permanent, read-only record of who did what. Nothing here can be
-        edited or deleted from the app. Showing this year by default — pick
-        a date range to look further back.
-      </p>
 
       <div className="audit-log-filters">
         <select value={action} onChange={(e) => setAction(e.target.value)}>
