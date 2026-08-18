@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { normalizeProductName } = require("../utils/normalizeProductName");
 const Schema = mongoose.Schema;
 
 const ProductSchema = new Schema(
@@ -7,7 +8,14 @@ const ProductSchema = new Schema(
       type: String,
       required: true,
     },
-    
+    // Derived from `name` (case/spacing/punctuation-insensitive) so "50mm
+    // Pipe" and "50 mm  pipe" collide as the same product instead of
+    // becoming duplicates -- see utils/normalizeProductName.js. Kept in
+    // sync by the pre-validate hook below; never set directly.
+    normalizedName: {
+      type: String,
+    },
+
     category: {
       type: Schema.Types.ObjectId,
       ref: "Category",
@@ -88,6 +96,13 @@ const ProductSchema = new Schema(
   },
   { timestamps: true }
 );
+
+ProductSchema.pre("validate", function (next) {
+  if (this.isModified("name") || this.isNew) {
+    this.normalizedName = normalizeProductName(this.name);
+  }
+  next();
+});
 
 // Inventory/low-stock/summary aggregations all $unwind inventory then
 // $match on branch and/or color; category lookups filter on category too.
