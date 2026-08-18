@@ -260,6 +260,7 @@ const fetchStock = async () => {
           <option value="Silver">Silver</option>
           <option value="Bronze">Bronze</option>
           <option value="Black">Black</option>
+          <option value="White">White</option>
           <option value="Dark Bronze">
             Dark Bronze
           </option>

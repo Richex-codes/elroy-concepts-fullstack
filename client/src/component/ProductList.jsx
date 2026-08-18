@@ -194,6 +194,7 @@ export default function ProductListPage() {
         <option>Silver</option>
         <option>Bronze</option>
         <option>Black</option>
+        <option>White</option>
         <option>Dark Bronze</option>
         <option>Wood</option>
         <option>No Color</option>

@@ -180,6 +180,7 @@ export default function CartPage() {
                     <option value="Silver">Silver</option>
                     <option value="Bronze">Bronze</option>
                     <option value="Black">Black</option>
+                    <option value="White">White</option>
                     <option value="Dark Bronze">Dark Bronze</option>
                     <option value="Wood">Wood</option>
                     <option value="No Color">No Color</option>

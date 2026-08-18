@@ -65,6 +65,7 @@ export default function AddProductPage() {
   "Silver",
   "Bronze",
   "Black",
+  "White",
   "Dark Bronze",
   "Wood",
   "No Color",

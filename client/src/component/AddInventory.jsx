@@ -29,7 +29,7 @@ export default function AddInventoryPage() {
   const [supplierRef, setSupplierRef] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const COLORS = ["Gold", "Silver", "Bronze", "Black", "Dark Bronze", "Wood", "No Color"];
+  const COLORS = ["Gold", "Silver", "Bronze", "Black", "White", "Dark Bronze", "Wood", "No Color"];
 
   const selectedProductObj = products.find((p) => p._id === selectedProduct);
   const isPipe = selectedProductObj?.unitType === "length";
