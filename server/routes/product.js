@@ -14,6 +14,7 @@ const { getLowStock } = require("../utils/lowStockUtils");
 const { logAudit } = require("../utils/auditLog");
 const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify");
 const { idempotent } = require("../utils/idempotency");
+const { normalizeProductName } = require("../utils/normalizeProductName");
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -194,13 +195,11 @@ router.post(
 
       // A branch admin creating "30mm pipe" for the first time at their own
       // branch has no way of knowing another branch already stocks it under
-      // the same name -- catching that here (case-insensitively) means they
-      // get pointed at Add Inventory instead of ending up with two separate
-      // Product documents for what's really one item.
-      const existing = await Product.findOne({ name: name.trim() }).collation({
-        locale: "en",
-        strength: 2,
-      });
+      // a slightly different spelling of the same name (case, spacing,
+      // punctuation) -- catching that here means they get pointed at Add
+      // Inventory instead of ending up with two separate Product documents
+      // for what's really one item.
+      const existing = await Product.findOne({ normalizedName: normalizeProductName(name) });
       if (existing) {
         return res.status(409).json({
           msg: `"${existing.name}" already exists. Use Add Inventory to add stock for your branch instead of creating a new product.`,
@@ -247,14 +246,11 @@ router.post(
         .json({ msg: "Product added successfully", product: newProduct });
     } catch (err) {
       // Backstop for the rare race where two admins pass the findOne check
-      // above at nearly the same instant -- the unique collation index is
-      // what actually prevents the second write, this just turns that into
-      // the same friendly message instead of a raw 500.
+      // above at nearly the same instant -- the unique normalizedName index
+      // is what actually prevents the second write, this just turns that
+      // into the same friendly message instead of a raw 500.
       if (err.code === 11000) {
-        const existing = await Product.findOne({ name: req.body.name?.trim() }).collation({
-          locale: "en",
-          strength: 2,
-        });
+        const existing = await Product.findOne({ normalizedName: normalizeProductName(req.body.name) });
         return res.status(409).json({
           msg: `"${existing?.name || req.body.name}" already exists. Use Add Inventory to add stock for your branch instead of creating a new product.`,
           existingProductId: existing?._id,

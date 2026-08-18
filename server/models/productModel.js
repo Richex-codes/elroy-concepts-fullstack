@@ -122,6 +122,16 @@ ProductSchema.index(
   { name: 1 },
   { unique: true, collation: { locale: "en", strength: 2 }, name: "name_unique_ci" }
 );
+// Stricter successor to the above: catches spacing/punctuation variants of
+// the same name too (e.g. "50mm Pipe" vs "50 mm  pipe"), not just case.
+// Kept alongside name_unique_ci rather than replacing it -- both can stay
+// since normalizedName-uniqueness is a superset of name-uniqueness, and
+// dropping a live unique index is unnecessary risk for no real benefit.
+// normalizedName is backfilled on every existing product before this index
+// was added (server/backfill_normalized_names.js, run once, not committed)
+// -- a unique index built while documents are missing the field would fail
+// immediately, since MongoDB treats "missing" as null for indexing purposes.
+ProductSchema.index({ normalizedName: 1 }, { unique: true, name: "normalizedName_unique" });
 // Dashboard "recent inventory" pipeline sorts by this after $unwind.
 ProductSchema.index({ "inventory.addedAt": -1 });
 

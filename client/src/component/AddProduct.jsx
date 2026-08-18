@@ -46,13 +46,17 @@ export default function AddProductPage() {
   // via Add Inventory, which prices each restock individually.
   const [openingStockUnitLandedCost, setOpeningStockUnitLandedCost] = useState("");
 
-  // Case-insensitive, trimmed match against the existing catalog -- this is
-  // what lets a branch admin who's never seen a product at their own branch
-  // (so, from where they're standing, it's brand new) get pointed at Add
-  // Inventory instead of unknowingly creating a second Product document for
-  // something another branch already stocks under the same name.
+  // Match against the existing catalog ignoring case, spacing, and
+  // punctuation -- "50mm Pipe" and "50 mm  pipe" collide here, not just
+  // exact-same-text names. Mirrors the server's normalizeProductName.js;
+  // keep both in sync if this changes. This is what lets a branch admin who
+  // has never seen a product at their own branch (so, from where they're
+  // standing, it's brand new) get pointed at Add Inventory instead of
+  // unknowingly creating a second Product document for something another
+  // branch already stocks under a slightly different spelling.
+  const normalizeProductName = (name) => (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   const duplicateMatch = products.find(
-    (p) => p.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+    (p) => normalizeProductName(p.name) === normalizeProductName(formData.name)
   );
   const showDuplicateWarning = formData.name.trim().length > 0 && !!duplicateMatch;
 
