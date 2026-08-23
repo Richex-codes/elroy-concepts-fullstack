@@ -6,10 +6,13 @@ import ConfirmModal from "./ConfirmModal.jsx";
 import { useConfirm } from "../utils/useConfirm.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
+import Pagination from "./Pagination.jsx";
 import "../styles/Sales.css";
 
 const formatNaira = (value) =>
   `₦${(Number(value) || 0).toLocaleString("en-NG")}`;
+
+const PAGE_SIZE = 40;
 
 export default function SalesPage() {
     const { confirm, modalProps } = useConfirm();
@@ -30,6 +33,7 @@ export default function SalesPage() {
     const [toDate, setToDate] = useState("");
     const [expandedSaleId, setExpandedSaleId] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [salesPage, setSalesPage] = useState(1);
     const latestRequestId = useRef(0);
 
     useEffect(() => {
@@ -84,6 +88,7 @@ const fetchSales = async () => {
     if (requestId !== latestRequestId.current) return;
     clearError();
     setSales(res.data);
+    setSalesPage(1);
   } catch (err) {
     console.error(err);
     if (requestId === latestRequestId.current) {
@@ -245,7 +250,7 @@ const handleDelete = async (sale) => {
                         </td>
                       </tr>
                     )}
-                    {sales.map((sale, idx) => (
+                    {sales.slice((salesPage - 1) * PAGE_SIZE, salesPage * PAGE_SIZE).map((sale, idx) => (
                         <Fragment key={sale._id}>
                         <tr className={idx % 2 === 1 ? "row-alt" : ""}>
                         <td data-label="Customer">{sale.customerName}</td>
@@ -297,7 +302,13 @@ const handleDelete = async (sale) => {
                                   {sale.items?.map((item, i) => (
                                     <tr key={i}>
                                       <td>{item.productName}</td>
-                                      <td>{item.length != null ? `${item.length}m` : item.color}</td>
+                                      <td>
+                                        {item.cutType != null
+                                          ? item.cutType === "half"
+                                            ? `${item.color} · Half ${item.length}m`
+                                            : `${item.color} · Full`
+                                          : item.color}
+                                      </td>
                                       <td>{item.quantitySold}</td>
                                       <td className="amount-cell">
                                         {item.rate != null ? formatNaira(item.rate) : "-"}
@@ -320,6 +331,7 @@ const handleDelete = async (sale) => {
                     </tbody>
                 </table>
                 </div>
+        <Pagination page={salesPage} setPage={setSalesPage} totalItems={sales.length} pageSize={PAGE_SIZE} />
         <ConfirmModal {...modalProps} />
         </div>
 

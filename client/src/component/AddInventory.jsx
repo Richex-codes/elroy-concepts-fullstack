@@ -23,7 +23,6 @@ export default function AddInventoryPage() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [color, setColor] = useState("");
-  const [length, setLength] = useState("");
   const [dateAdded, setDateAdded] = useState("");
   const [description, setDescription] = useState("");
   const [unitLandedCost, setUnitLandedCost] = useState("");
@@ -31,9 +30,6 @@ export default function AddInventoryPage() {
   const [loading, setLoading] = useState(false);
 
   const COLORS = ["Gold", "Silver", "Bronze", "Black", "White", "Dark Bronze", "Wood", "No Color"];
-
-  const selectedProductObj = products.find((p) => p._id === selectedProduct);
-  const isPipe = selectedProductObj?.unitType === "length";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +75,6 @@ export default function AddInventoryPage() {
            branch: selectedBranch,
            quantity: parseInt(quantity),
            color,
-           ...(isPipe && { length: Number(length) }),
            description,
            addedAt: dateAdded,
            ...(unitLandedCost !== "" && { unitLandedCost: Number(unitLandedCost) }),
@@ -96,7 +91,6 @@ export default function AddInventoryPage() {
       setMessage("Inventory added!");
       setIdempotencyKey(newIdempotencyKey()); // this restock is done; the next submit is a new one
       setQuantity("");
-      setLength("");
       setDescription("")
       setUnitLandedCost("");
       setSupplierRef("");
@@ -170,27 +164,12 @@ export default function AddInventoryPage() {
             </select>
           </div>
 
-          {isPipe && (
-            <div className="inventory-form-field">
-              <label>Length (m)</label>
-              <input
-                type="number"
-                min="0.1"
-                step="0.1"
-                placeholder="e.g. 5.8"
-                value={length}
-                onChange={(e) => setLength(e.target.value)}
-                required
-              />
-            </div>
-          )}
-
           <div className="inventory-form-field">
-            <label>{isPipe ? "Number of sticks at this length" : "Quantity"}</label>
+            <label>Quantity</label>
             <input
               type="number"
               min="1"
-              placeholder={isPipe ? "e.g. 24" : "e.g. 20"}
+              placeholder="e.g. 20"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required

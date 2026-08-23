@@ -159,7 +159,7 @@ router.post(
   upload.single("image"), // Use the Cloudinary-configured Multer
   async (req, res) => {
     try {
-      const { name, category, dateAdded, unitType, pipeShape, pipeSize, pipeThickness } = req.body;
+      const { name, category, dateAdded, unitType } = req.body;
       const resolvedUnitType = unitType === "length" ? "length" : "piece";
 
       let imageUrl = "";
@@ -186,12 +186,6 @@ router.post(
       if (badColorLine) {
         return res.status(400).json({ msg: "Each inventory line needs a color." });
       }
-      if (resolvedUnitType === "length") {
-        const badLine = inventory.find((item) => !item.length || Number(item.length) <= 0);
-        if (badLine) {
-          return res.status(400).json({ msg: "Each length batch needs a valid length in meters." });
-        }
-      }
 
       // A branch admin creating "30mm pipe" for the first time at their own
       // branch has no way of knowing another branch already stocks it under
@@ -212,16 +206,10 @@ router.post(
         category,
         image: imageUrl,
         unitType: resolvedUnitType,
-        ...(resolvedUnitType === "length" && {
-          pipeShape: pipeShape || "",
-          pipeSize: pipeSize || "",
-          ...(pipeThickness && { pipeThickness: Number(pipeThickness) }),
-        }),
         inventory: inventory.map((item) => {
           const receivedQty = Number(item.quantity) || 0;
           const line = {
             ...item,
-            ...(resolvedUnitType === "length" && { length: Number(item.length) }),
             addedAt: dateAdded || Date.now(),
             batches: [
               {
@@ -371,7 +359,7 @@ router.get("/product-inventory", authMiddleware, requireAdmin, async (req, res) 
 // Add inventory to existing product
 router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inventory.add"), async (req, res) => {
   const productId = req.params.id;
-  const { branch, quantity, color, length, description, addedAt, unitLandedCost, supplierRef } = req.body;
+  const { branch, quantity, color, description, addedAt, unitLandedCost, supplierRef } = req.body;
 
   if (!branch || !quantity || isNaN(quantity)) {
     return res
@@ -387,12 +375,8 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ msg: "Product not found" });
 
-    const isPipe = product.unitType === "length";
     if (!color) {
       return res.status(400).json({ msg: "Color is required for this product." });
-    }
-    if (isPipe && (!length || isNaN(length) || Number(length) <= 0)) {
-      return res.status(400).json({ msg: "A valid length in meters is required for this product." });
     }
 
     const receivedQty = parseInt(quantity);
@@ -400,7 +384,6 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
     const newLine = {
       branch,
       color,
-      ...(isPipe && { length: Number(length) }),
       description,
       addedAt,
       batches: [
@@ -430,7 +413,6 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
         branchName: branchDoc?.name,
         quantity: receivedQty,
         color,
-        ...(isPipe && { length: Number(length) }),
         description,
         unitLandedCost: hasCost ? Number(unitLandedCost) : 0,
         costEstimated: !hasCost,

@@ -754,7 +754,6 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
       const resolved = [];
       for (const line of items) {
         const qty = Number(line.quantitySold);
-        const isPipeLine = line.length != null && line.length !== "";
 
         if (!line.productId || !line.color || !qty || qty <= 0 || line.amount == null) {
           throw Object.assign(new Error("Each item needs a product, color, valid quantity, and amount"), { statusCode: 400 });
@@ -767,16 +766,22 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
 
         const rate = line.rate != null && line.rate !== "" ? Number(line.rate) : undefined;
 
-        if (isPipeLine || product.unitType === "length") {
-          const requestedLength = Number(line.length);
-          if (product.unitType !== "length" || !requestedLength || requestedLength <= 0) {
-            throw Object.assign(new Error(`"${product.name}" is not sold by length`), { statusCode: 400 });
-          }
+        if (product.unitType === "length") {
           // Pipes are only ever sold as a full stick or exactly half of one
           // -- never a custom cut -- so cutType must say which.
           const cutType = line.cutType;
           if (cutType !== "full" && cutType !== "half") {
             throw Object.assign(new Error(`"${product.name}" must be sold as a full or half stick`), { statusCode: 400 });
+          }
+          // Only a "half" sale needs a length -- it's the length of the
+          // stick being cut, entered by staff right now (never recorded at
+          // stock-in time). A "full" sale needs no length at all.
+          let stickLength;
+          if (cutType === "half") {
+            stickLength = Number(line.length);
+            if (!stickLength || stickLength <= 0) {
+              throw Object.assign(new Error(`"${product.name}" needs the length of the stick being cut`), { statusCode: 400 });
+            }
           }
           // Best-effort pre-check only -- pass 2 (deductPipePieces) re-reads
           // live inventory and is the authoritative guard, since two lines
@@ -784,12 +789,12 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           // lines both eligible to cut the same fresh stick), which a
           // simple claimed-quantity map (as used for color below) can't
           // track exactly.
-          const totalAvailable = availablePieces(product, branch, line.color, requestedLength, cutType);
+          const totalAvailable = availablePieces(product, branch, line.color, cutType, stickLength);
           if (totalAvailable < qty) {
-            const label = cutType === "half" ? "half stick" : "full stick";
-            throw Object.assign(new Error(`Insufficient stock for "${product.name}" (${line.color}) -- ${label} at ${requestedLength}m`), { statusCode: 400 });
+            const label = cutType === "half" ? `half stick at ${stickLength}m` : "full stick";
+            throw Object.assign(new Error(`Insufficient stock for "${product.name}" (${line.color}) -- ${label}`), { statusCode: 400 });
           }
-          resolved.push({ product, qty, color: line.color, length: requestedLength, cutType, amount: Number(line.amount), rate, isPipe: true });
+          resolved.push({ product, qty, color: line.color, cutType, stickLength, amount: Number(line.amount), rate, isPipe: true });
           continue;
         }
 
@@ -820,24 +825,24 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         dirtyProducts.add(product);
 
         if (isPipe) {
-          const { length, color, cutType } = resolvedItem;
+          const { color, cutType, stickLength } = resolvedItem;
           // Re-reads live inventory (not the pass-1 snapshot) and throws if
           // it can't fully satisfy `qty` -- see the pass-1 comment above.
           const { cuts, landedCostAtSale, costBatchRefs, costEstimated } = deductPipePieces(
             product,
             branch,
             color,
-            length,
             cutType,
-            qty
+            qty,
+            stickLength
           );
 
           itemsForSale.push({
             product: product._id,
             quantitySold: qty,
             color,
-            length,
             cutType,
+            ...(cutType === "half" && { length: stickLength }),
             cuts,
             amount,
             landedCostAtSale,
@@ -846,11 +851,11 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
             ...(rate != null && { rate }),
           });
 
-          const remainingQty = availablePieces(product, branch, color, length, cutType);
+          const remainingQty = availablePieces(product, branch, color, cutType, stickLength);
           if (remainingQty <= LOW_STOCK_THRESHOLD) {
             lowStockLines.push({
               productName: product.name,
-              color: `${color} · ${cutType === "half" ? "Half" : "Full"} ${length}m`,
+              color: `${color} · ${cutType === "half" ? `Half ${stickLength}m` : "Full"}`,
               remainingQty,
             });
           }
@@ -936,7 +941,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           quantitySold: i.quantitySold,
           rate: i.rate,
           amount: i.amount,
-          ...(i.length != null && { length: i.length, cutType: i.cutType, cuts: i.cuts }),
+          ...(i.cutType != null && { length: i.length, cutType: i.cutType, cuts: i.cuts }),
           ...(i.landedCostAtSale != null && {
             landedCostAtSale: i.landedCostAtSale,
             costEstimated: i.costEstimated,
@@ -996,7 +1001,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           quantitySold: i.quantitySold,
           rate: i.rate,
           amount: i.amount,
-          ...(i.length != null && { length: i.length, cutType: i.cutType, cuts: i.cuts }),
+          ...(i.cutType != null && { length: i.length, cutType: i.cutType, cuts: i.cuts }),
         })),
         amount: sale.amount,
         amountPaid: sale.amountPaid,
@@ -1093,7 +1098,7 @@ router.get("/sales", authMiddleware, async (req, res) => {
         quantitySold: item.quantitySold,
         rate: item.rate,
         amount: item.amount,
-        ...(item.length != null && { length: item.length }),
+        ...(item.cutType != null && { cutType: item.cutType, length: item.length }),
       })),
       amount: sale.amount,
       amountPaid: sale.amountPaid,
@@ -1131,7 +1136,7 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
         const product = line.product; // populated Product doc, or null if deleted
         if (!product) continue;
 
-        if (line.length != null && line.cuts?.length) {
+        if (product.unitType === "length" && line.cuts?.length) {
           restorePipePieces(product, line.cuts);
           productsToSave.set(product._id.toString(), product);
           restoredCount++;
@@ -1190,7 +1195,7 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
           quantitySold: line.quantitySold,
           rate: line.rate,
           amount: line.amount,
-          ...(line.length != null && { length: line.length, cutType: line.cutType, cuts: line.cuts }),
+          ...(line.cutType != null && { length: line.length, cutType: line.cutType, cuts: line.cuts }),
         })),
         amount: sale.amount,
         amountPaid: sale.amountPaid,
@@ -1236,7 +1241,7 @@ async function loadSaleForInvoice(id) {
       quantitySold: line.quantitySold,
       rate: line.rate,
       amount: line.amount,
-      ...(line.length != null && { length: line.length, cutType: line.cutType }),
+      ...(line.cutType != null && { cutType: line.cutType, length: line.length }),
     })),
     amount: sale.amount,
     amountPaid: sale.amountPaid,

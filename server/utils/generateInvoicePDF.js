@@ -51,7 +51,7 @@ function generateInvoicePDF(sale) {
         [
           { key: "product", label: "PRODUCT", width: 160 },
           { key: "color", label: "COLOR", width: 70 },
-          { key: "length", label: "LENGTH", width: 60, align: "right" },
+          { key: "length", label: "CUT", width: 60, align: "right" },
           { key: "qty", label: "QTY", width: 45, align: "right" },
           { key: "rate", label: "RATE", width: 90, align: "right" },
           { key: "amount", label: "AMOUNT", width: 85, align: "right" },
@@ -59,7 +59,12 @@ function generateInvoicePDF(sale) {
         items.map((item) => ({
           product: item.productName || "N/A",
           color: item.color || "-",
-          length: item.length != null ? `${item.cutType === "half" ? "Half " : ""}${item.length}m` : "-",
+          length:
+            item.cutType === "half"
+              ? `Half ${item.length}m`
+              : item.cutType === "full"
+              ? "Full"
+              : "-",
           qty: item.quantitySold,
           rate: item.rate != null ? formatNaira(item.rate) : "-",
           amount: formatNaira(item.amount),

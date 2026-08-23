@@ -1,24 +1,28 @@
-// Stock deduction/restoration for "length" (pipe) products. Pipes are only
-// ever sold as a FULL stick (its own length, whatever that happens to be --
-// different delivery batches can be different lengths, e.g. 6m vs 5.8m) or
-// exactly HALF of one, never a custom cut. That means matching is always
-// exact-length, never best-fit: a "full" request only ever draws stock
-// already at that exact length, and a "half" request draws stock already at
-// that exact (half) length first, only cutting a fresh stick -- at exactly
-// double that length -- once those run out.
+// Stock deduction/restoration for "length" (pipe) products. Fresh stock
+// isn't tracked by length at all -- how long a stick happens to be doesn't
+// matter until someone wants to cut it. Pipes are sold two ways:
+//
+//   "full": sell a whole stick, no length involved anywhere.
+//   "half": staff enter the stick's length AT SALE TIME (it was never
+//     recorded when the stock came in), so the system can size the
+//     resulting remnant. That remnant IS a specific, known-length leftover
+//     from then on -- it's the only kind of inventory line that ever
+//     carries a real `length` value.
+//
+// A "half" request first uses up any existing remnant already sitting at
+// exactly that half-length (a leftover from an earlier half-stick sale),
+// and only cuts a fresh (length-less) stick once those run out.
 //
 // Cost: within whichever line(s) match, drawn FIFO (oldest arrivalDate
 // first) via drainLineBatches, same cost model as piece products'
-// consumeStock. A remnant (the other half of a freshly cut stick) inherits
-// the weighted-average cost of the stick it came from -- cutting a stick
-// doesn't change its cost basis.
+// consumeStock. A remnant inherits the weighted-average cost of the stick
+// it came from -- cutting a stick doesn't change its cost basis.
 
 const Product = require("../models/productModel");
 const { drainLineBatches, findBatchById } = require("./costConsumption.js");
 
 // A half this short wouldn't be a usable sellable piece -- treated as scrap
-// instead of a new inventory line. In practice, since pipes are only ever
-// sold whole or exactly halved, this only bites for unusually short stock.
+// instead of a new inventory line.
 const PIPE_REMNANT_MIN_LENGTH = 0.3;
 
 function findOrCreateRemnantLine(product, branchId, color, length) {
@@ -58,76 +62,69 @@ function addRemnant(product, branchId, color, length, pieces, unitLandedCost, co
   return newBatch._id;
 }
 
-// Every inventory line at exactly `length` for this branch+color, with
-// stock remaining. No best-fit fuzziness -- a stick of a different length
-// is a physically different piece, not a substitute.
-function exactLengthLines(product, branchId, color, length) {
+// Remnant lines at exactly `length` -- the only inventory lines that ever
+// carry a real length value.
+function remnantLinesAt(product, branchId, color, length) {
   return product.inventory.filter(
     (i) =>
       i.branch.toString() === branchId &&
       i.color === color &&
+      i.isRemnant &&
       i.length === length &&
       i.quantity > 0
   );
 }
 
-// Total pieces sellable at `pieceLength` for the given cutType: exact-length
-// stock on hand, plus -- for "half" only -- stock at double that length
-// that could still be cut. Used for a pre-flight check before the
-// transaction and for the post-sale low-stock check.
-function availablePieces(product, branchId, color, pieceLength, cutType) {
-  const exact = exactLengthLines(product, branchId, color, pieceLength).reduce((sum, i) => sum + i.quantity, 0);
-  if (cutType !== "half") return exact;
-  const parent = exactLengthLines(product, branchId, color, pieceLength * 2).reduce((sum, i) => sum + i.quantity, 0);
-  return exact + parent;
+// Fresh stock: no length recorded (never asked for at stock-in time), not a
+// remnant. This is what "full" sales draw from, and what "half" sales fall
+// back to cutting once matching remnants run out.
+function genericFreshLines(product, branchId, color) {
+  return product.inventory.filter(
+    (i) =>
+      i.branch.toString() === branchId &&
+      i.color === color &&
+      !i.isRemnant &&
+      i.length == null &&
+      i.quantity > 0
+  );
 }
 
-// Sells `piecesNeeded` pieces of length `pieceLength` (a full stick's own
-// length, or exactly half of it). Mutates the product in place (caller
-// saves). Throws a statusCode-tagged error if stock can't fully cover the
-// request -- safe mid-mutation since callers run this inside a Mongo
-// session transaction, which rolls back every write made on throw.
+// Total pieces sellable for the given cutType. "full" only ever counts
+// length-less fresh stock. "half" needs `stickLength` (the length the
+// caller intends to cut) and counts both a matching existing remnant and
+// fresh stock that could still be cut to produce one.
+function availablePieces(product, branchId, color, cutType, stickLength) {
+  if (cutType !== "half") {
+    return genericFreshLines(product, branchId, color).reduce((sum, i) => sum + i.quantity, 0);
+  }
+  const pieceLength = stickLength / 2;
+  const remnant = remnantLinesAt(product, branchId, color, pieceLength).reduce((sum, i) => sum + i.quantity, 0);
+  const fresh = genericFreshLines(product, branchId, color).reduce((sum, i) => sum + i.quantity, 0);
+  return remnant + fresh;
+}
+
+// Sells `piecesNeeded` pieces. Mutates the product in place (caller saves).
+// Throws a statusCode-tagged error if stock can't fully cover the request
+// -- safe mid-mutation since callers run this inside a Mongo session
+// transaction, which rolls back every write made on throw.
 //
-// cutType "full": only ever draws from stock already at exactly
-// pieceLength. Never cuts a longer stick down -- "full" means the entire
-// original stick, not a custom-sized piece of a bigger one.
+// cutType "full": stickLength is ignored. Draws only from length-less fresh
+// stock -- there's nothing to cut, nothing to record.
 //
-// cutType "half": first draws down any stock already at exactly
-// pieceLength (fresh stock naturally at that length, or a leftover half
-// from an earlier half-stick sale). Only once that's exhausted does it cut
-// a fresh stick -- drawn from stock at exactly pieceLength × 2 -- splitting
-// each one into the sold half and a remnant half of the same length.
-function deductPipePieces(product, branchId, color, pieceLength, cutType, piecesNeeded) {
+// cutType "half": stickLength is required (the stick being cut, entered by
+// staff right now). Draws down any existing remnant at exactly half that
+// length first, then cuts fresh sticks for the remainder, creating a new
+// remnant batch for each one cut.
+function deductPipePieces(product, branchId, color, cutType, piecesNeeded, stickLength) {
   const cuts = [];
   let remaining = piecesNeeded;
   let totalCost = 0;
   let drawnQty = 0;
   let costEstimated = false;
+  const pieceLength = cutType === "half" ? stickLength / 2 : null;
 
-  for (const line of exactLengthLines(product, branchId, color, pieceLength)) {
-    if (remaining <= 0) break;
-    const take = Math.min(line.quantity, remaining);
-    if (take <= 0) continue;
-
-    const drained = drainLineBatches(line, take);
-    totalCost += drained.totalCost;
-    drawnQty += drained.drawnQty;
-    remaining -= drained.drawnQty;
-    if (drained.costEstimated) costEstimated = true;
-    Product.recomputeInventoryQuantity(line);
-
-    cuts.push({
-      fromLength: pieceLength,
-      pieces: drained.drawnQty,
-      costBatchRefs: drained.refs,
-      remnantBatchId: null,
-    });
-  }
-
-  if (remaining > 0 && cutType === "half") {
-    const parentLength = pieceLength * 2;
-
-    for (const line of exactLengthLines(product, branchId, color, parentLength)) {
+  if (cutType === "half") {
+    for (const line of remnantLinesAt(product, branchId, color, pieceLength)) {
       if (remaining <= 0) break;
       const take = Math.min(line.quantity, remaining);
       if (take <= 0) continue;
@@ -139,9 +136,31 @@ function deductPipePieces(product, branchId, color, pieceLength, cutType, pieces
       if (drained.costEstimated) costEstimated = true;
       Product.recomputeInventoryQuantity(line);
 
-      const avgCost = drained.drawnQty > 0 ? drained.totalCost / drained.drawnQty : 0;
+      cuts.push({
+        fromLength: pieceLength,
+        pieces: drained.drawnQty,
+        costBatchRefs: drained.refs,
+        remnantBatchId: null,
+      });
+    }
+  }
+
+  if (remaining > 0) {
+    for (const line of genericFreshLines(product, branchId, color)) {
+      if (remaining <= 0) break;
+      const take = Math.min(line.quantity, remaining);
+      if (take <= 0) continue;
+
+      const drained = drainLineBatches(line, take);
+      totalCost += drained.totalCost;
+      drawnQty += drained.drawnQty;
+      remaining -= drained.drawnQty;
+      if (drained.costEstimated) costEstimated = true;
+      Product.recomputeInventoryQuantity(line);
+
       let remnantBatchId = null;
-      if (pieceLength >= PIPE_REMNANT_MIN_LENGTH) {
+      if (cutType === "half" && pieceLength >= PIPE_REMNANT_MIN_LENGTH) {
+        const avgCost = drained.drawnQty > 0 ? drained.totalCost / drained.drawnQty : 0;
         remnantBatchId = addRemnant(
           product,
           branchId,
@@ -155,7 +174,7 @@ function deductPipePieces(product, branchId, color, pieceLength, cutType, pieces
       }
 
       cuts.push({
-        fromLength: parentLength,
+        fromLength: cutType === "half" ? stickLength : null,
         pieces: drained.drawnQty,
         costBatchRefs: drained.refs,
         remnantBatchId,
@@ -164,9 +183,9 @@ function deductPipePieces(product, branchId, color, pieceLength, cutType, pieces
   }
 
   if (remaining > 0) {
-    const label = cutType === "half" ? "half stick" : "full stick";
+    const label = cutType === "half" ? `half stick at ${stickLength}m` : "full stick";
     throw Object.assign(
-      new Error(`Insufficient stock for "${product.name}" (${color}) -- ${label} at ${pieceLength}m`),
+      new Error(`Insufficient stock for "${product.name}" (${color}) -- ${label}`),
       { statusCode: 400 }
     );
   }

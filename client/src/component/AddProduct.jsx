@@ -14,12 +14,8 @@ export default function AddProductPage() {
     image: null,
     dateAdded: "",
     unitType: "piece",
-    pipeShape: "",
-    pipeSize: "",
-    pipeThickness: "",
   });
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
-  const isPipe = formData.unitType === "length";
 
   const [categories, setCategories] = useState([]);
   const [branches, setBranches] = useState([]); // 🟡 Store branch list
@@ -28,16 +24,6 @@ export default function AddProductPage() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Pipe products don't fit the fixed color grid below -- lengths are
-  // arbitrary, so batches are built one at a time (draft-then-add-to-list,
-  // same pattern AddSales.jsx uses for sale line items).
-  const [pipeBatches, setPipeBatches] = useState([]); // {branch, length, color, quantity, unitLandedCost}
-  const [draftBatchBranch, setDraftBatchBranch] = useState("");
-  const [draftBatchLength, setDraftBatchLength] = useState("");
-  const [draftBatchColor, setDraftBatchColor] = useState("");
-  const [draftBatchQuantity, setDraftBatchQuantity] = useState("");
-  const [draftBatchUnitLandedCost, setDraftBatchUnitLandedCost] = useState("");
 
   // The color x branch grid below has one quantity per cell already --
   // asking for a cost per cell too would double the grid's width. Opening
@@ -189,87 +175,26 @@ export default function AddProductPage() {
   setInventory(updated);
 };
 
-  const handleAddPipeBatch = () => {
-    const length = Number(draftBatchLength);
-    const quantity = parseInt(draftBatchQuantity, 10);
-
-    if (!draftBatchBranch || !length || length <= 0) {
-      setIsError(true);
-      setMessage("Select a branch and enter a valid length.");
-      return;
-    }
-    if (!draftBatchColor) {
-      setIsError(true);
-      setMessage("Select a color.");
-      return;
-    }
-    if (!quantity || quantity <= 0) {
-      setIsError(true);
-      setMessage("Enter a valid number of sticks.");
-      return;
-    }
-
-    setIsError(false);
-    setMessage("");
-    setPipeBatches((prev) => [
-      ...prev,
-      {
-        branch: draftBatchBranch,
-        length,
-        color: draftBatchColor,
-        quantity,
-        unitLandedCost: draftBatchUnitLandedCost !== "" ? Number(draftBatchUnitLandedCost) : undefined,
-      },
-    ]);
-    setDraftBatchLength("");
-    setDraftBatchColor("");
-    setDraftBatchQuantity("");
-    setDraftBatchUnitLandedCost("");
-  };
-
-  const handleRemovePipeBatch = (index) => {
-    setPipeBatches((prev) => prev.filter((_, i) => i !== index));
-  };
-
   // 🔵 Submit everything including inventory
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    let inventoryPayload;
-
-    if (isPipe) {
-      if (pipeBatches.length === 0) {
-        setIsError(true);
-        setMessage("Add at least one length batch.");
-        setLoading(false);
-        return;
-      }
-      inventoryPayload = pipeBatches.map((batch) => ({
-        branch: batch.branch,
-        length: batch.length,
-        color: batch.color,
-        quantity: batch.quantity,
-        description: formData.description,
-        ...(batch.unitLandedCost != null && { unitLandedCost: batch.unitLandedCost }),
+    const inventoryPayload = inventory
+      .filter((item) => item.quantity > 0)
+      .map((item) => ({
+        ...item,
+        description: formData.description, // ✅ SAME DESC FOR ALL
+        ...(openingStockUnitLandedCost !== "" && {
+          unitLandedCost: Number(openingStockUnitLandedCost),
+        }),
       }));
-    } else {
-      inventoryPayload = inventory
-        .filter((item) => item.quantity > 0)
-        .map((item) => ({
-          ...item,
-          description: formData.description, // ✅ SAME DESC FOR ALL
-          ...(openingStockUnitLandedCost !== "" && {
-            unitLandedCost: Number(openingStockUnitLandedCost),
-          }),
-        }));
 
-      if (inventoryPayload.length === 0) {
-        setIsError(true);
-        setMessage("Please set quantity for at least one branch.");
-        setLoading(false);
-        return;
-      }
+    if (inventoryPayload.length === 0) {
+      setIsError(true);
+      setMessage("Please set quantity for at least one branch.");
+      setLoading(false);
+      return;
     }
     // 🟡 Prepare form data with inventory
     const payload = new FormData();
@@ -280,11 +205,6 @@ export default function AddProductPage() {
     }
     payload.append("dateAdded", formData.dateAdded);
     payload.append("unitType", formData.unitType);
-    if (isPipe) {
-      payload.append("pipeShape", formData.pipeShape);
-      payload.append("pipeSize", formData.pipeSize);
-      if (formData.pipeThickness) payload.append("pipeThickness", formData.pipeThickness);
-    }
     payload.append("inventory", JSON.stringify(inventoryPayload)); // send inventory
 
     try {
@@ -305,11 +225,7 @@ export default function AddProductPage() {
         image: null,
         dateAdded: "",
         unitType: "piece",
-        pipeShape: "",
-        pipeSize: "",
-        pipeThickness: "",
       });
-      setPipeBatches([]);
       setOpeningStockUnitLandedCost("");
       const resetInventory = [];
       branches.forEach((branch) => {
@@ -385,56 +301,12 @@ export default function AddProductPage() {
         </div>
 
         {!showDuplicateWarning && (
-          <div className="product-form-row">
-            <div className="product-form-field">
-              <label>Product Type</label>
-              <select name="unitType" value={formData.unitType} onChange={handleChange}>
-                <option value="piece">Piece (counted normally)</option>
-                <option value="length">Pipe (sold by length)</option>
-              </select>
-            </div>
-
-            {isPipe && (
-              <>
-                <div className="product-form-field">
-                  <label>Shape</label>
-                  <input
-                    type="text"
-                    name="pipeShape"
-                    list="pipe-shape-options"
-                    placeholder="e.g. Round, Square"
-                    value={formData.pipeShape}
-                    onChange={handleChange}
-                  />
-                  <datalist id="pipe-shape-options">
-                    <option value="Round" />
-                    <option value="Square" />
-                  </datalist>
-                </div>
-                <div className="product-form-field">
-                  <label>Size</label>
-                  <input
-                    type="text"
-                    name="pipeSize"
-                    placeholder="e.g. 50mm or 50x25mm"
-                    value={formData.pipeSize}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="product-form-field">
-                  <label>Thickness (mm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    name="pipeThickness"
-                    placeholder="e.g. 1.5"
-                    value={formData.pipeThickness}
-                    onChange={handleChange}
-                  />
-                </div>
-              </>
-            )}
+          <div className="product-form-field">
+            <label>Product Type</label>
+            <select name="unitType" value={formData.unitType} onChange={handleChange}>
+              <option value="piece">Piece (counted normally)</option>
+              <option value="length">Pipe (sold by full or half length)</option>
+            </select>
           </div>
         )}
 
@@ -508,8 +380,6 @@ export default function AddProductPage() {
               </div>
             </div>
 
-            {!isPipe && (
-              <>
             <h4>Set Quantity Per Branch</h4>
 
             <div className="product-form-field">
@@ -608,105 +478,6 @@ export default function AddProductPage() {
     </div>
   ))}
 </div>
-              </>
-            )}
-
-            {isPipe && (
-              <>
-                <h4>Add Length Batches</h4>
-
-                <div className="pipe-batch-draft">
-                  <select
-                    value={draftBatchBranch}
-                    onChange={(e) => setDraftBatchBranch(e.target.value)}
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map((b) => (
-                      <option key={b._id} value={b._id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    placeholder="Length (m)"
-                    value={draftBatchLength}
-                    onChange={(e) => setDraftBatchLength(e.target.value)}
-                  />
-
-                  <select
-                    value={draftBatchColor}
-                    onChange={(e) => setDraftBatchColor(e.target.value)}
-                  >
-                    <option value="">Select Color</option>
-                    {COLORS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Sticks"
-                    value={draftBatchQuantity}
-                    onChange={(e) => setDraftBatchQuantity(e.target.value)}
-                  />
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Cost per stick (₦, optional)"
-                    value={draftBatchUnitLandedCost}
-                    onChange={(e) => setDraftBatchUnitLandedCost(e.target.value)}
-                  />
-
-                  <button type="button" className="btn-add-batch" onClick={handleAddPipeBatch}>
-                    + Add Batch
-                  </button>
-                </div>
-
-                {pipeBatches.length > 0 && (
-                  <table className="pipe-batches-table">
-                    <thead>
-                      <tr>
-                        <th>Branch</th>
-                        <th>Length</th>
-                        <th>Color</th>
-                        <th>Sticks</th>
-                        <th>Cost</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pipeBatches.map((batch, index) => (
-                        <tr key={index}>
-                          <td>{branches.find((b) => b._id === batch.branch)?.name || batch.branch}</td>
-                          <td>{batch.length}m</td>
-                          <td>{batch.color}</td>
-                          <td>{batch.quantity}</td>
-                          <td>{batch.unitLandedCost != null ? `₦${batch.unitLandedCost}` : "-"}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn-remove-batch"
-                              onClick={() => handleRemovePipeBatch(index)}
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </>
-            )}
 
             <button type="submit" className="btn-primary" disabled={loading}>
               <i className="fas fa-box-open"></i> {loading ? "Adding Product..." : "Add Product"}

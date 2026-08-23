@@ -46,11 +46,10 @@ const SaleItemSchema = new mongoose.Schema(
     // estimated, not real, cost.
     costEstimated: { type: Boolean, default: false },
     // --- "length" (pipe) products only, below ---
-    // Length in meters sold per piece (quantitySold counts pieces of this
-    // length, same way it counts pieces of a color for "piece" products).
-    // Pipes are only ever sold as a full stick or exactly half of one --
-    // never a custom cut -- so this is always either a stick's own length
-    // (cutType "full") or exactly half of it (cutType "half").
+    // For cutType "half", the length (in meters) of the stick the staff
+    // entered at sale time -- half of it is what was actually sold, and the
+    // other half became a remnant. Absent for cutType "full", since a full
+    // stick's length was never recorded and isn't needed for anything.
     length: {
       type: Number,
     },
@@ -58,16 +57,14 @@ const SaleItemSchema = new mongoose.Schema(
       type: String,
       enum: ["full", "half"],
     },
-    // Provenance of which original stick lengths this line was cut from,
-    // e.g. [{fromLength: 5.8, pieces: 2}, {fromLength: 6, pieces: 1}].
-    // Lets sale deletion restore stock (and undo any remnant it created)
-    // without needing to store the remnant length redundantly -- it's
-    // deterministically fromLength - length, recomputed at restore time.
-    // Also carries cost provenance per cut so deletion can reverse batch
-    // consumption precisely, not just quantities.
+    // Provenance of exactly what stock this line drew from, so sale
+    // deletion can restore it precisely (undoing any remnant batch it
+    // created, restoring the original batches it drew down) instead of
+    // guessing. fromLength is only meaningful for a "half" cut drawn from an
+    // existing remnant (the remnant's own length); absent otherwise.
     cuts: [
       {
-        fromLength: { type: Number, required: true },
+        fromLength: { type: Number },
         pieces: { type: Number, required: true },
         costBatchRefs: [
           {
