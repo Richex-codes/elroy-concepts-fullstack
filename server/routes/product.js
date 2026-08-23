@@ -20,6 +20,21 @@ function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// The batch with the latest arrivalDate across every inventory line of this
+// product (any branch/color) -- used as the price to assume when a restock
+// doesn't specify a new cost.
+function mostRecentBatch(product) {
+  let latest = null;
+  for (const line of product.inventory) {
+    for (const batch of line.batches || []) {
+      if (!latest || new Date(batch.arrivalDate) > new Date(latest.arrivalDate)) {
+        latest = batch;
+      }
+    }
+  }
+  return latest;
+}
+
 // True when a branch-scoped admin is trying to touch a branch that isn't
 // one of theirs (an admin can hold more than one branch). Superadmins (and,
 // transitionally, any pre-migration token still missing a role claim)
@@ -381,6 +396,24 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
 
     const receivedQty = parseInt(quantity);
     const hasCost = unitLandedCost != null && unitLandedCost !== "";
+
+    // No cost given -- rather than defaulting to 0 (which would understate
+    // this stock's value until someone notices and corrects it), assume the
+    // price hasn't changed since the last time this product was costed and
+    // carry that batch's cost (and estimated/real status) forward.
+    let resolvedCost = 0;
+    let resolvedCostEstimated = true;
+    if (hasCost) {
+      resolvedCost = Number(unitLandedCost);
+      resolvedCostEstimated = false;
+    } else {
+      const priorBatch = mostRecentBatch(product);
+      if (priorBatch) {
+        resolvedCost = priorBatch.unitLandedCost;
+        resolvedCostEstimated = priorBatch.costEstimated;
+      }
+    }
+
     const newLine = {
       branch,
       color,
@@ -390,9 +423,9 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
         {
           quantityReceived: receivedQty,
           quantityRemaining: receivedQty,
-          unitLandedCost: hasCost ? Number(unitLandedCost) : 0,
+          unitLandedCost: resolvedCost,
           arrivalDate: addedAt || Date.now(),
-          costEstimated: !hasCost,
+          costEstimated: resolvedCostEstimated,
           supplierRef: supplierRef || "",
         },
       ],
@@ -414,8 +447,8 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
         quantity: receivedQty,
         color,
         description,
-        unitLandedCost: hasCost ? Number(unitLandedCost) : 0,
-        costEstimated: !hasCost,
+        unitLandedCost: resolvedCost,
+        costEstimated: resolvedCostEstimated,
       },
       metadata: { productName: product.name },
     });
