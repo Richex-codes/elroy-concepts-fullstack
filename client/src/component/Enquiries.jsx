@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 import api from "../api/axios.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 import { useConfirm } from "../utils/useConfirm.js";
+import Pagination from "./Pagination.jsx";
 import "../styles/Enquiries.css";
+
+const PAGE_SIZE = 40;
 
 export default function Enquiries() {
   const [enquiries, setEnquiries] = useState([]);
+  const [page, setPage] = useState(1);
   const { confirm, modalProps } = useConfirm();
 
   useEffect(() => {
@@ -23,6 +27,7 @@ export default function Enquiries() {
         }
       );
       setEnquiries(res.data);
+      setPage(1);
     } catch (err) {
       console.error("Failed to fetch enquiries:", err);
     }
@@ -71,7 +76,7 @@ export default function Enquiries() {
             </tr>
           </thead>
           <tbody>
-            {enquiries.map((enquiry) => (
+            {enquiries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((enquiry) => (
               <tr key={enquiry._id}>
                 <td data-label="Name">{enquiry.name}</td>
                 <td data-label="Email">{enquiry.email}</td>
@@ -107,6 +112,7 @@ export default function Enquiries() {
         </table>
         </div>
       )}
+      <Pagination page={page} setPage={setPage} totalItems={enquiries.length} pageSize={PAGE_SIZE} />
       <ConfirmModal {...modalProps} />
     </div>
   );

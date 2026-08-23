@@ -3,10 +3,13 @@ import api from "../api/axios.js";
 import { getOwnBranchId } from "../utils/authUser.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
+import Pagination from "./Pagination.jsx";
 import "../styles/Debtors.css"
 
 const formatNaira = (value) =>
   `₦${(Number(value) || 0).toLocaleString("en-NG")}`;
+
+const PAGE_SIZE = 40;
 
 export default function DebtorPage(){
     const { error, showError, clearError } = useApiError();
@@ -24,6 +27,7 @@ export default function DebtorPage(){
     const [toDate, setToDate] = useState("");
 
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
     const latestRequestId = useRef(0);
 
     const fetchBranches = async () => {
@@ -64,6 +68,7 @@ export default function DebtorPage(){
             if (requestId !== latestRequestId.current) return;
             clearError();
             setDebtors(res.data);
+            setPage(1);
         } catch (err) {
             console.error(err);
             if (requestId === latestRequestId.current) {
@@ -189,7 +194,7 @@ export default function DebtorPage(){
                             </td>
                           </tr>
                         )}
-                        {debtors.map((debtor, idx) => (
+                        {debtors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((debtor, idx) => (
                             <tr key={debtor._id} className={idx % 2 === 1 ? "row-alt" : ""}>
                             <td data-label="Customer">
                                 {debtor.customerName}
@@ -243,6 +248,7 @@ export default function DebtorPage(){
                         </tbody>
                     </table>
                     </div>
+                    <Pagination page={page} setPage={setPage} totalItems={debtors.length} pageSize={PAGE_SIZE} />
 
         </div>
     )

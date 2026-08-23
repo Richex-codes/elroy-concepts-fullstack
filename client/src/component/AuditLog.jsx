@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../api/axios.js";
+import Pagination from "./Pagination.jsx";
 import "../styles/AuditLog.css";
+
+const PAGE_SIZE = 40;
 
 const ACTION_META = {
   "sale.created": { label: "Sale Created", tone: "positive" },
@@ -83,6 +86,7 @@ export default function AuditLog() {
   const [actor, setActor] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
 
   const authHeaders = {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -96,6 +100,7 @@ export default function AuditLog() {
         params: { action, actor, fromDate, toDate },
       });
       setEntries(res.data);
+      setPage(1);
     } catch (err) {
       console.error("Failed to load audit log", err);
     } finally {
@@ -170,7 +175,7 @@ export default function AuditLog() {
                 <td colSpan={5} className="table-empty-state">No audit entries found.</td>
               </tr>
             ) : (
-              entries.map((entry, idx) => (
+              entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((entry, idx) => (
                 <tr key={entry._id} className={idx % 2 === 1 ? "row-alt" : ""}>
                   <td className="audit-when-cell" data-label="When">
                     {new Date(entry.createdAt).toLocaleString()}
@@ -201,6 +206,7 @@ export default function AuditLog() {
           </tbody>
         </table>
       </div>
+      <Pagination page={page} setPage={setPage} totalItems={entries.length} pageSize={PAGE_SIZE} />
     </div>
   );
 }

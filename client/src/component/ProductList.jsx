@@ -5,13 +5,17 @@ import ConfirmModal from "./ConfirmModal.jsx";
 import { useConfirm } from "../utils/useConfirm.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
+import Pagination from "./Pagination.jsx";
 import "../styles/ProductList.css";
+
+const PAGE_SIZE = 40;
 
 export default function ProductListPage() {
   const { confirm, modalProps } = useConfirm();
   const { error, showError, clearError } = useApiError();
   const [products, setProducts] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [page, setPage] = useState(1);
 
   const [viewMode, setViewMode] = useState("card");
 
@@ -67,6 +71,13 @@ export default function ProductListPage() {
     fetchData();
   }, []);
 
+  // The product/category text fields filter live on every keystroke (not
+  // just on Search), so the page needs to reset whenever the filtered set
+  // could have shifted underneath whatever page the admin was on.
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
   // ========================
   // FLATTEN INVENTORY
   // ========================
@@ -101,6 +112,8 @@ export default function ProductListPage() {
 
   return productMatch && categoryMatch && branchMatch && colorMatch;
 });
+
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // ========================
   // DELETE INVENTORY LINE
@@ -209,7 +222,7 @@ export default function ProductListPage() {
       {/* CARD VIEW */}
       {viewMode === "card" ? (
         <div className="card-grid">
-          {filtered.map((item) => (
+          {pageItems.map((item) => (
           <div className="product-card" key={item.id}>
             {item.image && <img src={item.image} alt="" />}
 
@@ -251,7 +264,7 @@ export default function ProductListPage() {
           </thead>
 
             <tbody>
-            {filtered.map((item) => (
+            {pageItems.map((item) => (
               <tr key={item.id}>
                 <td>{item.productName}</td>
                 <td>{item.category}</td>
@@ -272,6 +285,7 @@ export default function ProductListPage() {
           </table>
         </div>
       )}
+      <Pagination page={page} setPage={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       <ConfirmModal {...modalProps} />
     </div>
   );
