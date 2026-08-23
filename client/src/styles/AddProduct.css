@@ -76,7 +76,7 @@
 }
 
 .product-form input[type="text"],
-.product-form input[type="file"],
+.product-form input[type="file"]:not(.visually-hidden-file-input),
 .product-form input[type="date"],
 .product-form input[type="number"],
 .product-form select,
