@@ -641,6 +641,59 @@ router.patch(
   }
 );
 
+// Correct a product's cost everywhere at once -- every batch, across every
+// branch and color -- for when the per-unit price was wrong system-wide
+// (e.g. a leftover placeholder that was never the real cost), rather than
+// the single-batch correction above, which is for pinning down one specific
+// shipment's real cost. Same as that one, this never touches
+// landedCostAtSale on sales already recorded -- only current/future stock
+// valuation and the cost future sales draw from.
+router.patch("/:productId/cost", authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { unitLandedCost } = req.body;
+
+    if (unitLandedCost == null || isNaN(unitLandedCost) || Number(unitLandedCost) < 0) {
+      return res.status(400).json({ message: "A valid, non-negative cost is required" });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const before = [];
+    for (const line of product.inventory) {
+      for (const batch of line.batches || []) {
+        before.push({ batchId: batch._id, unitLandedCost: batch.unitLandedCost, costEstimated: batch.costEstimated });
+        batch.unitLandedCost = Number(unitLandedCost);
+        batch.costEstimated = false;
+      }
+    }
+
+    if (before.length === 0) {
+      return res.status(400).json({ message: "This product has no stock batches to update." });
+    }
+
+    await product.save();
+
+    await logAudit({
+      action: "inventory.cost_corrected",
+      actor: req.user,
+      targetType: "Product",
+      targetId: product._id,
+      before: { batches: before },
+      after: { unitLandedCost: Number(unitLandedCost), costEstimated: false, batchesUpdated: before.length },
+      metadata: { productName: product.name, scope: "all-batches" },
+    });
+
+    res.json({ message: `Cost updated for ${before.length} batch(es) across the whole product.` });
+  } catch (err) {
+    console.error("Error correcting product cost:", err);
+    res.status(500).json({ message: "Error correcting cost" });
+  }
+});
+
 // recent product added
 router.get("/recent-products", authMiddleware, async (req, res) => {
   try {

@@ -232,6 +232,60 @@
     line-height: 1.5;
   }
 
+  .cost-modal-bulk {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    background-color: var(--accent-color-light);
+    border: 1px solid var(--accent-color);
+    border-radius: var(--radius-md);
+  }
+
+  .cost-modal-bulk label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+  }
+
+  .cost-modal-bulk-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .cost-modal-bulk-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+
+  .cost-modal-bulk-row .btn-primary {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .cost-modal-bulk-hint {
+    margin: 8px 0 0;
+    color: var(--secondary-text);
+    font-size: 0.76rem;
+    line-height: 1.4;
+  }
+
+  .cost-modal-batches-label {
+    margin: 0 0 8px;
+    color: var(--secondary-text);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
   .cost-modal-table-wrapper {
     overflow-x: auto;
   }

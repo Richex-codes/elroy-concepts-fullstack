@@ -37,6 +37,11 @@ export default function InventoryPage() {
   const [savingBatchId, setSavingBatchId] = useState(null);
   const [costModalMessage, setCostModalMessage] = useState("");
   const [costModalError, setCostModalError] = useState(false);
+  // Separate from batchDrafts -- this pushes one cost to every batch of the
+  // product at once (every branch/color), not just the line the modal was
+  // opened from.
+  const [bulkCostValue, setBulkCostValue] = useState("");
+  const [savingBulkCost, setSavingBulkCost] = useState(false);
 
   const formatNaira = (value) => `₦${(Number(value) || 0).toLocaleString("en-NG")}`;
 
@@ -175,6 +180,7 @@ const fetchStock = async () => {
       drafts[b._id] = { unitLandedCost: b.unitLandedCost ?? 0, supplierRef: b.supplierRef || "" };
     });
     setBatchDrafts(drafts);
+    setBulkCostValue("");
     setCostModalMessage("");
     setCostModalError(false);
   };
@@ -182,6 +188,7 @@ const fetchStock = async () => {
   const closeCostModal = () => {
     setCostModalItem(null);
     setBatchDrafts({});
+    setBulkCostValue("");
   };
 
   const handleSaveBatch = async (batchId) => {
@@ -219,6 +226,54 @@ const fetchStock = async () => {
       setCostModalMessage(err.response?.data?.message || "Failed to update cost.");
     } finally {
       setSavingBatchId(null);
+    }
+  };
+
+  // Pushes one cost to EVERY batch of this product -- every branch, every
+  // color -- instead of correcting one line at a time. For when a cost was
+  // simply wrong everywhere (e.g. a leftover placeholder), not for pinning
+  // down one specific shipment's real price.
+  const handleApplyBulkCost = async () => {
+    if (bulkCostValue === "" || Number(bulkCostValue) < 0) {
+      setCostModalError(true);
+      setCostModalMessage("Enter a valid, non-negative cost.");
+      return;
+    }
+    setSavingBulkCost(true);
+    setCostModalMessage("");
+    setCostModalError(false);
+    try {
+      const res = await api.patch(
+        `/products/${costModalItem.productId}/cost`,
+        { unitLandedCost: Number(bulkCostValue) },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setCostModalMessage(res.data.message || "Cost updated everywhere.");
+      setCostModalError(false);
+      // Reflect the change immediately for the batches this modal is
+      // showing (they're a subset of what the server just updated).
+      setCostModalItem((prev) => ({
+        ...prev,
+        batches: prev.batches.map((b) => ({
+          ...b,
+          unitLandedCost: Number(bulkCostValue),
+          costEstimated: false,
+        })),
+      }));
+      setBatchDrafts((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((id) => {
+          next[id] = { ...next[id], unitLandedCost: Number(bulkCostValue) };
+        });
+        return next;
+      });
+      setBulkCostValue("");
+      fetchStock(); // background refresh so every other row for this product picks up the new cost too
+    } catch (err) {
+      setCostModalError(true);
+      setCostModalMessage(err.response?.data?.message || "Failed to update cost.");
+    } finally {
+      setSavingBulkCost(false);
     }
   };
 
@@ -466,11 +521,41 @@ const fetchStock = async () => {
               from this batch -- sales already recorded keep their original cost.
             </p>
 
+            <div className="cost-modal-bulk">
+              <label>Apply one cost to this whole product</label>
+              <div className="cost-modal-bulk-row">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 4500"
+                  value={bulkCostValue}
+                  onChange={(e) => setBulkCostValue(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={savingBulkCost}
+                  onClick={handleApplyBulkCost}
+                >
+                  {savingBulkCost ? "Applying..." : "Apply to All Batches"}
+                </button>
+              </div>
+              <p className="cost-modal-bulk-hint">
+                Updates every batch for "{costModalItem.product}" across every branch and color --
+                not just this line. Use this when the cost was wrong everywhere, not just here.
+              </p>
+            </div>
+
             {costModalMessage && (
               <div className={`alert ${costModalError ? "alert-error" : "alert-success"}`}>
                 {costModalMessage}
               </div>
             )}
+
+            <p className="cost-modal-batches-label">
+              Or correct an individual batch (this line only) below:
+            </p>
 
             <div className="cost-modal-table-wrapper">
               <table className="cost-modal-table">
