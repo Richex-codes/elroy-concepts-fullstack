@@ -12,6 +12,7 @@ import {
   enablePushNotifications,
   disablePushNotifications,
 } from "../utils/pushNotifications.js";
+import { clearAllDrafts } from "../utils/formDraft.js";
 
 function itemHref(item) {
   return item.path === "" ? "/admin" : `/admin/${item.path}`;
@@ -44,6 +45,9 @@ export default function AdminDashboardPage() {
       console.error("Failed to record logout:", err);
     }
     localStorage.removeItem("token");
+    // So a half-finished form doesn't leak into whoever logs in next on
+    // this same browser/tab.
+    clearAllDrafts();
     navigate("/login", { replace: true });
   };
 

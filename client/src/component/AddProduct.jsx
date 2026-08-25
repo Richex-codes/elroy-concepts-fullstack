@@ -3,17 +3,26 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
 import { isOwnBranch } from "../utils/authUser.js";
 import { newIdempotencyKey } from "../utils/idempotencyKey.js";
+import { loadDraft, saveDraft, clearDraft } from "../utils/formDraft.js";
+import { normalizeProductName } from "../utils/normalizeProductName.js";
 import "../styles/AddProduct.css";
+
+const DRAFT_KEY = "addProduct";
 
 export default function AddProductPage() {
   const navigate = useNavigate();
+  // Lets an unsubmitted product survive the admin navigating away and back.
+  // A picked image file can't be persisted (or usefully restored) this way,
+  // so it's the one field always starting fresh.
+  const draft = loadDraft(DRAFT_KEY) || {};
+
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    category: "",
+    name: draft.name ?? "",
+    description: draft.description ?? "",
+    category: draft.category ?? "",
     image: null,
-    dateAdded: "",
-    unitType: "piece",
+    dateAdded: draft.dateAdded ?? "",
+    unitType: draft.unitType ?? "piece",
   });
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
 
@@ -30,17 +39,17 @@ export default function AddProductPage() {
   // stock is usually one shipment anyway, so a single cost applies to every
   // cell in this submission; per-color cost variation can be set afterward
   // via Add Inventory, which prices each restock individually.
-  const [openingStockUnitLandedCost, setOpeningStockUnitLandedCost] = useState("");
+  const [openingStockUnitLandedCost, setOpeningStockUnitLandedCost] = useState(
+    draft.openingStockUnitLandedCost ?? ""
+  );
 
   // Match against the existing catalog ignoring case, spacing, and
   // punctuation -- "50mm Pipe" and "50 mm  pipe" collide here, not just
-  // exact-same-text names. Mirrors the server's normalizeProductName.js;
-  // keep both in sync if this changes. This is what lets a branch admin who
-  // has never seen a product at their own branch (so, from where they're
-  // standing, it's brand new) get pointed at Add Inventory instead of
-  // unknowingly creating a second Product document for something another
-  // branch already stocks under a slightly different spelling.
-  const normalizeProductName = (name) => (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  // exact-same-text names. This is what lets a branch admin who has never
+  // seen a product at their own branch (so, from where they're standing,
+  // it's brand new) get pointed at Add Inventory instead of unknowingly
+  // creating a second Product document for something another branch
+  // already stocks under a slightly different spelling.
   const duplicateMatch = products.find(
     (p) => normalizeProductName(p.name) === normalizeProductName(formData.name)
   );
@@ -125,6 +134,22 @@ export default function AddProductPage() {
           });
         });
 
+      // Overlay any saved draft quantities onto the freshly-built grid --
+      // the grid's own shape (which branches/colors exist) always comes
+      // fresh from the server, only the quantities the admin already typed
+      // are restored.
+      if (Array.isArray(draft.inventory)) {
+        initialInventory.forEach((item) => {
+          const saved = draft.inventory.find(
+            (d) => d.branch === item.branch && d.color === item.color
+          );
+          if (saved) {
+            item.quantity = saved.quantity;
+            item.description = saved.description;
+          }
+        });
+      }
+
       setInventory(initialInventory);
       } catch (err) {
         console.error("Error fetching branches:", err);
@@ -150,6 +175,18 @@ export default function AddProductPage() {
     fetchBranches();
     fetchProducts();
   }, []);
+
+  // Keeps the draft in sync as the admin fills the form out, so navigating
+  // away and back (or an accidental reload) doesn't lose an unsubmitted
+  // product. Cleared on successful submit further down.
+  useEffect(() => {
+    const { image, ...formDataWithoutImage } = formData;
+    saveDraft(DRAFT_KEY, {
+      ...formDataWithoutImage,
+      inventory,
+      openingStockUnitLandedCost,
+    });
+  }, [formData, inventory, openingStockUnitLandedCost]);
 
   // 🔵 Handle form and image input
   const handleChange = (e) => {
@@ -218,6 +255,7 @@ export default function AddProductPage() {
       setIsError(false);
       setMessage("Product added successfully!");
       setIdempotencyKey(newIdempotencyKey()); // this product is done; the next submit is a new one
+      clearDraft(DRAFT_KEY);
       setFormData({
         name: "",
         description: "",

@@ -4,20 +4,29 @@ import ReportActions from "./ReportActions.jsx";
 import SearchableSelect from "./SearchableSelect.jsx";
 import { getOwnBranchId, isOwnBranch } from "../utils/authUser.js";
 import { newIdempotencyKey } from "../utils/idempotencyKey.js";
+import { loadDraft, saveDraft, clearDraft } from "../utils/formDraft.js";
 import "../styles/AddSales.css";
 
+const DRAFT_KEY = "addSales";
+
 export default function AddSales() {
+  // Everything a half-built sale needs to pick back up where the admin left
+  // off if they navigate away (e.g. to check something on the dashboard)
+  // before submitting -- read once per mount, each field's useState below
+  // only consumes its initial value on the very first render anyway.
+  const draft = loadDraft(DRAFT_KEY) || {};
+
   const [products, setProducts] = useState([]);
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
-  const [customerName, setCustomerName] = useState("");
+  const [customerName, setCustomerName] = useState(draft.customerName ?? "");
   // Branch admins can only ever record sales for their own branch (the
   // server rejects anything else), so this both defaults to it and --
   // below, in `branches` -- is the only option they're offered.
-  const [branch, setBranch] = useState(getOwnBranchId);
-  const [amountPaid, setAmountPaid] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [branch, setBranch] = useState(draft.branch ?? getOwnBranchId());
+  const [amountPaid, setAmountPaid] = useState(draft.amountPaid ?? "");
+  const [paymentMethod, setPaymentMethod] = useState(draft.paymentMethod ?? "");
   const [saleDate, setSaleDate] = useState(
-    new Date().toISOString().split("T")[0]
+    draft.saleDate ?? new Date().toISOString().split("T")[0]
   );
 
   const PAYMENT_METHODS = [
@@ -28,18 +37,18 @@ export default function AddSales() {
   ];
 
   // the line item currently being configured, before it's added to `items`
-  const [draftProduct, setDraftProduct] = useState("");
-  const [draftColor, setDraftColor] = useState("");
+  const [draftProduct, setDraftProduct] = useState(draft.draftProduct ?? "");
+  const [draftColor, setDraftColor] = useState(draft.draftColor ?? "");
   // Pipes are only ever sold as a full stick or exactly half of one -- never
   // a custom cut. Stock isn't tracked by length at all, so staff just pick
   // Full or Half; for Half, they additionally type in the length of the
   // stick being cut (never recorded when it was stocked), which sizes the
   // remnant the sale leaves behind.
-  const [draftCutType, setDraftCutType] = useState("");
-  const [draftSaleLength, setDraftSaleLength] = useState("");
-  const [draftQuantity, setDraftQuantity] = useState("");
-  const [draftRate, setDraftRate] = useState("");
-  const [draftAmount, setDraftAmount] = useState("");
+  const [draftCutType, setDraftCutType] = useState(draft.draftCutType ?? "");
+  const [draftSaleLength, setDraftSaleLength] = useState(draft.draftSaleLength ?? "");
+  const [draftQuantity, setDraftQuantity] = useState(draft.draftQuantity ?? "");
+  const [draftRate, setDraftRate] = useState(draft.draftRate ?? "");
+  const [draftAmount, setDraftAmount] = useState(draft.draftAmount ?? "");
 
   const formatNaira = (value) =>
     `₦${(Number(value) || 0).toLocaleString("en-NG")}`;
@@ -70,13 +79,48 @@ export default function AddSales() {
   };
 
   // confirmed line items for this sale
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(draft.items ?? []);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [itemMessage, setItemMessage] = useState("");
   const [lastSale, setLastSale] = useState(null);
+
+  // Keeps the draft in sync as the admin fills the form out, so navigating
+  // away and back (or an accidental reload) doesn't lose an unsubmitted
+  // sale. Cleared on successful submit further down.
+  useEffect(() => {
+    saveDraft(DRAFT_KEY, {
+      customerName,
+      branch,
+      amountPaid,
+      paymentMethod,
+      saleDate,
+      items,
+      draftProduct,
+      draftColor,
+      draftCutType,
+      draftSaleLength,
+      draftQuantity,
+      draftRate,
+      draftAmount,
+    });
+  }, [
+    customerName,
+    branch,
+    amountPaid,
+    paymentMethod,
+    saleDate,
+    items,
+    draftProduct,
+    draftColor,
+    draftCutType,
+    draftSaleLength,
+    draftQuantity,
+    draftRate,
+    draftAmount,
+  ]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -326,6 +370,7 @@ export default function AddSales() {
       setMessage("Sale recorded successfully!");
       setLastSale(saleRes.data.sale);
       setIdempotencyKey(newIdempotencyKey()); // this sale is done; the next submit is a new one
+      clearDraft(DRAFT_KEY);
 
       // Reset form
       setCustomerName("");

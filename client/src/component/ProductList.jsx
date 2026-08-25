@@ -6,6 +6,7 @@ import { useConfirm } from "../utils/useConfirm.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
 import Pagination from "./Pagination.jsx";
+import { normalizeProductName } from "../utils/normalizeProductName.js";
 import "../styles/ProductList.css";
 
 const PAGE_SIZE = 40;
@@ -96,9 +97,9 @@ export default function ProductListPage() {
   // FILTER CLIENT SIDE
   // ========================
   const filtered = flattened.filter((item) => {
-  const productMatch = item.productName
-    .toLowerCase()
-    .includes(filters.product.toLowerCase());
+  const productMatch = normalizeProductName(item.productName).includes(
+    normalizeProductName(filters.product)
+  );
 
   const categoryMatch =
     !filters.category ||

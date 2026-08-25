@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { normalizeProductName } from "../utils/normalizeProductName.js";
 import "../styles/SearchableSelect.css";
 
 // Drop-in replacement for a long native <select>: shows a text input that
@@ -43,10 +44,13 @@ export default function SearchableSelect({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOption]);
 
+  // Normalized (case/spacing/punctuation-insensitive) so "50 mm pipe" still
+  // finds "50mm Pipe" -- same matching AddProduct's duplicate-name check
+  // uses, just applied to searching the option list instead.
   const filtered =
     searchText.trim() === ""
       ? options
-      : options.filter((o) => o.label.toLowerCase().includes(searchText.toLowerCase()));
+      : options.filter((o) => normalizeProductName(o.label).includes(normalizeProductName(searchText)));
 
   const handleSelect = (option) => {
     onChange(option.value);

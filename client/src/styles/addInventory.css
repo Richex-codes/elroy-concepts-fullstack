@@ -112,6 +112,42 @@
   box-shadow: 0 0 0 3px var(--accent-color-light);
 }
 
+.inventory-form input:disabled {
+  background-color: #e9eaec;
+  color: var(--secondary-text);
+  cursor: not-allowed;
+}
+
+.cost-field-with-lock {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cost-field-with-lock input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-toggle-cost-lock {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  color: var(--accent-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.btn-toggle-cost-lock:hover {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
 .inventory-form .btn-primary {
   display: flex;
   align-items: center;
