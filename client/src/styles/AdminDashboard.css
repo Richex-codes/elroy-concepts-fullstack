@@ -60,6 +60,7 @@
   background-color: #f3f4f6;
   border-radius: var(--radius-sm);
   padding: 4px 8px;
+  flex-shrink: 0;
 }
 
 .admin-sidebar-brand span {
@@ -67,6 +68,10 @@
   font-size: 0.95rem;
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.85);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-sidebar-nav {
@@ -280,43 +285,39 @@
 /* Collapsible sidebar (desktop only) */
 /* ======================= */
 @media (min-width: 1025px) {
+  /* Lives in .admin-topbar now (see AdminDashboard.js), not floated over
+     the sidebar -- it used to be absolutely positioned straddling the
+     sidebar/topbar boundary, which (a) overlapped the "Admin ERP" brand
+     text whenever the row's content ran long enough to reach it, and (b)
+     had .admin-sidebar's required overflow:hidden clip whatever part of it
+     poked past the sidebar's own edge, so its real clickable area ended up
+     in a different spot than what was visibly painted. The topbar has
+     plenty of untouched space right next to the page icon/title, and
+     sits at the exact same boundary anyway, so it's the more natural home
+     for a "collapse the thing to my left" control regardless. */
   .collapse-toggle-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    /* Sized up from the original 24px for a proper touch target (the old
-       size was fine for a mouse pointer, but a touchscreen's much lower tap
-       precision could land just outside it and miss).
-
-       Kept fully INSIDE the sidebar's box (a positive `right`, not a
-       negative one straddling the edge) -- .admin-sidebar has
-       overflow:hidden (needed so its own nav list scrolling doesn't add a
-       second outer scrollbar), which was silently clipping whatever part
-       of this button poked past its right edge. The clipped remainder was
-       still painted (so a button-shaped thing was visible), but only the
-       unclipped, still-in-bounds portion was actually clickable -- exactly
-       the "the button I see isn't where I can tap it" mismatch. */
-    top: 20px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background-color: var(--accent-color);
-    color: white;
-    border: 2px solid var(--background-light);
+    background-color: #ffffff;
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    font-size: 0.7rem;
-    z-index: 20;
+    font-size: 0.75rem;
     /* Skips the ~300ms tap-delay browsers otherwise reserve to detect a
        double-tap-to-zoom gesture -- without this, a touchscreen tap here
        can feel unresponsive/like it needs a second tap to register. */
     touch-action: manipulation;
-    transition: background-color var(--transition-speed);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
   }
 
   .collapse-toggle-btn:hover {
-    background-color: var(--accent-color-dark);
+    background-color: var(--accent-color);
+    color: #ffffff;
   }
 
   .admin-sidebar.collapsed {
@@ -355,7 +356,6 @@
     collapse never affects mobile/tablet regardless of the persisted
     localStorage state.
   */
-  .admin-sidebar.collapsed .admin-sidebar-brand span,
   .admin-sidebar.collapsed .admin-sidebar-section-label,
   .admin-sidebar.collapsed .admin-sidebar-nav li > a span,
   .admin-sidebar.collapsed .admin-sidebar-nav li.disabled span,
@@ -395,9 +395,8 @@
   bottom: 0;
   width: 4px;
   background: linear-gradient(180deg, var(--accent-color), var(--accent-color-dark));
-  /* Purely decorative, and its left edge sits right where the sidebar's
-     collapse-toggle-btn overlaps the topbar -- never let it be what
-     receives a tap/click meant for that button. */
+  /* Purely decorative -- never let it be what receives a tap/click meant
+     for something else in the topbar. */
   pointer-events: none;
 }
 

@@ -185,14 +185,6 @@ export default function AdminDashboardPage() {
           collapsed ? "collapsed" : ""
         }`}
       >
-        <button
-          className="collapse-toggle-btn"
-          onClick={toggleCollapsed}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <i className={`fas ${collapsed ? "fa-chevron-right" : "fa-chevron-left"}`}></i>
-        </button>
-
         <div className="admin-sidebar-brand">
           <img src={logoImg} alt="Elroy Concepts" />
           <span>Admin ERP</span>
@@ -278,6 +270,13 @@ export default function AdminDashboardPage() {
 
       <div className="admin-main">
         <header className="admin-topbar">
+          <button
+            className="collapse-toggle-btn"
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <i className={`fas ${collapsed ? "fa-chevron-right" : "fa-chevron-left"}`}></i>
+          </button>
           <span className="admin-topbar-icon">
             <i className={`fas ${currentItem.icon}`}></i>
           </span>
