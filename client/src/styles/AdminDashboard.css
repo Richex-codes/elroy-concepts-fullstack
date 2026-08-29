@@ -287,11 +287,18 @@
     position: absolute;
     /* Sized up from the original 24px for a proper touch target (the old
        size was fine for a mouse pointer, but a touchscreen's much lower tap
-       precision could land just outside it, right on the sidebar/topbar
-       seam, and miss). Kept centered on that seam (right: -half the width)
-       the same way the original was. */
+       precision could land just outside it and miss).
+
+       Kept fully INSIDE the sidebar's box (a positive `right`, not a
+       negative one straddling the edge) -- .admin-sidebar has
+       overflow:hidden (needed so its own nav list scrolling doesn't add a
+       second outer scrollbar), which was silently clipping whatever part
+       of this button poked past its right edge. The clipped remainder was
+       still painted (so a button-shaped thing was visible), but only the
+       unclipped, still-in-bounds portion was actually clickable -- exactly
+       the "the button I see isn't where I can tap it" mismatch. */
     top: 20px;
-    right: -16px;
+    right: 8px;
     width: 32px;
     height: 32px;
     border-radius: 50%;
