@@ -285,17 +285,26 @@
     align-items: center;
     justify-content: center;
     position: absolute;
-    top: 24px;
-    right: -12px;
-    width: 24px;
-    height: 24px;
+    /* Sized up from the original 24px for a proper touch target (the old
+       size was fine for a mouse pointer, but a touchscreen's much lower tap
+       precision could land just outside it, right on the sidebar/topbar
+       seam, and miss). Kept centered on that seam (right: -half the width)
+       the same way the original was. */
+    top: 20px;
+    right: -16px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background-color: var(--accent-color);
     color: white;
     border: 2px solid var(--background-light);
     cursor: pointer;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     z-index: 20;
+    /* Skips the ~300ms tap-delay browsers otherwise reserve to detect a
+       double-tap-to-zoom gesture -- without this, a touchscreen tap here
+       can feel unresponsive/like it needs a second tap to register. */
+    touch-action: manipulation;
     transition: background-color var(--transition-speed);
   }
 
@@ -379,6 +388,10 @@
   bottom: 0;
   width: 4px;
   background: linear-gradient(180deg, var(--accent-color), var(--accent-color-dark));
+  /* Purely decorative, and its left edge sits right where the sidebar's
+     collapse-toggle-btn overlaps the topbar -- never let it be what
+     receives a tap/click meant for that button. */
+  pointer-events: none;
 }
 
 .admin-topbar-icon {
