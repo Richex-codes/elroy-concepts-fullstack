@@ -307,7 +307,7 @@ export default function AddInventoryPage() {
             ? costLocked
               ? `This product's last known cost is ₦${existingBatch.unitLandedCost.toLocaleString("en-NG")}${
                   existingBatch.costEstimated ? " (estimated)" : ""
-                } -- it'll be used automatically unless you change it.`
+                } — it'll be used automatically unless you change it.`
               : "Enter the new cost for this restock, or click \"Use existing cost\" to go back to the known price."
             : "Leave cost blank if you don't know it yet — this batch will be recorded at ₦0 and marked as an estimated cost, and profit/turnover reports will flag it as such."}
         </p>

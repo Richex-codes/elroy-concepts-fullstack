@@ -518,7 +518,7 @@ const fetchStock = async () => {
             </h3>
             <p className="cost-modal-subtitle">
               {costModalItem.branch}. Correcting a cost here only affects future sales that draw
-              from this batch -- sales already recorded keep their original cost.
+              from this batch — sales already recorded keep their original cost.
             </p>
 
             <div className="cost-modal-bulk">
@@ -542,7 +542,7 @@ const fetchStock = async () => {
                 </button>
               </div>
               <p className="cost-modal-bulk-hint">
-                Updates every batch for "{costModalItem.product}" across every branch and color --
+                Updates every batch for "{costModalItem.product}" across every branch and color —
                 not just this line. Use this when the cost was wrong everywhere, not just here.
               </p>
             </div>
