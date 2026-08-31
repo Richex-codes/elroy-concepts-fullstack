@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import "./App.css";
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
@@ -9,6 +9,7 @@ import ResetPassPage from "./pages/ResetPassPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import DashboardPage from "./pages/DashboardPage";
 import PrivateRoute from "./component/PrivateRoute";
+import RootRedirect from "./component/RootRedirect";
 import AdminRoute from "./component/AdminRoute";
 import SuperAdminRoute from "./component/SuperAdminRoute";
 import HideFromAdmin from "./component/HideFromAdmin";
@@ -33,8 +34,10 @@ function App() {
         <Routes>
           {/* Admin ERP is the primary product for now; the customer
               storefront is dormant but kept reachable at /home rather
-              than removed, so it can be reactivated with zero rework. */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+              than removed, so it can be reactivated with zero rework.
+              Still logged in? -> straight to /admin (or /dashboard for a
+              customer account) instead of making them log back in. */}
+          <Route path="/" element={<RootRedirect />} />
           <Route element={<HideFromAdmin />}>
             <Route path="/home" element={<HomePage />} />
           </Route>
