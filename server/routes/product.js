@@ -15,6 +15,7 @@ const { logAudit } = require("../utils/auditLog");
 const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify");
 const { idempotent } = require("../utils/idempotency");
 const { normalizeProductName } = require("../utils/normalizeProductName");
+const { isTokenBlocklisted } = require("../utils/tokenBlocklist");
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -107,7 +108,7 @@ const upload = multer({
 });
 
 // Middleware for authentication
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
@@ -119,6 +120,9 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (await isTokenBlocklisted(decoded.jti)) {
+      return res.status(401).json({ msg: "Invalid token" });
+    }
     req.user = decoded;
     next();
   } catch (err) {

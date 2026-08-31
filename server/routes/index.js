@@ -13,13 +13,14 @@ const { logAudit } = require("../utils/auditLog");
 const { notifySuperAdmins } = require("../utils/pushNotify");
 const { idempotent } = require("../utils/idempotency");
 const { loginLimiter, accountActionLimiter } = require("../utils/rateLimiters");
+const { blocklistToken, isTokenBlocklisted } = require("../utils/tokenBlocklist");
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
 
 
 // Middleware for authentication
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
@@ -31,6 +32,9 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (await isTokenBlocklisted(decoded.jti)) {
+      return res.status(401).json({ msg: "Invalid token" });
+    }
     req.user = decoded;
     next();
   } catch (err) {
@@ -251,7 +255,12 @@ router.post("/login", loginLimiter, async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "5h",
+        // Was 5h -- logging back in every few hours on a normal shift was
+        // pure friction with no real security upside, since logout (below)
+        // now actually revokes the token instead of just discarding it
+        // client-side. A week matches how long staff reasonably expect to
+        // stay signed in on their own device before needing to log in again.
+        expiresIn: "7d",
       }
     );
 
@@ -269,11 +278,12 @@ router.post("/login", loginLimiter, async (req, res) => {
   }
 });
 
-// handle logout -- the client just discards its token, so this is the only
-// place a logout event can be recorded server-side for the audit trail.
-// Expiration is intentionally not enforced here (signature still is) so a
-// session-timeout logout -- where the token has already expired by the time
-// the client reports it -- can still be attributed to the right user.
+// handle logout -- revokes the token server-side (see utils/tokenBlocklist)
+// so it can't still be used after this, and records the event for the
+// audit trail. Expiration is intentionally not enforced here (signature
+// still is) so a session-timeout logout -- where the token has already
+// expired by the time the client reports it -- can still be attributed to
+// the right user.
 router.post("/logout", async (req, res) => {
   const authHeader = req.header("Authorization");
   const token = authHeader ? authHeader.replace("Bearer", "").trim() : null;
@@ -291,6 +301,11 @@ router.post("/logout", async (req, res) => {
     // hit for it (e.g. several requests 401-ing at once on timeout) --
     // dedupeKey is unique per token, so repeat calls just no-op.
     const tokenKey = decoded.jti || `${decoded.id}:${decoded.iat}`;
+
+    // The actual revocation -- without this, "logout" only ever discarded
+    // the token client-side, leaving it fully valid server-side for its
+    // whole remaining 7-day lifetime on anyone who still had it.
+    await blocklistToken(decoded.jti, decoded.exp);
 
     await logAudit({
       action: reason === "timeout" ? "user.session_timeout" : "user.logged_out",

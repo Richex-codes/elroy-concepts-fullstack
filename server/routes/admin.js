@@ -21,6 +21,7 @@ const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify.j
 const { idempotent } = require("../utils/idempotency.js");
 const { availablePieces, deductPipePieces, restorePipePieces } = require("../utils/pipeStock.js");
 const { consumeStock, restoreStock } = require("../utils/costConsumption.js");
+const { isTokenBlocklisted } = require("../utils/tokenBlocklist.js");
 const {
   getProfitSummary,
   getInventoryTurnover,
@@ -91,7 +92,7 @@ function getYearRange(year) {
 
 const router = express.Router();
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
@@ -105,6 +106,9 @@ const authMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded.isAdmin) {
       return res.status(403).json({ msg: "Admin access required" });
+    }
+    if (await isTokenBlocklisted(decoded.jti)) {
+      return res.status(401).json({ msg: "Invalid token" });
     }
     req.user = decoded;
     next();
@@ -128,7 +132,7 @@ const requireSuperAdmin = (req, res, next) => {
 // Same token check as authMiddleware but without requiring isAdmin — for
 // the handful of routes under /admin (like category listing) that are
 // also read by the regular customer dashboard, not just the admin panel.
-const requireLogin = (req, res, next) => {
+const requireLogin = async (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
@@ -138,7 +142,11 @@ const requireLogin = (req, res, next) => {
   const token = authHeader.replace("Bearer", "").trim();
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (await isTokenBlocklisted(decoded.jti)) {
+      return res.status(401).json({ msg: "Invalid token" });
+    }
+    req.user = decoded;
     next();
   } catch (err) {
     res.status(401).json({ msg: "Invalid token" });
