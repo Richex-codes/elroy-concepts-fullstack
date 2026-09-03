@@ -361,6 +361,15 @@
     color: #dc2626;
   }
 
+  .batch-not-removable {
+    font-size: 0.78em;
+    font-style: italic;
+    color: var(--secondary-text);
+    white-space: nowrap;
+    cursor: help;
+    border-bottom: 1px dotted var(--secondary-text);
+  }
+
 
   .inventory-summary {
     background-color: #ffffff;

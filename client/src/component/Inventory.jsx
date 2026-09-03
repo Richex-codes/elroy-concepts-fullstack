@@ -651,7 +651,7 @@ const fetchStock = async () => {
                         </button>
                       </td>
                       <td>
-                        {batch.quantityRemaining === batch.quantityReceived && (
+                        {batch.quantityRemaining === batch.quantityReceived ? (
                           <button
                             type="button"
                             className="btn-remove-batch"
@@ -661,6 +661,13 @@ const fetchStock = async () => {
                           >
                             {removingBatchId === batch._id ? "Removing..." : "Remove"}
                           </button>
+                        ) : (
+                          <span
+                            className="batch-not-removable"
+                            title="Some of this batch has already been sold, so it can't be removed here."
+                          >
+                            Already sold from
+                          </span>
                         )}
                       </td>
                     </tr>
