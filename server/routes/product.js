@@ -698,6 +698,82 @@ router.patch("/:productId/cost", authMiddleware, requireAdmin, async (req, res) 
   }
 });
 
+// Removes one mistaken batch -- e.g. the same delivery entered twice by
+// accident. Only allowed while the batch is still untouched (nothing sold
+// from it yet); once any of it has been sold, deleting it outright would
+// leave those sales' cost records pointing at a batch that no longer
+// exists, so that has to be sorted out by hand instead of through this
+// self-service action. Removing the batch that emptied a line also drops
+// the now-empty line itself, rather than leaving a 0-quantity shell behind.
+router.delete(
+  "/:productId/inventory/:inventoryId/batches/:batchId",
+  authMiddleware,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { productId, inventoryId, batchId } = req.params;
+
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const line = product.inventory.id(inventoryId);
+      if (!line) {
+        return res.status(404).json({ message: "Inventory line not found" });
+      }
+
+      if (isOutsideOwnBranch(req, line.branch)) {
+        return res.status(403).json({ message: "You can only edit inventory for your own branch." });
+      }
+
+      const batch = line.batches.id(batchId);
+      if (!batch) {
+        return res.status(404).json({ message: "Batch not found" });
+      }
+
+      if (batch.quantityRemaining !== batch.quantityReceived) {
+        return res.status(400).json({
+          message: "Some of this batch has already been sold, so it can't be removed this way.",
+        });
+      }
+
+      const branchId = line.branch;
+      const removed = {
+        color: line.color,
+        quantityReceived: batch.quantityReceived,
+        unitLandedCost: batch.unitLandedCost,
+        arrivalDate: batch.arrivalDate,
+      };
+
+      batch.deleteOne();
+      if (line.batches.length === 0) {
+        line.deleteOne();
+      } else {
+        Product.recomputeInventoryQuantity(line);
+      }
+
+      await product.save();
+
+      const branchDoc = await Branch.findById(branchId);
+
+      await logAudit({
+        action: "inventory.batch_removed",
+        actor: req.user,
+        targetType: "Product",
+        targetId: product._id,
+        before: removed,
+        metadata: { productName: product.name, branchName: branchDoc?.name },
+      });
+
+      res.json({ message: "Batch removed." });
+    } catch (err) {
+      console.error("Error removing batch:", err);
+      res.status(500).json({ message: "Error removing batch" });
+    }
+  }
+);
+
 // recent product added
 router.get("/recent-products", authMiddleware, async (req, res) => {
   try {

@@ -28,6 +28,7 @@
   --danger-color-dark: #b91c1c;
   --success-color: #16a34a;
   --info-color: #3f3f46;
+  --warning-color: #d97706;
 
   /* Legacy aliases so existing var() usages across the app keep working */
   --secondary-text-color: var(--secondary-text);
@@ -125,9 +126,9 @@
 
 /*
   Shared alert/message style. Use `.alert` alongside a state modifier:
-  `.alert-success`, `.alert-error`, or `.alert-info`. Every form's status
-  message across the app should render with these classes instead of
-  one-off per-page styling.
+  `.alert-success`, `.alert-error`, `.alert-info`, or `.alert-warning`.
+  Every form's status message across the app should render with these
+  classes instead of one-off per-page styling.
 */
 .alert {
   display: flex;
@@ -183,6 +184,17 @@
 .alert-info::before {
   content: "\f05a"; /* info-circle */
   color: var(--primary-color);
+}
+
+.alert-warning {
+  background-color: #fffbeb;
+  border-left-color: var(--warning-color);
+  color: #92400e;
+}
+
+.alert-warning::before {
+  content: "\f071"; /* exclamation-triangle */
+  color: var(--warning-color);
 }
 
 @keyframes alert-in {

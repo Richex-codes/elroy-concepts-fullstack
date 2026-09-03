@@ -3,6 +3,8 @@ import api from "../api/axios.js";
 import ReportActions from "./ReportActions.jsx";
 import SearchableSelect from "./SearchableSelect.jsx";
 import Pagination from "./Pagination.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
+import { useConfirm } from "../utils/useConfirm.js";
 import { getOwnBranchId } from "../utils/authUser.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
@@ -12,6 +14,7 @@ const PAGE_SIZE = 40;
 
 export default function InventoryPage() {
   const { error, showError, clearError } = useApiError();
+  const { confirm, modalProps } = useConfirm();
   const [summary, setSummary] = useState([]);
   const [stock, setStock] = useState([]);
   const [products, setProducts] = useState([]);
@@ -35,6 +38,7 @@ export default function InventoryPage() {
   const [costModalItem, setCostModalItem] = useState(null);
   const [batchDrafts, setBatchDrafts] = useState({});
   const [savingBatchId, setSavingBatchId] = useState(null);
+  const [removingBatchId, setRemovingBatchId] = useState(null);
   const [costModalMessage, setCostModalMessage] = useState("");
   const [costModalError, setCostModalError] = useState(false);
   // Separate from batchDrafts -- this pushes one cost to every batch of the
@@ -226,6 +230,41 @@ const fetchStock = async () => {
       setCostModalMessage(err.response?.data?.message || "Failed to update cost.");
     } finally {
       setSavingBatchId(null);
+    }
+  };
+
+  // For a batch that was entered by mistake -- e.g. the same delivery added
+  // twice -- rather than a real correction. Only works while the batch is
+  // still untouched (nothing sold from it); the server enforces that too.
+  const handleRemoveBatch = async (batch) => {
+    const ok = await confirm(
+      `Remove this batch of ${batch.quantityRemaining} unit(s) from ${new Date(
+        batch.arrivalDate
+      ).toLocaleDateString()}? This can't be undone.`,
+      { title: "Remove batch", confirmLabel: "Remove", danger: true }
+    );
+    if (!ok) return;
+
+    setRemovingBatchId(batch._id);
+    setCostModalMessage("");
+    setCostModalError(false);
+    try {
+      await api.delete(
+        `/products/${costModalItem.productId}/inventory/${costModalItem.inventoryId}/batches/${batch._id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      setCostModalMessage("Batch removed.");
+      setCostModalError(false);
+      setCostModalItem((prev) => ({
+        ...prev,
+        batches: prev.batches.filter((b) => b._id !== batch._id),
+      }));
+      fetchStock(); // background refresh so the table reflects the removal once the modal closes
+    } catch (err) {
+      setCostModalError(true);
+      setCostModalMessage(err.response?.data?.message || "Failed to remove batch.");
+    } finally {
+      setRemovingBatchId(null);
     }
   };
 
@@ -566,6 +605,7 @@ const fetchStock = async () => {
                     <th>Unit Cost (₦)</th>
                     <th>Supplier Ref</th>
                     <th></th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -610,6 +650,19 @@ const fetchStock = async () => {
                           {savingBatchId === batch._id ? "Saving..." : "Save"}
                         </button>
                       </td>
+                      <td>
+                        {batch.quantityRemaining === batch.quantityReceived && (
+                          <button
+                            type="button"
+                            className="btn-remove-batch"
+                            disabled={removingBatchId === batch._id}
+                            onClick={() => handleRemoveBatch(batch)}
+                            title="Remove this batch entirely -- only available while nothing's been sold from it"
+                          >
+                            {removingBatchId === batch._id ? "Removing..." : "Remove"}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -622,6 +675,7 @@ const fetchStock = async () => {
           </div>
         </div>
       )}
+      <ConfirmModal {...modalProps} />
     </div>
   );
 }

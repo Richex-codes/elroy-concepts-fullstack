@@ -345,6 +345,22 @@
     background: #e5e7eb;
   }
 
+  .btn-remove-batch {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: #ffffff;
+    color: var(--secondary-text);
+    font-size: 0.85em;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-remove-batch:hover {
+    border-color: #dc2626;
+    color: #dc2626;
+  }
+
 
   .inventory-summary {
     background-color: #ffffff;

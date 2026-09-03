@@ -136,6 +136,24 @@ export default function AddInventoryPage() {
   const hasExistingCost = existingBatch != null;
   const costLocked = hasExistingCost && !costOverrideUnlocked;
 
+  // Flags this exact product/branch/color already having a batch dated the
+  // same day as the one being entered -- the same mistake as a delivery
+  // getting added twice. A warning, not a block: two separate deliveries
+  // can genuinely arrive on the same day.
+  const possibleDuplicate = (() => {
+    if (!selectedProductObj || !selectedBranch || !color || !dateAdded) return null;
+    const targetDate = new Date(dateAdded).toDateString();
+    for (const line of selectedProductObj.inventory || []) {
+      if (line.branch?._id !== selectedBranch || line.color !== color) continue;
+      for (const batch of line.batches || []) {
+        if (new Date(batch.arrivalDate).toDateString() === targetDate) {
+          return { quantity: batch.quantityReceived, date: batch.arrivalDate };
+        }
+      }
+    }
+    return null;
+  })();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -263,6 +281,14 @@ export default function AddInventoryPage() {
             required
           />
         </div>
+
+        {possibleDuplicate && (
+          <div className="alert alert-warning">
+            {possibleDuplicate.quantity} unit(s) of this product's {color} was already added at
+            this branch on {new Date(possibleDuplicate.date).toLocaleDateString()}. Make sure
+            this isn't the same delivery being entered twice.
+          </div>
+        )}
 
         <div className="inventory-form-row">
           <div className="inventory-form-field">
