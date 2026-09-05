@@ -52,9 +52,14 @@ function generateInvoicePDF(sale) {
           { key: "product", label: "PRODUCT", width: 160 },
           { key: "color", label: "COLOR", width: 70 },
           { key: "length", label: "CUT", width: 60, align: "right" },
-          { key: "qty", label: "QTY", width: 45, align: "right" },
-          { key: "rate", label: "RATE", width: 90, align: "right" },
-          { key: "amount", label: "AMOUNT", width: 85, align: "right" },
+          // QTY is always a short number, so it can give up width to RATE
+          // and AMOUNT -- both render full naira amounts (e.g.
+          // "NGN 3,037,500.00"), which wrapped onto a second line and
+          // overlapped the row below once the total climbed into the
+          // millions and no longer fit the old, narrower columns.
+          { key: "qty", label: "QTY", width: 35, align: "right" },
+          { key: "rate", label: "RATE", width: 100, align: "right" },
+          { key: "amount", label: "AMOUNT", width: 107, align: "right" },
         ],
         items.map((item) => ({
           product: item.productName || "N/A",
