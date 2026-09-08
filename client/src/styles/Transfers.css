@@ -1,0 +1,349 @@
+/* =========================
+   TRANSFERS PAGE WRAPPER
+========================= */
+.transfers-page {
+  padding: 24px 28px;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.transfers-page h1 {
+  margin-bottom: 4px;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* =========================
+   FILTERS SECTION
+========================= */
+.transfers-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 24px;
+}
+
+.transfers-filters input,
+.transfers-filters select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+
+  width: 180px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.transfers-filters input:focus,
+.transfers-filters select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.transfers-filters button {
+  padding: 9px 14px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color var(--transition-speed);
+}
+
+.transfers-filters button:hover {
+  background: var(--primary-color-dark);
+}
+
+/* =========================
+   TABLE WRAPPER (SCROLL FIX)
+========================= */
+.transfers-table-container {
+  width: 100%;
+  max-height: 65vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: #f3f4f6;
+  box-shadow: var(--shadow-sm);
+}
+
+/* =========================
+   TABLE STYLE
+========================= */
+.transfers-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.transfers-inventory-table thead {
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.transfers-inventory-table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.transfers-inventory-table td {
+  padding: 11px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.transfers-inventory-table .col-right {
+  text-align: right;
+}
+
+.transfers-inventory-table tbody tr.row-alt {
+  background-color: #ffffff;
+}
+
+.transfers-inventory-table tbody tr:hover {
+  background: var(--accent-color-light);
+}
+
+.table-empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--secondary-text);
+  font-style: italic;
+}
+
+.invoice-toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: #f3f4f6;
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+
+.invoice-toggle-btn:hover {
+  background-color: #ffffff;
+}
+
+.invoice-actions-cell {
+  background-color: #ffffff;
+  padding: 14px !important;
+}
+
+.transfer-items-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f3f4f6;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.transfer-items-detail-table th,
+.transfer-items-detail-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85em;
+}
+
+.transfer-items-detail-table .col-right {
+  text-align: right;
+}
+
+.transfer-items-detail-table thead {
+  background-color: #ffffff;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.transfer-notes {
+  margin: 0;
+  color: var(--secondary-text);
+  font-size: 0.85em;
+  font-style: italic;
+}
+
+.sale-delete-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--danger-color);
+  border-radius: var(--radius-sm);
+  background-color: #f3f4f6;
+  color: var(--danger-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.sale-delete-btn:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1024px) {
+  .transfers-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .transfers-filters input,
+  .transfers-filters select {
+    width: 100%;
+  }
+
+  .transfers-filters button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .transfers-page {
+    padding: 16px 12px;
+  }
+
+  .transfers-filters input,
+  .transfers-filters select,
+  .transfers-filters button {
+    width: 100%;
+  }
+
+  /* Table becomes a stack of cards on phones — easier to scan with a
+     thumb than scrolling a 6-column table sideways. */
+  .transfers-table-container {
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .transfers-inventory-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .transfers-inventory-table thead {
+    display: none;
+  }
+
+  .transfers-inventory-table tbody {
+    display: block;
+  }
+
+  .transfers-inventory-table tr {
+    display: block;
+    margin-bottom: 14px;
+    background: #f3f4f6;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 4px 14px;
+  }
+
+  .transfers-inventory-table tr,
+  .transfers-inventory-table tr.row-alt,
+  .transfers-inventory-table tr:hover {
+    background: #f3f4f6;
+  }
+
+  .transfers-inventory-table td {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+  }
+
+  .transfers-inventory-table td:last-child {
+    border-bottom: none;
+  }
+
+  .transfers-inventory-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 700;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+    margin-bottom: 2px;
+  }
+
+  .transfers-inventory-table tr.sale-detail-row {
+    margin-top: -14px;
+    box-shadow: none;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding-top: 0;
+  }
+
+  .invoice-actions-cell {
+    display: block;
+    padding: 10px 0 0 !important;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .invoice-actions-cell::before {
+    content: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .transfers-page {
+    padding: 14px 10px;
+  }
+
+  .transfers-page h1 {
+    font-size: 1.2rem;
+  }
+
+  .transfers-filters {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .transfers-inventory-table td {
+    font-size: 0.85rem;
+  }
+}
+
+/* ===================== */
+/* 360px and below -- folded-phone cover screens (e.g. Z Fold 5, ~344px) */
+/* ===================== */
+@media (max-width: 360px) {
+  .transfers-page {
+    padding: 12px 8px;
+  }
+
+  .transfers-filters input,
+  .transfers-filters select {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+}

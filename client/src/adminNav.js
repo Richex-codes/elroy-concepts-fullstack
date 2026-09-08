@@ -14,6 +14,8 @@ const AddInventoryPage = lazy(() => import("./component/AddInventory.jsx"));
 const Enquiries = lazy(() => import("./component/Enquiries.jsx"));
 const AddSales = lazy(() => import("./component/AddSales.jsx"));
 const SalesPage = lazy(() => import("./component/Sales.jsx"));
+const AddTransfer = lazy(() => import("./component/AddTransfer.jsx"));
+const TransfersPage = lazy(() => import("./component/Transfers.jsx"));
 const DebtorPage = lazy(() => import("./component/Debtor.jsx"));
 const AuditLog = lazy(() => import("./component/AuditLog.jsx"));
 const MakeAdmin = lazy(() => import("./component/MakeAdmin.jsx"));
@@ -40,6 +42,8 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { key: "sales", path: "sales", label: "Sales", icon: "fa-cash-register", Component: SalesPage },
       { key: "add-sales", path: "add-sales", label: "Add Sale", icon: "fa-receipt", Component: AddSales },
+      { key: "transfers", path: "transfers", label: "Transfers", icon: "fa-right-left", Component: TransfersPage },
+      { key: "add-transfer", path: "add-transfer", label: "Transfer Stock", icon: "fa-truck-ramp-box", Component: AddTransfer },
       { key: "debtor", path: "debtor", label: "Debtors", icon: "fa-file-invoice-dollar", Component: DebtorPage },
     ],
   },

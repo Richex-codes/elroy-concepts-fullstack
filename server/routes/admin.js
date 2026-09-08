@@ -9,6 +9,7 @@ const { generateInventoryPDF } = require("../utils/pdfGenerator.js");
 const { generateInvoicePDF } = require("../utils/generateInvoicePDF.js");
 const sendEmailWithPDF = require("../utils/emailSender.js");
 const Sales = require("../models/salesModel.js");
+const StockTransfer = require("../models/stockTransferModel.js");
 const { getInventorySummary, computeProductTotals } = require("../utils/inventorySummaryUtils.js")
 const { getLowStock, LOW_STOCK_THRESHOLD } = require("../utils/lowStockUtils.js");
 const { generateLowStockPDF } = require("../utils/generateLowStockPDF.js");
@@ -21,6 +22,7 @@ const { notifySuperAdmins, notifyBranchAdmins } = require("../utils/pushNotify.j
 const { idempotent } = require("../utils/idempotency.js");
 const { availablePieces, deductPipePieces, restorePipePieces } = require("../utils/pipeStock.js");
 const { consumeStock, restoreStock } = require("../utils/costConsumption.js");
+const { totalAvailable: totalAvailableForTransfer, transferStock, restoreTransfer } = require("../utils/stockTransfer.js");
 const { isTokenBlocklisted } = require("../utils/tokenBlocklist.js");
 const {
   getProfitSummary,
@@ -782,13 +784,21 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
             throw Object.assign(new Error(`"${product.name}" must be sold as a full or half stick`), { statusCode: 400 });
           }
           // Only a "half" sale needs a length -- it's the length of the
-          // stick being cut, entered by staff right now (never recorded at
-          // stock-in time). A "full" sale needs no length at all.
-          let stickLength;
+          // piece being sold, entered by staff right now (defaults to half
+          // the product's standard pipeLength in the UI, but freely
+          // editable for a custom cut). A "full" sale needs no length at
+          // all.
+          let pieceLength;
           if (cutType === "half") {
-            stickLength = Number(line.length);
-            if (!stickLength || stickLength <= 0) {
-              throw Object.assign(new Error(`"${product.name}" needs the length of the stick being cut`), { statusCode: 400 });
+            pieceLength = Number(line.length);
+            if (!pieceLength || pieceLength <= 0) {
+              throw Object.assign(new Error(`"${product.name}" needs the length of the piece being sold`), { statusCode: 400 });
+            }
+            if (pieceLength >= product.pipeLength) {
+              throw Object.assign(
+                new Error(`"${product.name}" piece length must be less than the standard ${product.pipeLength}m stick`),
+                { statusCode: 400 }
+              );
             }
           }
           // Best-effort pre-check only -- pass 2 (deductPipePieces) re-reads
@@ -797,12 +807,12 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
           // lines both eligible to cut the same fresh stick), which a
           // simple claimed-quantity map (as used for color below) can't
           // track exactly.
-          const totalAvailable = availablePieces(product, branch, line.color, cutType, stickLength);
+          const totalAvailable = availablePieces(product, branch, line.color, cutType, pieceLength);
           if (totalAvailable < qty) {
-            const label = cutType === "half" ? `half stick at ${stickLength}m` : "full stick";
+            const label = cutType === "half" ? `piece at ${pieceLength}m` : "full stick";
             throw Object.assign(new Error(`Insufficient stock for "${product.name}" (${line.color}) -- ${label}`), { statusCode: 400 });
           }
-          resolved.push({ product, qty, color: line.color, cutType, stickLength, amount: Number(line.amount), rate, isPipe: true });
+          resolved.push({ product, qty, color: line.color, cutType, pieceLength, amount: Number(line.amount), rate, isPipe: true });
           continue;
         }
 
@@ -833,7 +843,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
         dirtyProducts.add(product);
 
         if (isPipe) {
-          const { color, cutType, stickLength } = resolvedItem;
+          const { color, cutType, pieceLength } = resolvedItem;
           // Re-reads live inventory (not the pass-1 snapshot) and throws if
           // it can't fully satisfy `qty` -- see the pass-1 comment above.
           const { cuts, landedCostAtSale, costBatchRefs, costEstimated } = deductPipePieces(
@@ -842,7 +852,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
             color,
             cutType,
             qty,
-            stickLength
+            pieceLength
           );
 
           itemsForSale.push({
@@ -850,7 +860,7 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
             quantitySold: qty,
             color,
             cutType,
-            ...(cutType === "half" && { length: stickLength }),
+            ...(cutType === "half" && { length: pieceLength }),
             cuts,
             amount,
             landedCostAtSale,
@@ -859,11 +869,11 @@ router.post("/sales", authMiddleware, idempotent("sale.create"), async (req, res
             ...(rate != null && { rate }),
           });
 
-          const remainingQty = availablePieces(product, branch, color, cutType, stickLength);
+          const remainingQty = availablePieces(product, branch, color, cutType, pieceLength);
           if (remainingQty <= LOW_STOCK_THRESHOLD) {
             lowStockLines.push({
               productName: product.name,
-              color: `${color} · ${cutType === "half" ? `Half ${stickLength}m` : "Full"}`,
+              color: `${color} · ${cutType === "half" ? `Half ${pieceLength}m` : "Full"}`,
               remainingQty,
             });
           }
@@ -1226,6 +1236,300 @@ router.delete("/sales/:id", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to delete sale" });
+  }
+});
+
+// Stock moved from one branch to another -- not a sale (no customer, no
+// revenue), just relocating material the business already owns. Kept in
+// its own collection (StockTransfer) so it can never be mistaken for, or
+// counted toward, real income in profit/revenue reporting.
+router.post("/transfers", authMiddleware, idempotent("transfer.create"), async (req, res) => {
+  const { fromBranch, toBranch, items, transferDate, notes } = req.body;
+
+  if (!fromBranch || !toBranch) {
+    return res.status(400).json({ message: "Both branches are required" });
+  }
+  if (fromBranch === toBranch) {
+    return res.status(400).json({ message: "Choose two different branches" });
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: "At least one item is required" });
+  }
+  if (isOutsideOwnBranch(req, fromBranch)) {
+    return res.status(403).json({ message: "You can only transfer stock out of your own branch" });
+  }
+
+  const session = await mongoose.startSession();
+  let transfer, itemsForTransfer, productNameById;
+
+  try {
+    await session.withTransaction(async () => {
+      const productIds = [...new Set(items.map((line) => line.productId).filter(Boolean))];
+      const products = await Product.find({ _id: { $in: productIds } }).session(session);
+      const productById = new Map(products.map((p) => [p._id.toString(), p]));
+
+      // Same "claim as you validate" guard the sales route uses -- two
+      // lines for the same product+color in this transfer can't each pass
+      // a stock check that only actually holds once.
+      const claimedByKey = new Map();
+      const resolved = [];
+      for (const line of items) {
+        const qty = Number(line.quantity);
+        if (!line.productId || !line.color || !qty || qty <= 0) {
+          throw Object.assign(new Error("Each item needs a product, color, and valid quantity"), { statusCode: 400 });
+        }
+        const product = productById.get(line.productId);
+        if (!product) {
+          throw Object.assign(new Error(`Product not found: ${line.productId}`), { statusCode: 404 });
+        }
+        const key = `${line.productId}:${line.color}`;
+        const alreadyClaimed = claimedByKey.get(key) || 0;
+        const available = totalAvailableForTransfer(product, fromBranch, line.color);
+        if (available - alreadyClaimed < qty) {
+          throw Object.assign(
+            new Error(`Insufficient stock for "${product.name}" (${line.color}) at the sending branch`),
+            { statusCode: 400 }
+          );
+        }
+        claimedByKey.set(key, alreadyClaimed + qty);
+        resolved.push({ product, qty, color: line.color });
+      }
+
+      itemsForTransfer = [];
+      const dirtyProducts = new Set();
+      for (const { product, qty, color } of resolved) {
+        dirtyProducts.add(product);
+        const result = transferStock(product, fromBranch, toBranch, color, qty);
+        itemsForTransfer.push({
+          product: product._id,
+          color,
+          quantity: qty,
+          unitLandedCost: result.avgCost,
+          costEstimated: result.costEstimated,
+          costBatchRefs: result.costBatchRefs,
+          destBatchId: result.destBatchId,
+        });
+      }
+
+      await Promise.all([...dirtyProducts].map((p) => p.save({ session })));
+
+      transfer = new StockTransfer({
+        fromBranch,
+        toBranch,
+        items: itemsForTransfer,
+        notes: notes || "",
+        transferDate: transferDate ? new Date(transferDate) : new Date(),
+        createdBy: req.user.id,
+      });
+      await transfer.save({ session });
+
+      productNameById = new Map(resolved.map((r) => [r.product._id.toString(), r.product.name]));
+    });
+  } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ message: err.message });
+    }
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  } finally {
+    await session.endSession();
+  }
+
+  try {
+    const [fromBranchDoc, toBranchDoc] = await Promise.all([
+      Branch.findById(fromBranch),
+      Branch.findById(toBranch),
+    ]);
+
+    await logAudit({
+      action: "stock.transferred",
+      actor: req.user,
+      targetType: "StockTransfer",
+      targetId: transfer._id,
+      after: {
+        fromBranchName: fromBranchDoc?.name,
+        toBranchName: toBranchDoc?.name,
+        items: itemsForTransfer.map((i) => ({
+          productName: productNameById.get(i.product.toString()),
+          color: i.color,
+          quantity: i.quantity,
+        })),
+        notes: transfer.notes,
+      },
+    });
+
+    const payload = {
+      title: "Stock transferred",
+      body: `${itemsForTransfer.length} item(s) moved from ${fromBranchDoc?.name || "a branch"} to ${toBranchDoc?.name || "a branch"}`,
+      url: "/admin/transfers",
+    };
+    notifyBranchAdmins(fromBranch, payload).catch((err) => console.error("Push notify failed:", err.message));
+    notifyBranchAdmins(toBranch, payload).catch((err) => console.error("Push notify failed:", err.message));
+    notifySuperAdmins(payload).catch((err) => console.error("Push notify failed:", err.message));
+
+    res.json({
+      message: "Stock transferred successfully",
+      transfer: {
+        _id: transfer._id,
+        fromBranchName: fromBranchDoc?.name,
+        toBranchName: toBranchDoc?.name,
+        items: itemsForTransfer.map((i) => ({
+          productName: productNameById.get(i.product.toString()),
+          color: i.color,
+          quantity: i.quantity,
+        })),
+        transferDate: transfer.transferDate,
+        notes: transfer.notes,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/transfers", authMiddleware, async (req, res) => {
+  try {
+    const { product, branch, fromDate, toDate } = req.query;
+    const query = {};
+
+    // A transfer touches two branches at once, so "your own branch" means
+    // either side, not just one field -- unlike every other branch-scoped
+    // query in this file.
+    if (req.user?.role === "admin") {
+      const own = (Array.isArray(req.user.adminBranches) ? req.user.adminBranches : []).map(String);
+      if (branch) {
+        if (!own.includes(branch)) {
+          return res.status(403).json({ message: "You can only view transfers for your own branch." });
+        }
+        query.$or = [{ fromBranch: branch }, { toBranch: branch }];
+      } else {
+        query.$or = [{ fromBranch: { $in: own } }, { toBranch: { $in: own } }];
+      }
+    } else if (branch) {
+      query.$or = [{ fromBranch: branch }, { toBranch: branch }];
+    }
+
+    if (product) {
+      query["items.product"] = new mongoose.Types.ObjectId(product);
+    }
+
+    if (fromDate || toDate) {
+      query.transferDate = {};
+      if (fromDate) query.transferDate.$gte = new Date(fromDate);
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        query.transferDate.$lte = end;
+      }
+    } else {
+      // No date range chosen: default to the current year, same as Sales.
+      const { start, end } = getYearRange();
+      query.transferDate = { $gte: start, $lte: end };
+    }
+
+    const transfers = await StockTransfer.find(query)
+      .populate("fromBranch", "name")
+      .populate("toBranch", "name")
+      .populate("items.product", "name")
+      .sort({ transferDate: -1 })
+      .lean();
+
+    const formatted = transfers.map((t) => ({
+      _id: t._id,
+      fromBranch: t.fromBranch?.name || "Deleted branch",
+      fromBranchId: t.fromBranch?._id,
+      toBranch: t.toBranch?.name || "Deleted branch",
+      toBranchId: t.toBranch?._id,
+      items: t.items.map((i) => ({
+        productName: i.product?.name || "Deleted product",
+        color: i.color,
+        quantity: i.quantity,
+      })),
+      notes: t.notes,
+      transferDate: t.transferDate,
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("Error fetching transfers:", err);
+    res.status(500).json({ message: "Error fetching transfers" });
+  }
+});
+
+// delete a transfer, restoring the stock it moved (if the product/inventory
+// line still exists) -- claws back what's still sitting in the batch it
+// created at the receiving branch and restores the exact original batches
+// at the sending branch.
+router.delete("/transfers/:id", authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  let transfer;
+
+  try {
+    await session.withTransaction(async () => {
+      transfer = await StockTransfer.findById(req.params.id).session(session);
+      if (!transfer) {
+        throw Object.assign(new Error("Transfer not found"), { statusCode: 404 });
+      }
+      if (isOutsideOwnBranch(req, transfer.fromBranch)) {
+        throw Object.assign(new Error("You can only delete transfers for your own branch"), { statusCode: 403 });
+      }
+
+      const products = await Product.find({
+        _id: { $in: transfer.items.map((i) => i.product) },
+      }).session(session);
+      const productById = new Map(products.map((p) => [p._id.toString(), p]));
+
+      for (const item of transfer.items) {
+        const product = productById.get(item.product.toString());
+        if (!product) continue;
+        restoreTransfer(product, item.destBatchId, item.costBatchRefs);
+      }
+
+      await Promise.all([...productById.values()].map((p) => p.save({ session })));
+      await StockTransfer.findByIdAndDelete(req.params.id).session(session);
+    });
+  } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ message: err.message });
+    }
+    console.error(err);
+    return res.status(500).json({ message: "Failed to delete transfer" });
+  } finally {
+    await session.endSession();
+  }
+
+  try {
+    const [fromBranchDoc, toBranchDoc] = await Promise.all([
+      Branch.findById(transfer.fromBranch),
+      Branch.findById(transfer.toBranch),
+    ]);
+
+    await logAudit({
+      action: "stock.transfer_deleted",
+      actor: req.user,
+      targetType: "StockTransfer",
+      targetId: transfer._id,
+      before: {
+        fromBranchName: fromBranchDoc?.name,
+        toBranchName: toBranchDoc?.name,
+        items: transfer.items.map((i) => ({ product: i.product, color: i.color, quantity: i.quantity })),
+      },
+    });
+
+    const payload = {
+      title: "Transfer deleted",
+      body: `A transfer from ${fromBranchDoc?.name || "a branch"} to ${toBranchDoc?.name || "a branch"} was deleted and stock restored`,
+      url: "/admin/transfers",
+    };
+    notifyBranchAdmins(transfer.fromBranch, payload).catch((err) => console.error("Push notify failed:", err.message));
+    notifyBranchAdmins(transfer.toBranch, payload).catch((err) => console.error("Push notify failed:", err.message));
+    notifySuperAdmins(payload).catch((err) => console.error("Push notify failed:", err.message));
+
+    res.json({ message: "Transfer deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete transfer" });
   }
 });
 
