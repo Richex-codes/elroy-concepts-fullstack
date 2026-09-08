@@ -52,6 +52,12 @@ export default function AddInventoryPage() {
   // True once the admin has explicitly chosen to override an existing
   // known cost -- see costLocked below.
   const [costOverrideUnlocked, setCostOverrideUnlocked] = useState(draft.costOverrideUnlocked ?? false);
+  // Pipes restock as either a full, length-less stick (the common case) or
+  // at a specific piece length (e.g. pipes that arrived pre-cut) -- same
+  // Full/Half pattern as Add Sales, prefilled to half the product's
+  // standard length but freely editable.
+  const [stockLengthType, setStockLengthType] = useState(draft.stockLengthType ?? "full");
+  const [pieceLength, setPieceLength] = useState(draft.pieceLength ?? "");
   const [loading, setLoading] = useState(false);
 
   const COLORS = ["Gold", "Silver", "Bronze", "Black", "White", "Dark Bronze", "Wood", "No Color"];
@@ -104,6 +110,8 @@ export default function AddInventoryPage() {
       unitLandedCost,
       supplierRef,
       costOverrideUnlocked,
+      stockLengthType,
+      pieceLength,
     });
   }, [
     selectedProduct,
@@ -115,6 +123,8 @@ export default function AddInventoryPage() {
     unitLandedCost,
     supplierRef,
     costOverrideUnlocked,
+    stockLengthType,
+    pieceLength,
   ]);
 
   // Re-lock the cost field (and clear any typed override) whenever the
@@ -129,12 +139,16 @@ export default function AddInventoryPage() {
     }
     setCostOverrideUnlocked(false);
     setUnitLandedCost("");
+    setStockLengthType("full");
+    setPieceLength("");
   }, [selectedProduct]);
 
   const selectedProductObj = products.find((p) => p._id === selectedProduct);
   const existingBatch = selectedProductObj ? mostRecentBatch(selectedProductObj) : null;
   const hasExistingCost = existingBatch != null;
   const costLocked = hasExistingCost && !costOverrideUnlocked;
+  const isPipeProduct = selectedProductObj?.unitType === "length";
+  const pieceLengthNum = Number(pieceLength) || 0;
 
   // Flags this exact product/branch/color already having a batch dated the
   // same day as the one being entered -- the same mistake as a delivery
@@ -156,6 +170,22 @@ export default function AddInventoryPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsError(false);
+    setMessage("");
+
+    if (isPipeProduct && stockLengthType === "half") {
+      if (!pieceLength) {
+        setIsError(true);
+        setMessage("Enter the piece length being restocked.");
+        return;
+      }
+      if (pieceLengthNum >= selectedProductObj.pipeLength) {
+        setIsError(true);
+        setMessage(`Piece length must be less than the standard ${selectedProductObj.pipeLength}m stick.`);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       await api.post(
@@ -172,6 +202,7 @@ export default function AddInventoryPage() {
            // display echo of what it already knows.
            ...(!costLocked && unitLandedCost !== "" && { unitLandedCost: Number(unitLandedCost) }),
            ...(supplierRef !== "" && { supplierRef }),
+           ...(isPipeProduct && stockLengthType === "half" && { length: pieceLengthNum }),
           },
         {
           headers: {
@@ -189,6 +220,8 @@ export default function AddInventoryPage() {
       setUnitLandedCost("");
       setSupplierRef("");
       setCostOverrideUnlocked(false);
+      setStockLengthType("full");
+      setPieceLength("");
     } catch (err) {
       console.error("Error adding inventory:", err);
       setIsError(true);
@@ -271,6 +304,41 @@ export default function AddInventoryPage() {
             />
           </div>
         </div>
+
+        {isPipeProduct && (
+          <div className="inventory-form-row">
+            <div className="inventory-form-field">
+              <label>Stock Type</label>
+              <select
+                value={stockLengthType}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setStockLengthType(newType);
+                  setPieceLength(
+                    newType === "half" ? String(Math.round((selectedProductObj.pipeLength / 2) * 100) / 100) : ""
+                  );
+                }}
+              >
+                <option value="full">Full stick ({selectedProductObj.pipeLength}m)</option>
+                <option value="half">Specific length</option>
+              </select>
+            </div>
+
+            {stockLengthType === "half" && (
+              <div className="inventory-form-field">
+                <label>Piece Length (m)</label>
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  placeholder="Length of piece being restocked (m)"
+                  value={pieceLength}
+                  onChange={(e) => setPieceLength(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="inventory-form-field">
           <label>Stock Date</label>

@@ -180,6 +180,8 @@ router.post(
     try {
       const { name, category, dateAdded, unitType, pipeLength } = req.body;
       const resolvedUnitType = unitType === "length" ? "length" : "piece";
+      const resolvedPipeLength =
+        resolvedUnitType === "length" && pipeLength != null && pipeLength !== "" ? Number(pipeLength) : 5.8;
 
       let imageUrl = "";
       if (req.file) {
@@ -206,6 +208,22 @@ router.post(
         return res.status(400).json({ msg: "Each inventory line needs a color." });
       }
 
+      // Opening stock at a specific piece length instead of full sticks --
+      // same length constraint as a half-stick sale.
+      if (resolvedUnitType === "length") {
+        const badLengthLine = inventory.find(
+          (item) =>
+            item.length != null &&
+            item.length !== "" &&
+            !(Number(item.length) > 0 && Number(item.length) < resolvedPipeLength)
+        );
+        if (badLengthLine) {
+          return res.status(400).json({
+            msg: `Piece length must be less than the standard ${resolvedPipeLength}m stick.`,
+          });
+        }
+      }
+
       // A branch admin creating "30mm pipe" for the first time at their own
       // branch has no way of knowing another branch already stocks it under
       // a slightly different spelling of the same name (case, spacing,
@@ -225,13 +243,16 @@ router.post(
         category,
         image: imageUrl,
         unitType: resolvedUnitType,
-        ...(resolvedUnitType === "length" && {
-          pipeLength: pipeLength != null && pipeLength !== "" ? Number(pipeLength) : 5.8,
-        }),
+        ...(resolvedUnitType === "length" && { pipeLength: resolvedPipeLength }),
         inventory: inventory.map((item) => {
           const receivedQty = Number(item.quantity) || 0;
+          const itemHasLength =
+            resolvedUnitType === "length" && item.length != null && item.length !== "";
           const line = {
             ...item,
+            ...(itemHasLength
+              ? { length: Number(item.length), isRemnant: true }
+              : { length: undefined, isRemnant: false }),
             addedAt: dateAdded || Date.now(),
             batches: [
               {
@@ -381,7 +402,7 @@ router.get("/product-inventory", authMiddleware, requireAdmin, async (req, res) 
 // Add inventory to existing product
 router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inventory.add"), async (req, res) => {
   const productId = req.params.id;
-  const { branch, quantity, color, description, addedAt, unitLandedCost, supplierRef } = req.body;
+  const { branch, quantity, color, description, addedAt, unitLandedCost, supplierRef, length } = req.body;
 
   if (!branch || !quantity || isNaN(quantity)) {
     return res
@@ -399,6 +420,17 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
 
     if (!color) {
       return res.status(400).json({ msg: "Color is required for this product." });
+    }
+
+    // Restocking at a specific piece length (e.g. pre-cut pipes) instead of
+    // full, length-less sticks -- same length constraint as a half-stick
+    // sale, so this stock is findable by that same "half at this length"
+    // sale flow later.
+    const hasLength = product.unitType === "length" && length != null && length !== "";
+    if (hasLength && !(Number(length) > 0 && Number(length) < product.pipeLength)) {
+      return res.status(400).json({
+        msg: `Piece length must be less than the standard ${product.pipeLength}m stick.`,
+      });
     }
 
     const receivedQty = parseInt(quantity);
@@ -426,6 +458,7 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
       color,
       description,
       addedAt,
+      ...(hasLength && { length: Number(length), isRemnant: true }),
       batches: [
         {
           quantityReceived: receivedQty,
@@ -453,6 +486,7 @@ router.post("/:id/add-inventory", authMiddleware, requireAdmin, idempotent("inve
         branchName: branchDoc?.name,
         quantity: receivedQty,
         color,
+        ...(hasLength && { length: Number(length) }),
         description,
         unitLandedCost: resolvedCost,
         costEstimated: resolvedCostEstimated,

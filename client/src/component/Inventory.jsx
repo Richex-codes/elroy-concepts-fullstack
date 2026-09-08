@@ -426,7 +426,7 @@ const fetchStock = async () => {
                   <td data-label="Branch">{item.branch}</td>
                   <td data-label="Color">{item.color || "-"}</td>
                   <td data-label="Length">
-                    {item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-"}
+                    {item.length != null ? `${item.length}m` : "-"}
                   </td>
                   <td className="col-right" data-label="Quantity">{item.quantity}</td>
                   <td className="col-right" data-label="Cost">

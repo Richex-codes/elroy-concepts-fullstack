@@ -60,14 +60,18 @@ const ProductSchema = new Schema(
           type: String,
           default: "",
         },
-        // Only ever set on a remnant line (isRemnant: true) -- the leftover
-        // from cutting a pipe in half at sale time. Regular stock, for both
-        // "piece" and "length" products, never has a length.
+        // Only ever set on a line with isRemnant: true -- a piece of a known
+        // length, either an offcut auto-created from a half-stick sale, or
+        // stock an admin restocked directly at a specific length (e.g. pipes
+        // that arrived pre-cut). Fresh, length-less stock (for both "piece"
+        // and "length" products) never has a length.
         length: {
           type: Number,
         },
-        // True for a line auto-created from a sale's leftover offcut,
-        // rather than stock an admin explicitly restocked.
+        // True for any line carrying a specific length: an offcut
+        // auto-created from a half-stick sale, or stock an admin restocked
+        // directly at a known length instead of as a full, length-less
+        // stick.
         isRemnant: {
           type: Boolean,
           default: false,

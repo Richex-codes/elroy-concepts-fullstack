@@ -44,6 +44,18 @@ export default function AddProductPage() {
     draft.openingStockUnitLandedCost ?? ""
   );
 
+  // Same reasoning as the cost field above: one Stock Type/length applies
+  // to every cell in this submission, rather than per-cell. Pipes default
+  // to full, length-less sticks; picking "Specific length" prefills half
+  // the standard length (still freely editable) and applies it to every
+  // quantity entered below.
+  const [openingStockLengthType, setOpeningStockLengthType] = useState(
+    draft.openingStockLengthType ?? "full"
+  );
+  const [openingStockPieceLength, setOpeningStockPieceLength] = useState(
+    draft.openingStockPieceLength ?? ""
+  );
+
   // Match against the existing catalog ignoring case, spacing, and
   // punctuation -- "50mm Pipe" and "50 mm  pipe" collide here, not just
   // exact-same-text names. This is what lets a branch admin who has never
@@ -186,8 +198,10 @@ export default function AddProductPage() {
       ...formDataWithoutImage,
       inventory,
       openingStockUnitLandedCost,
+      openingStockLengthType,
+      openingStockPieceLength,
     });
-  }, [formData, inventory, openingStockUnitLandedCost]);
+  }, [formData, inventory, openingStockUnitLandedCost, openingStockLengthType, openingStockPieceLength]);
 
   // 🔵 Handle form and image input
   const handleChange = (e) => {
@@ -216,6 +230,24 @@ export default function AddProductPage() {
   // 🔵 Submit everything including inventory
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsError(false);
+    setMessage("");
+
+    const isPipeProduct = formData.unitType === "length";
+    if (isPipeProduct && openingStockLengthType === "half") {
+      const pieceLengthNum = Number(openingStockPieceLength) || 0;
+      if (!openingStockPieceLength) {
+        setIsError(true);
+        setMessage("Enter the piece length for this opening stock.");
+        return;
+      }
+      if (pieceLengthNum >= Number(formData.pipeLength)) {
+        setIsError(true);
+        setMessage(`Piece length must be less than the standard ${formData.pipeLength}m stick.`);
+        return;
+      }
+    }
+
     setLoading(true);
 
     const inventoryPayload = inventory
@@ -226,6 +258,11 @@ export default function AddProductPage() {
         ...(openingStockUnitLandedCost !== "" && {
           unitLandedCost: Number(openingStockUnitLandedCost),
         }),
+        ...(isPipeProduct &&
+          openingStockLengthType === "half" && {
+            length: Number(openingStockPieceLength),
+            isRemnant: true,
+          }),
       }));
 
     if (inventoryPayload.length === 0) {
@@ -270,6 +307,8 @@ export default function AddProductPage() {
         pipeLength: 5.8,
       });
       setOpeningStockUnitLandedCost("");
+      setOpeningStockLengthType("full");
+      setOpeningStockPieceLength("");
       const resetInventory = [];
       branches.forEach((branch) => {
         COLORS.forEach((color) => {
@@ -441,6 +480,43 @@ export default function AddProductPage() {
             </div>
 
             <h4>Set Quantity Per Branch</h4>
+
+            {formData.unitType === "length" && (
+              <div className="product-form-row">
+                <div className="product-form-field">
+                  <label>Stock Type (applies to all opening stock above)</label>
+                  <select
+                    value={openingStockLengthType}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setOpeningStockLengthType(newType);
+                      setOpeningStockPieceLength(
+                        newType === "half"
+                          ? String(Math.round((Number(formData.pipeLength) / 2) * 100) / 100)
+                          : ""
+                      );
+                    }}
+                  >
+                    <option value="full">Full stick ({formData.pipeLength}m)</option>
+                    <option value="half">Specific length</option>
+                  </select>
+                </div>
+
+                {openingStockLengthType === "half" && (
+                  <div className="product-form-field">
+                    <label>Piece Length (m)</label>
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      placeholder="Length of piece being stocked (m)"
+                      value={openingStockPieceLength}
+                      onChange={(e) => setOpeningStockPieceLength(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="product-form-field">
               <label>Unit Landed Cost (₦, optional — applies to all opening stock above)</label>
