@@ -39,13 +39,14 @@ export default function AddSales() {
   // the line item currently being configured, before it's added to `items`
   const [draftProduct, setDraftProduct] = useState(draft.draftProduct ?? "");
   const [draftColor, setDraftColor] = useState(draft.draftColor ?? "");
-  // Pipes are only ever sold as a full stick or exactly half of one -- never
-  // a custom cut. Stock isn't tracked by length at all, so staff just pick
-  // Full or Half; for Half, they additionally type in the length of the
-  // stick being cut (never recorded when it was stocked), which sizes the
-  // remnant the sale leaves behind.
+  // Pipes are sold as a full stick, or as a specific piece length cut from
+  // one ("half" cutType). The piece length defaults to half the product's
+  // standard pipeLength (prefilled below when Half is picked) but stays
+  // freely editable, e.g. for a 1.2m caterpillar-pipe piece. Whatever's left
+  // of the stick after the cut becomes a remnant, sized from the product's
+  // own pipeLength.
   const [draftCutType, setDraftCutType] = useState(draft.draftCutType ?? "");
-  const [draftSaleLength, setDraftSaleLength] = useState(draft.draftSaleLength ?? "");
+  const [draftPieceLength, setDraftPieceLength] = useState(draft.draftPieceLength ?? "");
   const [draftQuantity, setDraftQuantity] = useState(draft.draftQuantity ?? "");
   const [draftRate, setDraftRate] = useState(draft.draftRate ?? "");
   const [draftAmount, setDraftAmount] = useState(draft.draftAmount ?? "");
@@ -58,14 +59,14 @@ export default function AddSales() {
   // a negotiated lump sum with no clean per-unit price). A full stick has no
   // known length to price by the meter, so its rate is flat per stick, same
   // as a piece product; a half stick's rate is per meter, scaled by the
-  // half-length being sold (isPipeProduct/draftPieceLength are declared
+  // piece length being sold (isPipeProduct/draftPieceLengthNum are declared
   // further down, but this closure only reads them once the handler
   // actually fires, by which point the render that defined them has already
   // completed).
   const handleDraftQuantityChange = (value) => {
     setDraftQuantity(value);
     if (draftRate !== "" && value !== "") {
-      const unitLength = isPipeProduct && draftCutType === "half" ? draftPieceLength : 1;
+      const unitLength = isPipeProduct && draftCutType === "half" ? draftPieceLengthNum : 1;
       setDraftAmount(String(Number(value) * Number(draftRate) * unitLength));
     }
   };
@@ -73,7 +74,7 @@ export default function AddSales() {
   const handleDraftRateChange = (value) => {
     setDraftRate(value);
     if (value !== "" && draftQuantity !== "") {
-      const unitLength = isPipeProduct && draftCutType === "half" ? draftPieceLength : 1;
+      const unitLength = isPipeProduct && draftCutType === "half" ? draftPieceLengthNum : 1;
       setDraftAmount(String(Number(draftQuantity) * Number(value) * unitLength));
     }
   };
@@ -101,7 +102,7 @@ export default function AddSales() {
       draftProduct,
       draftColor,
       draftCutType,
-      draftSaleLength,
+      draftPieceLength,
       draftQuantity,
       draftRate,
       draftAmount,
@@ -116,7 +117,7 @@ export default function AddSales() {
     draftProduct,
     draftColor,
     draftCutType,
-    draftSaleLength,
+    draftPieceLength,
     draftQuantity,
     draftRate,
     draftAmount,
@@ -179,25 +180,23 @@ export default function AddSales() {
       .reduce((total, item) => total + item.quantitySold, 0);
 
   // Pieces of this exact product/color already staged as a "Half" sale of
-  // this exact stick length -- a distinct stock pool (remnants at half that
+  // this exact piece length -- a distinct stock pool (remnants at that
   // length, plus fresh stock) from a differently-lengthed half sale of the
   // same product/color, so it's tracked separately from alreadyStagedQty.
-  const alreadyStagedHalfQty = (productId, color, stickLength) =>
+  const alreadyStagedHalfQty = (productId, color, pieceLength) =>
     items
       .filter(
         (item) =>
           item.productId === productId &&
           item.color === color &&
           item.cutType === "half" &&
-          item.length === stickLength
+          item.length === pieceLength
       )
       .reduce((total, item) => total + item.quantitySold, 0);
 
-  const draftSaleLengthNum = Number(draftSaleLength) || 0;
-  // Length of ONE piece being sold: only meaningful for "Half" (exactly
-  // half the stick length just entered). A "Full" sale's stick length was
-  // never recorded, so there's nothing to derive here for it.
-  const draftPieceLength = draftCutType === "half" ? draftSaleLengthNum / 2 : null;
+  // The length actually being sold, entered directly -- no more halving
+  // (see the cutType comment above). Only meaningful for "Half".
+  const draftPieceLengthNum = Number(draftPieceLength) || 0;
 
   const availableStock = (() => {
     if (!selectedProduct || !branch || !draftColor) return 0;
@@ -216,15 +215,15 @@ export default function AddSales() {
         return freshQty - alreadyStagedQty(selectedProduct._id, draftColor);
       }
 
-      if (!draftSaleLengthNum) return 0;
+      if (!draftPieceLengthNum) return 0;
       const remnantQty = selectedProduct.inventory
         .filter(
           (inv) =>
-            inv.branch._id === branch && inv.color === draftColor && inv.isRemnant && inv.length === draftPieceLength
+            inv.branch._id === branch && inv.color === draftColor && inv.isRemnant && inv.length === draftPieceLengthNum
         )
         .reduce((total, inv) => total + inv.quantity, 0);
       return (
-        remnantQty + freshQty - alreadyStagedHalfQty(selectedProduct._id, draftColor, draftSaleLengthNum)
+        remnantQty + freshQty - alreadyStagedHalfQty(selectedProduct._id, draftColor, draftPieceLengthNum)
       );
     }
     return (
@@ -242,7 +241,7 @@ export default function AddSales() {
     setDraftProduct("");
     setDraftColor("");
     setDraftCutType("");
-    setDraftSaleLength("");
+    setDraftPieceLength("");
     setDraftQuantity("");
     setDraftRate("");
     setDraftAmount("");
@@ -256,13 +255,17 @@ export default function AddSales() {
       !draftProduct ||
       !draftColor ||
       (isPipeProduct && !draftCutType) ||
-      (isPipeProduct && draftCutType === "half" && !draftSaleLength)
+      (isPipeProduct && draftCutType === "half" && !draftPieceLength)
     ) {
       setItemMessage(
         isPipeProduct
-          ? "Select a product, color, and Full or Half (Half also needs the stick's length)."
+          ? "Select a product, color, and Full or Half (Half also needs the piece length)."
           : "Select a product and color."
       );
+      return;
+    }
+    if (isPipeProduct && draftCutType === "half" && draftPieceLengthNum >= selectedProduct.pipeLength) {
+      setItemMessage(`Piece length must be less than the standard ${selectedProduct.pipeLength}m stick.`);
       return;
     }
     const qty = Number(draftQuantity);
@@ -292,7 +295,7 @@ export default function AddSales() {
         color: draftColor,
         ...(isPipeProduct && {
           cutType: draftCutType,
-          ...(draftCutType === "half" && { length: draftSaleLengthNum }),
+          ...(draftCutType === "half" && { length: draftPieceLengthNum }),
         }),
         quantitySold: qty,
         rate: draftRate !== "" ? Number(draftRate) : undefined,
@@ -303,7 +306,7 @@ export default function AddSales() {
     setDraftProduct("");
     setDraftColor("");
     setDraftCutType("");
-    setDraftSaleLength("");
+    setDraftPieceLength("");
     setDraftQuantity("");
     setDraftRate("");
     setDraftAmount("");
@@ -459,7 +462,7 @@ export default function AddSales() {
                   setDraftProduct(newValue);
                   setDraftColor("");
                   setDraftCutType("");
-                  setDraftSaleLength("");
+                  setDraftPieceLength("");
                   setDraftQuantity("");
                   setDraftRate("");
                   setDraftAmount("");
@@ -472,7 +475,7 @@ export default function AddSales() {
                 onChange={(e) => {
                   setDraftColor(e.target.value);
                   setDraftCutType("");
-                  setDraftSaleLength("");
+                  setDraftPieceLength("");
                   setDraftQuantity("");
                   setDraftRate("");
                   setDraftAmount("");
@@ -491,8 +494,15 @@ export default function AddSales() {
                 <select
                   value={draftCutType}
                   onChange={(e) => {
-                    setDraftCutType(e.target.value);
-                    setDraftSaleLength("");
+                    const newCutType = e.target.value;
+                    setDraftCutType(newCutType);
+                    // Defaults to half the product's standard length, but
+                    // stays freely editable right below for a custom cut.
+                    setDraftPieceLength(
+                      newCutType === "half" && selectedProduct
+                        ? String(Math.round((selectedProduct.pipeLength / 2) * 100) / 100)
+                        : ""
+                    );
                     setDraftQuantity("");
                     setDraftRate("");
                     setDraftAmount("");
@@ -510,10 +520,10 @@ export default function AddSales() {
                   type="number"
                   min="0.1"
                   step="0.1"
-                  placeholder="Length of stick being cut (m)"
-                  value={draftSaleLength}
+                  placeholder="Length of piece being sold (m)"
+                  value={draftPieceLength}
                   onChange={(e) => {
-                    setDraftSaleLength(e.target.value);
+                    setDraftPieceLength(e.target.value);
                     setDraftQuantity("");
                     setDraftRate("");
                     setDraftAmount("");
@@ -529,7 +539,7 @@ export default function AddSales() {
                 value={draftQuantity}
                 onChange={(e) => handleDraftQuantityChange(e.target.value)}
                 disabled={
-                  isPipeProduct ? !draftCutType || (draftCutType === "half" && !draftSaleLength) : !draftColor
+                  isPipeProduct ? !draftCutType || (draftCutType === "half" && !draftPieceLength) : !draftColor
                 }
               />
 
@@ -542,7 +552,7 @@ export default function AddSales() {
                 value={draftRate}
                 onChange={(e) => handleDraftRateChange(e.target.value)}
                 disabled={
-                  isPipeProduct ? !draftCutType || (draftCutType === "half" && !draftSaleLength) : !draftColor
+                  isPipeProduct ? !draftCutType || (draftCutType === "half" && !draftPieceLength) : !draftColor
                 }
               />
 
@@ -560,11 +570,11 @@ export default function AddSales() {
             </div>
 
             {draftColor &&
-              (!isPipeProduct || (draftCutType === "full" || (draftCutType === "half" && draftSaleLength))) && (
+              (!isPipeProduct || (draftCutType === "full" || (draftCutType === "half" && draftPieceLength))) && (
                 <div className="stock-display">
                   Available Stock: {availableStock}
                   {isPipeProduct
-                    ? ` piece(s) (${draftCutType === "half" ? `Half of ${draftSaleLength}m` : "Full"})`
+                    ? ` piece(s) (${draftCutType === "half" ? `Half ${draftPieceLength}m` : "Full"})`
                     : ""}
                 </div>
               )}

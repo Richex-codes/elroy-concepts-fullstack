@@ -178,7 +178,7 @@ router.post(
   upload.single("image"), // Use the Cloudinary-configured Multer
   async (req, res) => {
     try {
-      const { name, category, dateAdded, unitType } = req.body;
+      const { name, category, dateAdded, unitType, pipeLength } = req.body;
       const resolvedUnitType = unitType === "length" ? "length" : "piece";
 
       let imageUrl = "";
@@ -225,6 +225,9 @@ router.post(
         category,
         image: imageUrl,
         unitType: resolvedUnitType,
+        ...(resolvedUnitType === "length" && {
+          pipeLength: pipeLength != null && pipeLength !== "" ? Number(pipeLength) : 5.8,
+        }),
         inventory: inventory.map((item) => {
           const receivedQty = Number(item.quantity) || 0;
           const line = {

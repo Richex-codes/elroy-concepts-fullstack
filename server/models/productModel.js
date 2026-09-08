@@ -26,13 +26,23 @@ const ProductSchema = new Schema(
       required: false,
     },
     // "piece" = counted normally (existing behaviour). "length" = pipes sold
-    // whole ("full") or cut in half at the point of sale ("half") -- stock
-    // isn't tracked by length at all, only by branch+color, the same as
-    // "piece" products (see utils/pipeStock.js).
+    // whole ("full") or cut at the point of sale ("half") -- stock isn't
+    // tracked by length at all, only by branch+color, the same as "piece"
+    // products (see utils/pipeStock.js).
     unitType: {
       type: String,
       enum: ["piece", "length"],
       default: "piece",
+    },
+    // Only meaningful when unitType === "length". The standard stick length
+    // for this pipe -- almost every pipe is 5.8m, but it's editable
+    // per-product for the rare one that isn't. A "half" sale defaults to
+    // half of this and computes the resulting remnant's length from it, but
+    // staff can still type a different piece length at sale time for a
+    // one-off custom cut.
+    pipeLength: {
+      type: Number,
+      default: 5.8,
     },
     inventory: [
       {

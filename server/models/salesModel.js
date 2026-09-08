@@ -46,10 +46,11 @@ const SaleItemSchema = new mongoose.Schema(
     // estimated, not real, cost.
     costEstimated: { type: Boolean, default: false },
     // --- "length" (pipe) products only, below ---
-    // For cutType "half", the length (in meters) of the stick the staff
-    // entered at sale time -- half of it is what was actually sold, and the
-    // other half became a remnant. Absent for cutType "full", since a full
-    // stick's length was never recorded and isn't needed for anything.
+    // For cutType "half", the length (in meters) of the piece actually
+    // sold, entered by staff at sale time (defaults to half the product's
+    // standard pipeLength in the UI, but freely editable for a custom cut).
+    // Absent for cutType "full", since a full stick's length was never
+    // recorded and isn't needed for anything.
     length: {
       type: Number,
     },

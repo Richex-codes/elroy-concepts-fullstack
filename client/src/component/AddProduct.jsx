@@ -23,6 +23,7 @@ export default function AddProductPage() {
     image: null,
     dateAdded: draft.dateAdded ?? "",
     unitType: draft.unitType ?? "piece",
+    pipeLength: draft.pipeLength ?? 5.8,
   });
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
 
@@ -242,6 +243,9 @@ export default function AddProductPage() {
     }
     payload.append("dateAdded", formData.dateAdded);
     payload.append("unitType", formData.unitType);
+    if (formData.unitType === "length") {
+      payload.append("pipeLength", formData.pipeLength);
+    }
     payload.append("inventory", JSON.stringify(inventoryPayload)); // send inventory
 
     try {
@@ -263,6 +267,7 @@ export default function AddProductPage() {
         image: null,
         dateAdded: "",
         unitType: "piece",
+        pipeLength: 5.8,
       });
       setOpeningStockUnitLandedCost("");
       const resetInventory = [];
@@ -339,12 +344,29 @@ export default function AddProductPage() {
         </div>
 
         {!showDuplicateWarning && (
-          <div className="product-form-field">
-            <label>Product Type</label>
-            <select name="unitType" value={formData.unitType} onChange={handleChange}>
-              <option value="piece">Piece (counted normally)</option>
-              <option value="length">Pipe (sold by full or half length)</option>
-            </select>
+          <div className="product-form-row">
+            <div className="product-form-field">
+              <label>Product Type</label>
+              <select name="unitType" value={formData.unitType} onChange={handleChange}>
+                <option value="piece">Piece (counted normally)</option>
+                <option value="length">Pipe (sold by full or half length)</option>
+              </select>
+            </div>
+
+            {formData.unitType === "length" && (
+              <div className="product-form-field">
+                <label>Standard Length (m)</label>
+                <input
+                  type="number"
+                  name="pipeLength"
+                  min="0"
+                  step="0.01"
+                  placeholder="5.8"
+                  value={formData.pipeLength}
+                  onChange={handleChange}
+                />
+              </div>
+            )}
           </div>
         )}
 
