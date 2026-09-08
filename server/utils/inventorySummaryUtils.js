@@ -63,6 +63,11 @@ async function getInventorySummary({ product, branch, color } = {}) {
         product: { $first: "$name" },
         isRemnant: { $max: "$inventory.isRemnant" },
         totalQuantity: { $sum: "$inventory.quantity" },
+        // So the client can show "5.8m (full)" instead of a bare "-" for a
+        // length-less line that's still a full stick of a pipe product,
+        // rather than a piece product with no length concept at all.
+        unitType: { $first: "$unitType" },
+        pipeLength: { $first: "$pipeLength" },
       },
     },
 
@@ -76,6 +81,8 @@ async function getInventorySummary({ product, branch, color } = {}) {
         length: "$_id.length",
         isRemnant: { $ifNull: ["$isRemnant", false] },
         totalQuantity: 1,
+        unitType: 1,
+        pipeLength: 1,
       },
     },
 

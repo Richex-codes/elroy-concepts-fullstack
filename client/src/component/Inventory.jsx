@@ -426,7 +426,11 @@ const fetchStock = async () => {
                   <td data-label="Branch">{item.branch}</td>
                   <td data-label="Color">{item.color || "-"}</td>
                   <td data-label="Length">
-                    {item.length != null ? `${item.length}m` : "-"}
+                    {item.length != null
+                      ? `${item.length}m`
+                      : item.unitType === "length"
+                      ? `${item.pipeLength}m (full)`
+                      : "-"}
                   </td>
                   <td className="col-right" data-label="Quantity">{item.quantity}</td>
                   <td className="col-right" data-label="Cost">
@@ -505,7 +509,11 @@ const fetchStock = async () => {
                 <td data-label="Product">{item.product}</td>
                 <td data-label="Color">{item.color || "-"}</td>
                 <td data-label="Length">
-                  {item.length != null ? `${item.length}m${item.isRemnant ? " (offcut)" : ""}` : "-"}
+                  {item.length != null
+                    ? `${item.length}m`
+                    : item.unitType === "length"
+                    ? `${item.pipeLength}m (full)`
+                    : "-"}
                 </td>
                 <td className="col-right" data-label="Total Qty">{item.totalQuantity}</td>
               </tr>

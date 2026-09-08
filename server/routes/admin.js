@@ -1972,6 +1972,11 @@ router.get(
             color: "$inventory.color",
             length: "$inventory.length",
             isRemnant: { $ifNull: ["$inventory.isRemnant", false] },
+            // So the client can show "5.8m (full)" instead of a bare "-"
+            // for a length-less line that's still a full stick of a pipe
+            // product, rather than a piece product with no length concept.
+            unitType: "$unitType",
+            pipeLength: "$pipeLength",
             quantity: "$inventory.quantity",
             description: "$inventory.description",
             addedAt: "$inventory.addedAt",
