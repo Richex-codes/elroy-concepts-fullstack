@@ -4,6 +4,8 @@ import { getOwnBranchId } from "../utils/authUser.js";
 import ErrorBanner from "./ErrorBanner.jsx";
 import { useApiError } from "../utils/useApiError.js";
 import Pagination from "./Pagination.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
+import { useConfirm } from "../utils/useConfirm.js";
 import "../styles/Debtors.css"
 
 const formatNaira = (value) =>
@@ -13,6 +15,7 @@ const PAGE_SIZE = 40;
 
 export default function DebtorPage(){
     const { error, showError, clearError } = useApiError();
+    const { confirm, modalProps } = useConfirm();
 
     const [debtors, setDebtors] = useState([]);
     const [branches, setBranches] = useState([]);
@@ -80,10 +83,16 @@ export default function DebtorPage(){
         }
     };
 
-    const clearDebtors = async (id) => {
+    const clearDebtors = async (debtor) => {
+        const confirmed = await confirm(
+            `Mark ${debtor.customerName}'s ${formatNaira(debtor.balance)} balance as fully paid? This can't be undone from here.`,
+            { title: "Clear debtor", confirmLabel: "Clear", danger: true }
+        );
+        if (!confirmed) return;
+
         try {
             await api.patch(
-            `/admin/debtors/${id}`,
+            `/admin/debtors/${debtor._id}`,
             {}, // request body
             {
                 headers: {
@@ -236,12 +245,12 @@ export default function DebtorPage(){
                                 className="clear-btn"
                                 onClick={() =>
                                     clearDebtors(
-                                    debtor._id
+                                    debtor
                                     )
                                 }
                                 >
                                 Clear
-                                </button> 
+                                </button>
                             </td>
                             </tr>
                         ))}
@@ -249,6 +258,7 @@ export default function DebtorPage(){
                     </table>
                     </div>
                     <Pagination page={page} setPage={setPage} totalItems={debtors.length} pageSize={PAGE_SIZE} />
+                    <ConfirmModal {...modalProps} />
 
         </div>
     )
